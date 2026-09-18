@@ -1,0 +1,144 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# Configuration reference: https://docs.coderabbit.ai/reference/configuration
+language: en-GB
+early_access: false
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  collapse_walkthrough: true
+  sequence_diagrams: true
+  assess_linked_issues: true
+  related_issues: true
+  poem: false
+  auto_apply_labels: false
+  suggested_labels: true
+
+  labeling_instructions:
+    - label: "type:feature"
+      instructions: Apply when the PR implements a ROADMAP task that adds behaviour.
+    - label: "type:bug"
+      instructions: Apply when the PR fixes a defect in existing behaviour.
+    - label: "type:spike"
+      instructions: Apply when the PR records the result of an OPEN_QUESTIONS.md S-item investigation.
+    - label: "type:docs"
+      instructions: Apply when the PR only changes Markdown, ADRs, specs, or the docs site.
+    - label: "type:infra"
+      instructions: Apply when the PR changes CI, tooling, pre-commit, packaging, or repository configuration.
+    - label: "provider:antigravity"
+      instructions: Apply when the PR touches src/thumbforge/providers/antigravity.py or its prompt wrapper.
+    - label: "provider:fake"
+      instructions: Apply when the PR touches src/thumbforge/providers/fake.py.
+    - label: "needs:decision"
+      instructions: Apply when the PR is blocked on a D-item in OPEN_QUESTIONS.md.
+
+  path_filters:
+    - "!uv.lock"
+    - "!graphify-out/**"
+    - "!site/**"
+    - "!tests/golden/**"
+    - "!tests/fixtures/**"
+
+  path_instructions:
+    - path: "src/thumbforge/**/*.py"
+      instructions: |
+        Enforce the conventions in AGENTS.md and docs/CONVENTIONS.md.
+
+        Layering (also enforced by import-linter): `cli` may import core, storage, providers,
+        sources, templates, imaging. `core` must import nothing internal except core.errors and
+        core.ids. Every other package may import core only. Nothing may import `cli`. Flag any
+        import that breaks this.
+
+        Required:
+        - Full type hints; the package is pyright-strict. Flag missing or `Any` annotations.
+        - `pathlib.Path` for paths, never `str`. `StrEnum` for enumerations. `match` for dispatch
+          on enums or status values.
+        - Logging through `thumbforge.logging.get_logger(__name__)` (structlog). Flag `print()`
+          anywhere except `cli/_render.py`, and flag any direct use of the stdlib `logging` module
+          in application code.
+        - Errors must be `ThumbforgeError` subclasses carrying `code`, `exit_code` and `hint`.
+          Flag `sys.exit` outside `cli/_errors.py`, and flag bare `except:` or except-pass.
+        - Secrets come from environment variables or keyring only. Flag any secret written to the
+          database, TOML config, logs, or a literal in source.
+        - Async only in providers, sources and batch fan-out. Flag blocking I/O inside async
+          functions and unbounded concurrency: provider fan-out must respect
+          `asyncio.Semaphore(min(concurrency, capabilities.max_concurrency))`.
+        - Business logic must not live in `cli/`; commands should parse input, call a service and
+          render.
+
+    - path: "src/thumbforge/providers/**/*.py"
+      instructions: |
+        Providers must satisfy the `ImageProvider` protocol and declare accurate
+        `ProviderCapabilities`. Flag a capability flag that contradicts the implementation (for
+        example `supports_seed = True` with the seed ignored).
+
+        Subprocess adapters must not use `shell=True`, must pass argv as a list, must enforce a
+        timeout, and must map every failure onto the documented exception table in PLAN.md §4.3
+        (auth, permanent, transient, timeout, output-missing). Flag a success path that trusts the
+        exit code alone without verifying the output file exists and opens.
+
+    - path: "src/thumbforge/storage/**/*.py"
+      instructions: |
+        Any change to `storage/models.py` must ship with a matching Alembic migration under
+        `storage/migrations/versions/`. Flag schema changes without one.
+
+        Flag raw SQL string interpolation, missing `ON DELETE` behaviour on new foreign keys, and
+        writes to the asset store that are not atomic (the contract is tmp file, fsync, rename).
+
+    - path: "tests/**/*.py"
+      instructions: |
+        Unit tests must never touch the network or a real provider: they use FakeProvider and the
+        recorded yt-dlp fixtures. Flag live HTTP, real `agy` invocation, or `time.sleep` used as
+        synchronisation.
+
+        A test must defend an observable contract: behaviour, boundaries, invariants, state
+        transitions, error mapping. Flag tests that assert implementation detail (field copies,
+        defaults, forwarding, mock echoes, source text) and padding such as bare
+        does-not-throw or non-empty assertions.
+
+        Tests hitting live systems require the `integration` marker; image comparisons require
+        `golden`.
+
+    - path: ".github/workflows/*.{yml,yaml}"
+      instructions: |
+        Flag unpinned third-party actions, missing `permissions` blocks, use of
+        `pull_request_target` with checkout of PR code, and secrets exposed via `run` echo.
+        PyPI publishing must use trusted publishing (OIDC), never a long-lived token.
+
+    - path: "docs/adr/*.md"
+      instructions: |
+        ADRs are append-only once Accepted: a decision change must add a new superseding ADR
+        rather than edit the existing decision. Flag edits to the Decision section of an Accepted
+        ADR.
+
+    - path: "docs/specs/*.md"
+      instructions: |
+        Acceptance criteria must be observable (concrete input to expected output), not
+        aspirational. Flag criteria that cannot be checked by running a command.
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+
+  tools:
+    ruff:
+      enabled: true
+    actionlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    shellcheck:
+      enabled: true
+    markdownlint:
+      enabled: false # prettier owns Markdown formatting in this repo
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  learnings:
+    scope: local
