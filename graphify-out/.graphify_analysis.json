@@ -1,0 +1,125 @@
+{
+  "communities": {
+    "0": [
+      "json",
+      "path",
+      "pathlib",
+      "scripts_check_graph_drift",
+      "scripts_check_graph_drift_main",
+      "scripts_check_graph_drift_rationale_1",
+      "scripts_check_graph_drift_structure",
+      "sys"
+    ],
+    "1": [
+      "callback",
+      "help",
+      "is_eager",
+      "option",
+      "src_thumbforge_cli_app_rationale_39",
+      "src_thumbforge_cli_app_root",
+      "src_thumbforge_cli_app_version_callback"
+    ],
+    "2": [
+      "importlib_metadata",
+      "src_thumbforge_init",
+      "src_thumbforge_init_rationale_1",
+      "tests_test_version",
+      "tests_test_version_test_help_exits_zero",
+      "tests_test_version_test_version_flag_prints_version",
+      "typer_testing"
+    ],
+    "3": [
+      "src_thumbforge_cli_app",
+      "src_thumbforge_cli_app_main",
+      "src_thumbforge_cli_app_rationale_1",
+      "src_thumbforge_main",
+      "typer",
+      "typing"
+    ],
+    "4": [
+      "src_thumbforge_cli_init",
+      "src_thumbforge_cli_init_rationale_1"
+    ],
+    "5": [
+      "tests_conftest",
+      "tests_conftest_rationale_1"
+    ],
+    "6": [
+      "pkg_thumbforge"
+    ]
+  },
+  "cohesion": {
+    "0": 0.2857142857142857,
+    "1": 0.2857142857142857,
+    "2": 0.2857142857142857,
+    "3": 0.4,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0
+  },
+  "gods": [
+    {
+      "id": "src_thumbforge_cli_app_root",
+      "label": "root()",
+      "degree": 7
+    },
+    {
+      "id": "scripts_check_graph_drift_structure",
+      "label": "structure()",
+      "degree": 3
+    },
+    {
+      "id": "scripts_check_graph_drift_main",
+      "label": "main()",
+      "degree": 2
+    },
+    {
+      "id": "src_thumbforge_cli_app_version_callback",
+      "label": "_version_callback()",
+      "degree": 2
+    },
+    {
+      "id": "src_thumbforge_cli_app_main",
+      "label": "main()",
+      "degree": 2
+    },
+    {
+      "id": "scripts_check_graph_drift_rationale_1",
+      "label": "Compare a committed graphify graph against a freshly extracted one. Only the…",
+      "degree": 1
+    },
+    {
+      "id": "src_thumbforge_cli_app_rationale_39",
+      "label": "thumbforge command-line interface.",
+      "degree": 1
+    },
+    {
+      "id": "src_thumbforge_init_rationale_1",
+      "label": "thumbforge: consistent, spec-compliant YouTube thumbnails from a hero image and…",
+      "degree": 1
+    },
+    {
+      "id": "src_thumbforge_cli_app_rationale_1",
+      "label": "Root Typer application. Phase 0 ships only ``--version``. Sub-apps (fetch,…",
+      "degree": 1
+    },
+    {
+      "id": "src_thumbforge_cli_init_rationale_1",
+      "label": "Typer command surface. Commands are thin; behaviour lives in…",
+      "degree": 1
+    }
+  ],
+  "surprises": [],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `root()` connect `Community 1` to `Community 3`?",
+      "why": "High betweenness centrality (0.161) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `thumbforge` to the rest of the system?",
+      "why": "1 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

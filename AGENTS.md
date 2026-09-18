@@ -17,28 +17,28 @@ src/thumbforge/
   logging.py    structlog configuration
 tests/          unit/ contract/ integration/ golden/ fixtures/
 docs/           ARCHITECTURE.md ROADMAP.md CONVENTIONS.md TESTING.md GLOSSARY.md adr/ specs/ spikes/
-graphify-out/   generated codebase knowledge graph (committed; cost.json ignored)
+graphify-out/   generated codebase knowledge graph (committed; cache/ and cost.json ignored)
 ```
 
 Dependency rule: `cli → core, storage, providers, sources, templates, imaging`; `core` imports nothing internal except `core.errors`/`core.ids`; every other package may import `core` only; nothing imports `cli`. Enforced by import-linter.
 
 ## Commands (always via uv)
 
-| Purpose                                                  | Command                                                 |
-| -------------------------------------------------------- | ------------------------------------------------------- |
-| Install / sync                                           | `uv sync --locked`                                      |
-| Run the CLI                                              | `uv run thumbforge …`                                   |
-| Lint + format Python                                     | `uv run ruff check . && uv run ruff format .`           |
-| Type check                                               | `uv run pyright`                                        |
-| Unit + contract tests                                    | `uv run pytest -q`                                      |
-| Opt-in live tests                                        | `uv run pytest -m integration`                          |
-| Golden image tests                                       | `uv run pytest -m golden`                               |
-| Import contracts                                         | `uv run lint-imports`                                   |
-| New migration                                            | `uv run alembic revision --autogenerate -m "<message>"` |
-| Docs preview                                             | `uv run zensical serve`                                 |
-| Docs build (CI gate)                                     | `uv run zensical build`                                 |
-| All hooks (incl. prettier for `*.md`, `*.yml`, `*.json`) | `pre-commit run --all-files`                            |
-| Refresh knowledge graph                                  | `graphify update .`                                     |
+| Purpose                                                  | Command                                                                |
+| -------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Install / sync                                           | `uv sync --locked`                                                     |
+| Run the CLI                                              | `uv run thumbforge …`                                                  |
+| Lint + format Python                                     | `uv run ruff check . && uv run ruff format .`                          |
+| Type check                                               | `uv run pyright`                                                       |
+| Unit + contract tests                                    | `uv run pytest -q`                                                     |
+| Opt-in live tests                                        | `uv run pytest -m integration`                                         |
+| Golden image tests                                       | `uv run pytest -m golden`                                              |
+| Import contracts                                         | `uv run lint-imports`                                                  |
+| New migration                                            | `uv run alembic revision --autogenerate -m "<message>"`                |
+| Docs preview                                             | `uv run zensical serve`                                                |
+| Docs build (CI gate)                                     | `uv run zensical build`                                                |
+| All hooks (incl. prettier for `*.md`, `*.yml`, `*.json`) | `pre-commit run --all-files`                                           |
+| Refresh knowledge graph                                  | `graphify extract . --code-only && graphify cluster-only . --no-label` |
 
 Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run`.
 
@@ -76,7 +76,7 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 - Tests added at the right layer: unit (no network, FakeProvider / recorded fixtures), contract (every provider), `integration` marker for live systems, `golden` for image output.
 - `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, `uv run pytest -q`, `uv run lint-imports`, `uv run zensical build` all green locally and in CI.
 - Docs updated in the same PR when behaviour or structure changed: `docs/ARCHITECTURE.md`, the phase spec, `AGENTS.md`, ADR if a decision changed.
-- `graphify update .` run and `graphify-out/` committed when source structure changed.
+- Knowledge graph refreshed when source structure changed: `graphify extract . --code-only && graphify cluster-only . --no-label`, then commit `graphify-out/`. Installed once with `uv tool install graphifyy`. CI runs an advisory drift check (`scripts/check_graph_drift.py`); regeneration is manual, not hooked.
 
 ## Updating docs
 
@@ -93,6 +93,6 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 - Use `print()` for logging.
 - Skip an Alembic migration for a schema change.
 - Hit the network or a real provider from unit tests.
-- Commit `graphify-out/cost.json` or the built `site/` directory.
+- Commit `graphify-out/cache/`, `graphify-out/cost.json`, or the built `site/` directory.
 - Mark a spike as resolved without recorded command output.
 - Widen a PR beyond its ROADMAP task.
