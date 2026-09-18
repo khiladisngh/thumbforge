@@ -9,8 +9,7 @@ from __future__ import annotations
 
 import functools
 import json
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Mapping
 
 import typer
 from rich.console import Console
@@ -19,7 +18,7 @@ from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import ExitCode, ThumbforgeError
 
 
-def _app_context(args: tuple[Any, ...], kwargs: dict[str, Any]) -> AppContext | None:
+def _app_context(args: tuple[object, ...], kwargs: Mapping[str, object]) -> AppContext | None:
     """Find the :class:`AppContext` the root callback stored on the Click context.
 
     Typer injects the context by keyword and vendors its own Click, so neither
@@ -42,7 +41,7 @@ def _stderr(app_ctx: AppContext | None) -> tuple[Console, bool]:
 def _report(app_ctx: AppContext | None, error: ThumbforgeError) -> None:
     console, json_mode = _stderr(app_ctx)
     if json_mode:
-        payload: dict[str, Any] = {
+        payload: dict[str, str | int] = {
             "error": error.code,
             "message": error.message,
             "exit_code": int(error.exit_code),

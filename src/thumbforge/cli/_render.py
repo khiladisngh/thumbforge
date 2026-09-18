@@ -10,11 +10,14 @@ from __future__ import annotations
 import json
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from pathlib import Path
 
-from rich.console import Console
+from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
+
+type JsonValue = str | int | float | bool | Sequence[JsonValue] | Mapping[str, JsonValue] | None
+"""What a command may emit in ``--json`` mode. Anything else is a bug, not a coercion."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,8 +26,7 @@ class AppContext:
 
     console: Console
     json_mode: bool
-    config_path: Any = None
-    settings: Any = None
+    config_path: Path | None = None
 
 
 def table(
@@ -47,7 +49,7 @@ def panel(title: str, body: str) -> Panel:
     return Panel(body, title=title, expand=False)
 
 
-def kv(mapping: Mapping[str, Any], *, title: str | None = None) -> Table:
+def kv(mapping: Mapping[str, object], *, title: str | None = None) -> Table:
     """Build a two-column key/value table, the default shape for ``show``-style commands."""
     rendered = Table(title=title, box=None, show_header=False)
     rendered.add_column(style="bold cyan")
@@ -57,13 +59,21 @@ def kv(mapping: Mapping[str, Any], *, title: str | None = None) -> Table:
     return rendered
 
 
-def emit(ctx: AppContext, data: Any, *, render: Callable[[], Any] | None = None) -> None:
+def emit(
+    ctx: AppContext,
+    data: JsonValue,
+    *,
+    render: Callable[[], RenderableType] | None = None,
+) -> None:
     """Print ``data`` as JSON in ``--json`` mode, otherwise print ``render()``.
 
-    ``data`` must be JSON-serialisable; it is the machine contract. ``render`` is a thunk so the
-    Rich object is never built in JSON mode.
+    ``data`` is the machine contract and must already be JSON-serialisable: no ``default=``
+    coercion, so a stray ``Path`` raises here instead of silently becoming a string in output
+    someone parses.
+
+    ``render`` is a thunk so the Rich object is never built in JSON mode.
     """
     if ctx.json_mode:
-        ctx.console.print_json(json.dumps(data, default=str))
+        ctx.console.print_json(json.dumps(data))
         return
     ctx.console.print(render() if render is not None else data)

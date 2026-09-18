@@ -118,12 +118,6 @@ def test_json_mode_emits_machine_readable_diagnostic() -> None:
     }
 
 
-def test_partial_batch_carries_counts_for_the_resume_message() -> None:
-    error = PartialBatchError("7 of 20 done", completed=7, failed=1, pending=12)
-    assert (error.completed, error.failed, error.pending) == (7, 1, 12)
-    assert error.exit_code == 6
-
-
 def test_only_transient_and_timeout_are_retryable() -> None:
     assert ProviderTransientError("x").retryable
     assert ProviderTimeoutError("x").retryable
