@@ -16,8 +16,13 @@ from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
 
-type JsonValue = str | int | float | bool | Sequence[JsonValue] | Mapping[str, JsonValue] | None
-"""What a command may emit in ``--json`` mode. Anything else is a bug, not a coercion."""
+type JsonValue = str | int | float | bool | list[JsonValue] | dict[str, JsonValue] | None
+"""What a command may emit in ``--json`` mode.
+
+Deliberately `list`/`dict` rather than `Sequence`/`Mapping`: the wider protocols admit `bytes`
+and `range`, which `json.dumps` rejects at runtime, so the annotation would promise more than
+the serialiser accepts.
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,11 +74,12 @@ def emit(
 
     ``data`` is the machine contract and must already be JSON-serialisable: no ``default=``
     coercion, so a stray ``Path`` raises here instead of silently becoming a string in output
-    someone parses.
+    someone parses. ``allow_nan=False`` likewise rejects ``NaN``/``Infinity``, which are
+    JavaScript literals rather than valid JSON.
 
     ``render`` is a thunk so the Rich object is never built in JSON mode.
     """
     if ctx.json_mode:
-        ctx.console.print_json(json.dumps(data))
+        ctx.console.print_json(json.dumps(data, allow_nan=False))
         return
     ctx.console.print(render() if render is not None else data)

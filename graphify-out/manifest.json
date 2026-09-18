@@ -54,10 +54,10 @@
     "semantic_hash": "e18084823be45ea215972a9624192325"
   },
   "src/thumbforge/cli/_render.py": {
-    "mtime": 1789761655.9116986,
-    "seen": 1789761677.0544555,
-    "ast_hash": "db3ed710500ff04da73f8857a8e0345d",
-    "semantic_hash": "db3ed710500ff04da73f8857a8e0345d"
+    "mtime": 1789762151.0245066,
+    "seen": 1789762171.69965,
+    "ast_hash": "a0668315de6bb30a557041a6dfd2423d",
+    "semantic_hash": "a0668315de6bb30a557041a6dfd2423d"
   },
   "src/thumbforge/core/__init__.py": {
     "mtime": 1789760689.936158,
@@ -88,5 +88,11 @@
     "seen": 1789761677.055011,
     "ast_hash": "d1f72734ae8c37a02b454a2916ff75d8",
     "semantic_hash": "d1f72734ae8c37a02b454a2916ff75d8"
+  },
+  "tests/test_render.py": {
+    "mtime": 1789762160.2099693,
+    "seen": 1789762171.7004702,
+    "ast_hash": "1bd5747cddb6d02bbe799bac724226fb",
+    "semantic_hash": "1bd5747cddb6d02bbe799bac724226fb"
   }
 }
