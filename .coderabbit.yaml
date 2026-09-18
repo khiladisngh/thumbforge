@@ -100,7 +100,7 @@ reviews:
         Tests hitting live systems require the `integration` marker; image comparisons require
         `golden`.
 
-    - path: ".github/workflows/*.yml"
+    - path: ".github/workflows/*.{yml,yaml}"
       instructions: |
         Flag unpinned third-party actions, missing `permissions` blocks, use of
         `pull_request_target` with checkout of PR code, and secrets exposed via `run` echo.
