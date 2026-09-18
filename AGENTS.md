@@ -77,6 +77,7 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 - `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, `uv run pytest -q`, `uv run lint-imports`, `uv run zensical build` all green locally and in CI.
 - Docs updated in the same PR when behaviour or structure changed: `docs/ARCHITECTURE.md`, the phase spec, `AGENTS.md`, ADR if a decision changed.
 - Knowledge graph refreshed when source structure changed: `graphify extract . --code-only && graphify cluster-only . --no-label`, then commit `graphify-out/`. Installed once with `uv tool install graphifyy`. CI runs an advisory drift check (`scripts/check_graph_drift.py`); regeneration is manual, not hooked.
+- CodeRabbit review comments on the PR resolved or explicitly answered (advisory, not a merge gate). Rules live in `.coderabbit.yaml`; `@coderabbitai review` re-runs it. If a comment is wrong for this project, reply with the reason instead of silently dismissing it.
 
 ## Updating docs
 
