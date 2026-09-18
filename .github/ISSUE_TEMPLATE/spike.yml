@@ -1,0 +1,35 @@
+name: Spike
+description: Time-boxed verification of an unknown fact (OPEN_QUESTIONS.md S-items)
+labels: ["type:spike"]
+body:
+  - type: input
+    id: spike
+    attributes:
+      label: Spike id
+      placeholder: S1
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Verification command
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: changes
+    attributes:
+      label: What the answer changes
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Time box
+      placeholder: 2 hours

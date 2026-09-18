@@ -1,0 +1,24 @@
+[project]
+site_name = "Thumbforge"
+site_url = "https://khiladisngh.github.io/thumbforge/"
+site_description = "Generate consistent, spec-compliant YouTube thumbnails from a hero image and a playlist."
+site_author = "Gishant Singh"
+copyright = "&copy; 2026 Gishant Singh. MIT licensed."
+repo_url = "https://github.com/khiladisngh/thumbforge"
+edit_uri = "edit/main/docs/"
+docs_dir = "docs"
+site_dir = "site"
+
+[project.markdown_extensions]
+admonition = {}
+attr_list = {}
+md_in_html = {}
+tables = {}
+toc = { permalink = true }
+"pymdownx.details" = {}
+"pymdownx.tabbed" = { alternate_style = true }
+
+[project.markdown_extensions."pymdownx.superfences"]
+custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]

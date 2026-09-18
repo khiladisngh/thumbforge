@@ -1,0 +1,385 @@
+# thumbforge — Project Plan
+
+> Planning document. No implementation exists yet. Working name `thumbforge`; see `OPEN_QUESTIONS.md` D1 for the naming decision.
+
+## 1. Executive summary
+
+`thumbforge` is a Typer + Rich CLI that turns a YouTube video or playlist URL into a set of consistent, spec-compliant thumbnails. You generate a **hero** thumbnail for one video with several iterations, pick and refine one, then use it as the style reference to **batch**-generate every video in a playlist with deterministic titles and "Part N" badges. Video, playlist and channel metadata come from `yt-dlp` (no API key). Image generation is behind a pluggable `ImageProvider` protocol; the first real provider drives the **Antigravity CLI (`agy`)** headlessly, and a deterministic **FakeProvider** keeps tests and offline development honest. Everything — channels, playlists, videos, templates, runs, iterations, assets — lives in a local SQLite database, with generated images stored content-addressed on disk.
+
+Name candidates: **`thumbforge`** (recommended), `heroframe`, `stillcast`.
+
+Stack: Python 3.14 · uv · Typer · Rich · pydantic-settings/TOML · platformdirs · SQLite via SQLAlchemy 2.0 + Alembic · yt-dlp · Jinja2 · Pillow · structlog · ruff · pyright · pytest · pre-commit · prettier (Markdown/YAML/JSON) · zensical (docs site) · graphify (agent knowledge graph).
+
+Core design bet: **AI paints the background; Pillow renders the text.** Titles and "Part N" are composited deterministically over provider art, so batch consistency does not depend on a model's text rendering (ADR 0008).
+
+Phase 0 is infrastructure only — the repo is built primarily by coding agents, so `AGENTS.md`, CI, ADRs, specs and the graphify knowledge graph come before any feature code.
+
+## 2. Architecture
+
+### 2.1 Package layout (src layout)
+
+```
+src/thumbforge/
+  __init__.py            # __version__ via importlib.metadata
+  __main__.py
+  cli/                   # Typer apps only; no business logic
+    app.py               # root Typer; registers sub-apps; global --json/--verbose/--config
+    fetch.py video.py playlist.py thumb.py batch.py template.py provider.py runs.py config.py db.py
+    _render.py           # Rich tables/panels/progress; image preview helper
+    _errors.py           # ThumbforgeError -> exit code mapping (single handler)
+  core/                  # pure domain: models + services; no I/O imports
+    models.py            # Pydantic v2 models: VideoMeta, PlaylistMeta, ChannelMeta, GenerationRequest, GenerationResult, RunSpec
+    errors.py            # ThumbforgeError hierarchy (see §7)
+    ids.py               # idempotency-key + content-hash helpers
+    services/hero.py services/batch.py services/iterate.py services/compliance.py
+  providers/
+    base.py              # ImageProvider Protocol, ProviderCapabilities, ProviderInfo
+    registry.py          # entry-point discovery (group "thumbforge.providers") + builtin map
+    fake.py              # FakeProvider
+    antigravity.py       # AntigravityProvider (subprocess adapter)
+    antigravity_wrapper.j2
+  sources/
+    base.py              # MetadataSource Protocol
+    ytdlp.py             # YtDlpSource
+    youtube_api.py       # YouTubeDataApiSource (Phase 8, optional extra)
+  storage/
+    db.py                # engine/session factory; SQLite pragmas (WAL, foreign_keys=ON)
+    models.py            # SQLAlchemy 2.0 declarative ORM
+    repositories.py      # one repo class per aggregate
+    assets.py            # AssetStore: content-addressed files
+    migrations/          # Alembic env + versions/
+  templates/
+    loader.py schema.py render.py builtin/   # builtin/*.toml + *.j2
+  imaging/
+    overlay.py           # text overlay (title, Part N) with Pillow
+    fit.py               # resize/crop to 16:9 target
+    compliance.py        # YouTube spec check
+    fonts.py             # font resolution; bundled fallback font
+  settings.py            # pydantic-settings; TOML at platformdirs user_config_dir
+  logging.py             # structlog configuration; console renderer for humans, JSON renderer when --json
+```
+
+### 2.2 Dependency rule
+
+`cli → core, storage, providers, sources, templates, imaging`; `core → nothing internal except errors/ids`; `providers/sources/storage/templates/imaging → core`; nothing imports `cli`.
+
+Enforced by an `import-linter` contract added in Phase 1 (`uv add --dev import-linter`). A PR that violates a contract fails CI.
+
+### 2.3 Batch run data flow
+
+```mermaid
+flowchart LR
+    CLI[cli/batch.py] --> BS[core.services.batch.BatchService]
+    BS --> MS[MetadataSource<br/>sources/ytdlp.py]
+    BS --> TR[TemplateRenderer<br/>templates/render.py]
+    BS --> SEM{{asyncio.Semaphore<br/>min(--concurrency, max_concurrency)}}
+    SEM --> IP[ImageProvider<br/>providers/*]
+    IP --> OV[Overlay<br/>imaging/overlay.py]
+    OV --> CC[Compliance<br/>imaging/compliance.py]
+    CC --> AS[AssetStore<br/>storage/assets.py]
+    AS --> RR[RunRepository<br/>storage/repositories.py]
+    RR --> DB[(SQLite)]
+```
+
+## 3. Data model
+
+All primary keys are `TEXT` ULIDs unless stated. Every table has `created_at` and `updated_at` (ISO-8601 UTC text). JSON columns are `TEXT` holding JSON.
+
+```mermaid
+erDiagram
+    channel ||--o{ playlist : owns
+    channel ||--o{ video : owns
+    playlist ||--o{ playlist_item : contains
+    video ||--o{ playlist_item : appears_in
+    template ||--o{ run : configures
+    provider_profile ||--o{ run : executes
+    run ||--o{ iteration : produces
+    run o|--o| run : parent_run
+    asset o|--o{ run : reference_asset
+    iteration }o--o| asset : raw_asset
+    iteration }o--o| asset : final_asset
+    video ||--o{ iteration : targets
+```
+
+| Entity             | Columns                                                                                                                                                                                                                                                                                                                                                         | Notes                                                                                                                     |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `channel`          | `id`, `youtube_id UNIQUE`, `title`, `url`, `source`, `fetched_at`                                                                                                                                                                                                                                                                                               | `source` ∈ `ytdlp`, `api`                                                                                                 |
+| `playlist`         | `id`, `youtube_id UNIQUE`, `channel_id FK`, `title`, `description`, `url`, `item_count`, `fetched_at`                                                                                                                                                                                                                                                           |                                                                                                                           |
+| `video`            | `id`, `youtube_id UNIQUE`, `channel_id FK`, `title`, `description`, `duration_s`, `published_at`, `url`, `source_thumbnail_url`, `fetched_at`                                                                                                                                                                                                                   |                                                                                                                           |
+| `playlist_item`    | `id`, `playlist_id FK`, `video_id FK`, `position INT`, `part_number INT NULL`, `part_label TEXT NULL`, `UNIQUE(playlist_id, video_id)`, `UNIQUE(playlist_id, position)`                                                                                                                                                                                         | `part_number` defaults to `position + 1`; overridden by `playlist renumber`                                               |
+| `template`         | `id`, `name`, `version INT`, `prompt_template TEXT`, `layout_spec_json TEXT`, `spec_hash TEXT`, `is_builtin BOOL`, `UNIQUE(name, version)`                                                                                                                                                                                                                      | Immutable per version; editing creates `version + 1`. `spec_hash = sha256(prompt_template + canonical_json(layout_spec))` |
+| `provider_profile` | `id`, `name UNIQUE`, `provider_key`, `provider_version`, `params_json`, `created_at`                                                                                                                                                                                                                                                                            | Snapshot of provider identity + parameters used by a run. **Never stores secrets.**                                       |
+| `run`              | `id`, `kind CHECK IN ('hero','iterate','batch')`, `status CHECK IN ('pending','running','paused','completed','failed','cancelled')`, `template_id FK`, `provider_profile_id FK`, `video_id FK NULL`, `playlist_id FK NULL`, `reference_asset_id FK NULL`, `parent_run_id FK NULL`, `params_json`, `started_at`, `finished_at`, `error_text NULL`                | `video_id` set for `hero`/`iterate`; `playlist_id` set for `batch`                                                        |
+| `iteration`        | `id`, `run_id FK`, `video_id FK NULL`, `ordinal INT`, `idempotency_key TEXT UNIQUE`, `status` (same enum as run), `prompt_text`, `seed INT NULL`, `raw_asset_id FK NULL`, `final_asset_id FK NULL`, `picked BOOL DEFAULT 0`, `provider_request_json`, `provider_response_json`, `started_at`, `finished_at`, `duration_ms`, `cost_json NULL`, `error_text NULL` | One row per generated image attempt slot; `raw` = provider output, `final` = after overlay + fit                          |
+| `asset`            | `id`, `sha256 UNIQUE`, `rel_path`, `mime`, `width`, `height`, `bytes`, `kind CHECK IN ('raw','final','reference','preview')`, `compliant BOOL NULL`, `compliance_report_json NULL`                                                                                                                                                                              | Content-addressed; see §3.2                                                                                               |
+
+### 3.1 How a batch run links to its hero
+
+1. `thumb generate` creates a `run(kind='hero', video_id=V)` with N `iteration` rows.
+2. `thumb pick <run> <ordinal>` sets `iteration.picked = 1` on exactly one iteration of that run and `0` on the others. `run.reference_asset_id` is **not** used for hero runs.
+3. `batch <playlist> --hero <run|iteration>` creates `run(kind='batch', playlist_id=P, parent_run_id=<hero run id>, reference_asset_id=<picked iteration>.final_asset_id)`. Passing `--reference raw` uses `raw_asset_id` instead (background art without overlay text — preferred when the provider might copy the hero's title text).
+4. Each batch `iteration` receives the reference asset's absolute path in `GenerationRequest.reference_images`.
+5. Deleting a hero run while any batch run references it is refused (`ON DELETE RESTRICT` on `run.parent_run_id` and `run.reference_asset_id`).
+
+### 3.2 Asset store
+
+- Layout: `<data_dir>/assets/<sha256[:2]>/<sha256>.<ext>`; `asset.rel_path` is relative to `data_dir` so the data directory is relocatable.
+- Write path: write to `<data_dir>/tmp/<ulid>`, `fsync`, compute sha256, `rename` into place. Identical bytes dedupe to the same row.
+- `AssetStore.verify(asset)` re-hashes the file and reports drift.
+
+## 4. Provider interface
+
+```python
+class ProviderCapabilities(BaseModel, frozen=True):
+    supports_reference_image: bool
+    supports_seed: bool
+    supports_negative_prompt: bool
+    supports_aspect_ratio: bool
+    max_batch: int            # images per call; 1 for Antigravity
+    max_concurrency: int      # provider-side safe parallelism; 1 for Antigravity
+    output_formats: frozenset[str]   # {"jpeg"} for Antigravity
+
+class ImageProvider(Protocol):
+    key: ClassVar[str]        # "antigravity", "fake"
+    capabilities: ProviderCapabilities
+    async def info(self) -> ProviderInfo          # name, version string, auth state
+    async def healthcheck(self) -> HealthReport   # binary found, auth ok, model list
+    async def generate(self, req: GenerationRequest, *, workdir: Path) -> GenerationResult
+```
+
+```python
+class GenerationRequest(BaseModel, frozen=True):
+    prompt: str
+    negative_prompt: str | None
+    width: int
+    height: int
+    reference_images: tuple[Path, ...]
+    seed: int | None
+    params: dict[str, JsonValue]
+    idempotency_key: str
+
+
+class GenerationResult(BaseModel, frozen=True):
+    image_path: Path
+    provider_key: str
+    provider_version: str
+    model: str | None
+    seed_used: int | None
+    duration_ms: int
+    cost: Cost | None  # Cost(tokens_in, tokens_out, credits: Decimal | None, currency: str | None)
+    raw_response: dict[str, JsonValue]
+```
+
+### 4.1 Registry and plugins
+
+- Builtin map `{"fake": FakeProvider, "antigravity": AntigravityProvider}` is merged with `importlib.metadata.entry_points(group="thumbforge.providers")`. The entry-point **name** is the provider key; the value is an `ImageProvider` class.
+- Duplicate key (builtin vs plugin, or two plugins) → `ProviderRegistryError` at load time.
+- Unknown key on the CLI → `NotFoundError` → exit `3`.
+- Core code never imports a concrete provider; it asks the registry.
+
+### 4.2 FakeProvider (deterministic, offline)
+
+- Renders a 1376×768 PNG. Background colour = first 3 bytes of `sha256(prompt + str(seed))`; draws the sha prefix as text; when reference images are given, pastes 96-px thumbnails of them into the corners.
+- Sleeps `params.get("delay_ms", 0)` ms (lets progress-bar and concurrency tests be observable).
+- Raises `ProviderTransientError` when the prompt contains `[[FAIL_TRANSIENT]]` and `ProviderPermanentError` on `[[FAIL_PERMANENT]]` — used by contract, retry and resume tests.
+- Capabilities: reference=True, seed=True, negative=True, aspect=True, max_batch=8, max_concurrency=8, formats={"png"}.
+
+### 4.3 AntigravityProvider (designed around verified behaviour only)
+
+Verified from the official headless docs and `agy --help` (agy 1.2.3):
+
+- Invocation: `agy -p "<prompt>" --output-format json` prints one JSON envelope to stdout; diagnostics go to stderr.
+- Envelope fields: `conversation_id`, `status`, `response`, `error?`, `duration_seconds`, `num_turns`, `usage{input_tokens, output_tokens, thinking_tokens, cache_read_tokens, total_tokens}`.
+- `status` ∈ `SUCCESS | ERROR | CANCELED | INTERRUPTED | INVALID | WAITING | RUNNING`. Exit `0` on success; non-zero (observed `1`) on failure. Unknown `--model` → exit `1` with an `ERROR` envelope.
+- Flags used: `--add-dir <abs>` (repeatable), `--print-timeout <dur>` (default `5m`), `--model <slug>` (`agy models`), `--effort low|medium|high`, `--dangerously-skip-permissions`.
+- Headless mode uses cached credentials; an unauthenticated run exits with `authentication required`.
+- Permission-gated tools are **soft-denied** in headless mode (exit 0, notice on stderr) unless allowed via `permissions.allow` in `~/.gemini/antigravity-cli/settings.json` or `--dangerously-skip-permissions`.
+
+Not verified (third-party reports only; every item is a spike in `OPEN_QUESTIONS.md` S1–S8): existence/name of the image tool in headless mode, prompt-driven output path, default scratch directory, JPEG-only output, size behaviour, reference-image passing, rate limits, cost reporting.
+
+Adapter design:
+
+1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call its native image tool exactly once, (b) states the exact absolute output path `<workdir>/<idempotency_key>.jpg`, (c) states the target size as digits and words ("1920 x 1080 pixels, 16:9 widescreen"), (d) lists reference image absolute paths, (e) forbids running shell commands or other tools.
+2. Run `[binary, "-p", prompt, "--output-format", "json", "--add-dir", str(workdir), *("--add-dir", d for d in reference_dirs), "--print-timeout", f"{timeout_s}s", *(["--dangerously-skip-permissions"] if skip_permissions else []), *(["--model", model] if model else []), *(["--effort", effort] if effort else [])]` via `asyncio.create_subprocess_exec(..., cwd=workdir, stdout=PIPE, stderr=PIPE)`.
+3. Success ⇔ exit code `0` **and** `status == "SUCCESS"` **and** the output file exists **and** Pillow opens it.
+4. Error mapping:
+
+    | Observation                                            | Exception                                                                            | Retryable |
+    | ------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------- |
+    | `SUCCESS` but output file missing                      | `ProviderOutputMissingError` (message mentions `~/.gemini/antigravity-cli/scratch/`) | no        |
+    | `status ∈ {CANCELED, INTERRUPTED}`                     | `ProviderTransientError`                                                             | yes       |
+    | `ERROR` and `error` contains `authentication required` | `ProviderAuthError`                                                                  | no        |
+    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`  | `ProviderPermanentError`                                                             | no        |
+    | subprocess exceeds `timeout_s + 30`                    | `ProviderTimeoutError` (process killed)                                              | yes       |
+    | binary not found                                       | `ProviderPermanentError` with hint "install Antigravity CLI"                         | no        |
+
+5. `usage` tokens and `duration_seconds` are written to `iteration.cost_json`; the whole envelope to `provider_response_json`; stdout/stderr to per-iteration log files.
+6. Never uses `--continue`/`--conversation`; every image is a fresh conversation.
+7. `providers.antigravity.skip_permissions` defaults to `true` (decision D4). The documented alternative is a `permissions.allow` rule for the image tool discovered in spike S1.
+8. Capabilities: reference=True (pending S4), seed=False, negative=True (prompt-only), aspect=True (prompt-only, pending S3), max_batch=1, max_concurrency=1, formats={"jpeg"}.
+
+## 5. CLI command tree
+
+Global options on the root app: `--config PATH`, `--data-dir PATH`, `--json` (machine-readable stdout, disables Rich), `-v/-vv`, `--quiet`, `--no-color`, `--version`.
+
+### 5.1 Exit codes
+
+| Code  | Meaning                                                         |
+| ----- | --------------------------------------------------------------- |
+| `0`   | success                                                         |
+| `1`   | unexpected error (`SourceError`, uncaught)                      |
+| `2`   | usage / validation error (Typer default; `TemplateError`)       |
+| `3`   | not found (video, playlist, run, iteration, template, provider) |
+| `4`   | provider error (auth, permanent, output missing)                |
+| `5`   | compliance failure                                              |
+| `6`   | partial batch — some items failed; run is resumable             |
+| `130` | interrupted (SIGINT)                                            |
+
+### 5.2 Commands
+
+| Command                                               | Key flags                                                                                                                                                                                        | Output                                                                                                                   | Exit            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | --------------- |
+| `thumbforge fetch <url>`                              | `--source ytdlp\|api`, `--refresh`                                                                                                                                                               | Detects video / playlist / channel URL; upserts channel, playlist, videos, playlist_items; prints a table                | 0, 1, 2         |
+| `thumbforge video list`                               | `--channel`, `--limit`                                                                                                                                                                           | table                                                                                                                    | 0               |
+| `thumbforge video show <id\|url>`                     |                                                                                                                                                                                                  | panel with metadata + runs                                                                                               | 0, 3            |
+| `thumbforge playlist list`                            | `--channel`                                                                                                                                                                                      | table                                                                                                                    | 0               |
+| `thumbforge playlist show <id\|url>`                  | `--videos`                                                                                                                                                                                       | panel; with `--videos` a table `position, part, title, youtube_id`                                                       | 0, 3            |
+| `thumbforge playlist renumber <playlist>`             | `--start N`, `--skip-ids ID,ID`                                                                                                                                                                  | rewrites `part_number` sequentially from `--start`, skipping listed videos (their `part_number` → NULL)                  | 0, 3            |
+| `thumbforge thumb generate <video>`                   | `--template NAME[@VERSION]`, `--provider KEY`, `--n 4`, `--concurrency 1`, `--seed N`, `--var key=value` (repeatable), `--out DIR`                                                               | creates hero `run` + N iterations; preview grid; prints run id                                                           | 0, 3, 4, 5, 6   |
+| `thumbforge thumb iterate <run\|iteration>`           | `--n 4`, `--prompt-append TEXT`, `--var …`, `--from-picked`                                                                                                                                      | child run (`kind='iterate'`, `parent_run_id`), same template/provider; reference = picked or given iteration's raw asset | 0, 3, 4, 6      |
+| `thumbforge thumb pick <run> <ordinal\|iteration-id>` |                                                                                                                                                                                                  | marks picked; un-picks siblings                                                                                          | 0, 3            |
+| `thumbforge thumb show <run>`                         | `--columns 2`                                                                                                                                                                                    | preview grid with ordinals, picked marker, compliance status                                                             | 0, 3            |
+| `thumbforge thumb export <run\|iteration>`            | `--to PATH`, `--raw`                                                                                                                                                                             | copies final (or raw) asset(s) to PATH                                                                                   | 0, 3            |
+| `thumbforge batch <playlist>`                         | `--hero <run\|iteration>`, `--template NAME`, `--provider KEY`, `--concurrency 2`, `--only 3,7-9`, `--dry-run`, `--resume RUN_ID`, `--reference final\|raw`, `--max-images N`, `--max-retries 2` | batch run; Rich progress; summary table                                                                                  | 0, 3, 4, 6, 130 |
+| `thumbforge runs list`                                | `--kind`, `--status`, `--limit`                                                                                                                                                                  | table                                                                                                                    | 0               |
+| `thumbforge runs show <run>`                          |                                                                                                                                                                                                  | panel + iterations table                                                                                                 | 0, 3            |
+| `thumbforge runs resume <run>`                        | `--concurrency`                                                                                                                                                                                  | continues a `paused`/`failed` run                                                                                        | 0, 3, 4, 6      |
+| `thumbforge runs cancel <run>`                        |                                                                                                                                                                                                  | marks `cancelled` (only if not `completed`)                                                                              | 0, 3            |
+| `thumbforge runs delete <run>`                        | `--assets`                                                                                                                                                                                       | deletes run + iterations; `--assets` also unlinks unreferenced assets; refuses if referenced by a batch (exit 2)         | 0, 2, 3         |
+| `thumbforge runs cost <run>`                          |                                                                                                                                                                                                  | aggregates `iteration.cost_json`: tokens in/out, credits, duration, `no_cost_data` count (Phase 8)                       | 0, 3            |
+| `thumbforge template list`                            |                                                                                                                                                                                                  | table `name, version, builtin`                                                                                           | 0               |
+| `thumbforge template show NAME[@VERSION]`             |                                                                                                                                                                                                  | prompt + layout spec                                                                                                     | 0, 3            |
+| `thumbforge template new NAME`                        | `--from NAME`                                                                                                                                                                                    | writes `<config_dir>/templates/NAME.toml` + `.j2` from builtin                                                           | 0, 2            |
+| `thumbforge template validate PATH`                   |                                                                                                                                                                                                  | schema + Jinja parse check                                                                                               | 0, 2            |
+| `thumbforge template import PATH`                     |                                                                                                                                                                                                  | stores as new version                                                                                                    | 0, 2            |
+| `thumbforge template render NAME`                     | `--video <id>`, `--part 3`, `--var …`                                                                                                                                                            | prints rendered prompt only; no provider call                                                                            | 0, 2, 3         |
+| `thumbforge provider list`                            |                                                                                                                                                                                                  | table `key, version, capabilities, auth`                                                                                 | 0               |
+| `thumbforge provider check KEY`                       |                                                                                                                                                                                                  | runs `healthcheck()`                                                                                                     | 0, 3, 4         |
+| `thumbforge provider models KEY`                      |                                                                                                                                                                                                  | lists model slugs (Antigravity: `agy models`)                                                                            | 0, 3, 4         |
+| `thumbforge provider set-key KEY`                     |                                                                                                                                                                                                  | prompts for secret; stores in keyring                                                                                    | 0, 3            |
+| `thumbforge config show\|path\|init`                  |                                                                                                                                                                                                  | TOML / path / write defaults                                                                                             | 0               |
+| `thumbforge config set KEY VALUE`                     |                                                                                                                                                                                                  | dotted key, validated against settings schema                                                                            | 0, 2            |
+| `thumbforge db init\|upgrade\|status\|path\|vacuum`   |                                                                                                                                                                                                  | Alembic head / migration status                                                                                          | 0, 1            |
+
+### 5.3 Examples
+
+```
+$ thumbforge fetch "https://www.youtube.com/playlist?list=PLxxxx"
+╭─ Playlist ────────────────────────────────────────────────╮
+│ Rust for Pythonistas   PLxxxx   12 videos   @channel-name │
+╰───────────────────────────────────────────────────────────╯
+ #   Part  Video ID      Title
+ 1   1     dQw4w9WgXcQ   Ownership explained
+ 2   2     …             Borrowing and lifetimes
+ …
+Stored 1 channel, 1 playlist, 12 videos.
+```
+
+```
+$ thumbforge thumb generate dQw4w9WgXcQ --template bold-title --provider antigravity --n 4
+Run 01J9… (hero) · template bold-title@1 · provider antigravity 1.2.3
+  ⠋ generating 4 iterations  ━━━━━━━━━━━━━━━━━━━━━━━━  4/4  0:03:12
+ Ord  Status     Size       Compliant  Asset
+ 1    completed  1920×1080  ✔          a1b2c3…
+ 2    completed  1920×1080  ✔          d4e5f6…
+ 3    completed  1920×1080  ✔          …
+ 4    failed     —          —          ProviderTimeoutError
+[preview grid]
+Pick one with: thumbforge thumb pick 01J9… <ordinal>
+exit 6
+```
+
+```
+$ thumbforge batch PLxxxx --hero 01J9… --template series-parts --concurrency 1
+Run 01JA… (batch) · 12 items · reference a1b2c3… (final) · parent 01J9…
+  ⠋ Part 7/12  Borrowing and lifetimes  ━━━━━━━━━━━━━━━━━━╸━━━━━━  58%  0:07:40
+^C
+Interrupted: run 01JA… paused (7 completed, 1 failed, 4 pending).
+Resume with: thumbforge runs resume 01JA…
+exit 130
+```
+
+## 6. Run lifecycle and resumability
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> running
+    running --> completed
+    running --> failed
+    running --> cancelled
+    running --> paused : SIGINT
+    paused --> running : runs resume
+    failed --> running : runs resume
+    pending --> cancelled
+```
+
+- **Idempotency key** (per iteration): `sha256(template.spec_hash + provider_profile.id + video.youtube_id + str(part_number) + rendered_prompt + str(seed) + reference_asset.sha256)[:32]`, stored on `iteration.idempotency_key UNIQUE`. For hero runs `part_number` is `""` and the ordinal is folded into `seed` (or `str(ordinal)` when the provider has no seed) so N iterations get N keys.
+- **Batch / resume algorithm**: for every selected `playlist_item`, compute the key. If an iteration with that key exists and is `completed` → skip (counted as done). If `running` and `started_at` is older than `batch.stale_after_s` (default 900 s) → treat as `failed`. If `failed` → retry while `provider_response_json.attempts < --max-retries` (default 2). Otherwise create a `pending` iteration.
+- **Concurrency**: `asyncio.Semaphore(min(--concurrency, capabilities.max_concurrency))`; Antigravity is therefore serialised.
+- **Interrupt**: SIGINT → cancel in-flight tasks, mark those iterations `failed` with `error_text = "interrupted"`, mark run `paused`, exit `130`. Finished iterations are never touched.
+- **Partial completion**: run ends with ≥1 failed and ≥1 completed → run `failed`, exit `6`, message shows the resume command. All failed → run `failed`, exit `4`.
+- **Budget guard**: `--max-images N` aborts before creating more than N new iterations (pre-flight count, exit `2`).
+
+## 7. Errors, retries, logging
+
+### 7.1 Error hierarchy
+
+```
+ThumbforgeError(code: str, exit_code: int, hint: str | None)
+├── NotFoundError            exit 3
+├── ProviderError            exit 4
+│   ├── ProviderAuthError
+│   ├── ProviderPermanentError
+│   ├── ProviderTransientError
+│   ├── ProviderTimeoutError
+│   └── ProviderOutputMissingError
+├── ComplianceError          exit 5
+├── PartialBatchError        exit 6
+├── SourceError              exit 1
+└── TemplateError            exit 2
+```
+
+`cli/_errors.py` wraps every command: catches `ThumbforgeError`, prints `code: message` and `hint` to stderr (JSON object when `--json`), exits with `exit_code`. Anything else is logged with traceback and exits `1`.
+
+### 7.2 Retries
+
+Only `ProviderTransientError` and `ProviderTimeoutError` are retried, via `tenacity`: exponential backoff base 2 s, factor 2, max 60 s, full jitter, `max_attempts = 3` per provider call. Attempt count is recorded in `iteration.provider_response_json.attempts`. Metadata fetches (`yt-dlp`) retry the same way on network errors only.
+
+### 7.3 Logging (structlog)
+
+- `logging.py` exposes `configure_logging(level: str, fmt: Literal["console", "json"], log_file: Path) -> None` and `get_logger(name: str) -> structlog.stdlib.BoundLogger`.
+- Processor chain: `structlog.contextvars.merge_contextvars`, `add_log_level`, `TimeStamper(fmt="iso", utc=True)`, `StackInfoRenderer`, `format_exc_info`, then the renderer: `structlog.dev.ConsoleRenderer(colors=True)` on stderr for `console` (default); `structlog.processors.JSONRenderer()` when `--json` or `THUMBFORGE_LOG_FORMAT=json`.
+- Stdlib bridge: `structlog.stdlib.ProcessorFormatter` on the root `logging` handler so `yt_dlp`, `sqlalchemy` and `alembic` records render through the same pipeline. `logger_factory=structlog.stdlib.LoggerFactory()`, `wrapper_class=structlog.stdlib.BoundLogger`, `cache_logger_on_first_use=True`.
+- Log file: always JSON lines at `<state_dir>/logs/thumbforge.log` via `RotatingFileHandler` (5 files × 5 MB).
+- Context: `structlog.contextvars.bind_contextvars(run_id=…, iteration_id=…, provider=…)` at run/iteration entry, `clear_contextvars()` on exit.
+- Rich progress bars and tables go to **stdout**; logs go to **stderr**. They never interleave.
+- Provider subprocess stdout/stderr are captured per iteration to `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
+
+## 8. Secrets
+
+- Lookup order: environment variable `THUMBFORGE_PROVIDERS__<KEY>__API_KEY`, then `keyring` (service `thumbforge`, username `<provider_key>`).
+- `thumbforge provider set-key KEY` writes to keyring; nothing else writes secrets.
+- The settings loader rejects any TOML key matching `*_key`, `*_token`, `*_secret` with `SettingsError` and a hint pointing at env/keyring. The DB schema has no secret columns; `provider_profile.params_json` is validated against a deny-list of the same patterns before insert.
+- Antigravity needs no key; it uses its own cached login.
+
+## 9. Risks
+
+| Risk                                                     | Impact                                        | Mitigation                                                                                                                             |
+| -------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Antigravity image tool is undocumented for headless mode | Provider may not work as designed             | Spikes S1–S8 run in Phase 3 before adapter code; FakeProvider keeps Phases 4–7 unblocked; ADR 0013 stays _Proposed_ until spikes close |
+| JPEG-only output, no seed                                | Reproducibility limited to prompt + reference | Record prompt, reference hash, model, envelope; overlay works on RGB                                                                   |
+| yt-dlp breakage on YouTube changes                       | `fetch` fails                                 | Pin version in `uv.lock`; recorded fixtures for unit tests; opt-in live tests                                                          |
+| Font availability on Windows/Linux                       | Overlay output differs across machines        | Bundle an OFL font (Inter) in `imaging/fonts/`; golden tests use only bundled fonts                                                    |
+| Unknown quota / cost                                     | Runaway spend                                 | `--max-images`, serialised concurrency, per-iteration cost capture, S7/S8 spikes                                                       |
+| Pre-1.0 tooling (zensical 0.0.x, graphify)               | Breaking changes                              | Exact pins in `uv.lock` / `uv tool install graphifyy==<ver>`; docs build is a CI gate so drift is visible                              |

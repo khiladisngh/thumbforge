@@ -1,0 +1,40 @@
+name: Bug
+description: Something behaves differently from the spec
+labels: ["type:bug"]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: Command run
+      placeholder: thumbforge batch PLxxxx --hero 01J9… --template series-parts
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Output of `thumbforge --version`
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS and terminal
+      placeholder: Windows 11 / Windows Terminal
+  - type: textarea
+    id: log
+    attributes:
+      label: Log excerpt
+      description: From `<state_dir>/logs/thumbforge.log` (`thumbforge config path` shows the directory). Redact anything private.
+      render: json

@@ -1,0 +1,30 @@
+name: Feature
+description: A ROADMAP task or new behaviour backed by a spec
+labels: ["type:feature"]
+body:
+  - type: input
+    id: task
+    attributes:
+      label: ROADMAP task id
+      placeholder: P3.2
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: Spec link
+      placeholder: docs/specs/phase-3-providers.md#fakeprovider
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Observable input → output; copied or refined from the spec
+    validations:
+      required: true
+  - type: input
+    id: adrs
+    attributes:
+      label: ADRs affected
+      placeholder: 0010, 0013

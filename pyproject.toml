@@ -1,0 +1,86 @@
+[project]
+name = "thumbforge"
+version = "0.0.0"
+description = "Generate consistent, spec-compliant YouTube thumbnails from a hero image and a playlist."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Gishant Singh", email = "khiladisngh@hotmail.com" }]
+requires-python = ">=3.14"
+keywords = ["youtube", "thumbnail", "cli", "image-generation", "typer"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Multimedia :: Graphics",
+]
+dependencies = [
+  "typer",
+]
+
+[project.urls]
+Homepage = "https://github.com/khiladisngh/thumbforge"
+Documentation = "https://khiladisngh.github.io/thumbforge/"
+Repository = "https://github.com/khiladisngh/thumbforge"
+Issues = "https://github.com/khiladisngh/thumbforge/issues"
+Changelog = "https://github.com/khiladisngh/thumbforge/blob/main/CHANGELOG.md"
+
+[project.scripts]
+thumbforge = "thumbforge.cli.app:main"
+
+[project.entry-points."thumbforge.providers"]
+# populated in Phase 3: fake = "thumbforge.providers.fake:FakeProvider"
+
+[dependency-groups]
+dev = [
+  "ruff",
+  "pyright",
+  "pytest",
+  "pytest-asyncio",
+  "pytest-cov",
+  "pre-commit",
+  "import-linter",
+  "zensical",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.16,<0.13.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TCH", "RUF"]
+
+[tool.pyright]
+strict = ["src"]
+pythonVersion = "3.14"
+venvPath = "."
+venv = ".venv"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+markers = [
+  "integration: hits the network or a real provider; opt in with -m integration",
+  "golden: image snapshot comparison",
+]
+testpaths = ["tests"]
+addopts = "-m 'not integration'"
+
+[tool.coverage.run]
+source = ["thumbforge"]
+branch = true
+omit = ["src/thumbforge/__main__.py"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
+[tool.importlinter]
+root_package = "thumbforge"
+# contracts are added in Phase 1 (docs/specs/phase-1-skeleton.md)
