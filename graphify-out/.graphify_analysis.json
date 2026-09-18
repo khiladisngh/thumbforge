@@ -1,6 +1,16 @@
 {
   "communities": {
     "0": [
+      "json",
+      "path",
+      "pathlib",
+      "scripts_check_graph_drift",
+      "scripts_check_graph_drift_main",
+      "scripts_check_graph_drift_rationale_1",
+      "scripts_check_graph_drift_structure",
+      "sys"
+    ],
+    "1": [
       "callback",
       "help",
       "is_eager",
@@ -9,24 +19,22 @@
       "src_thumbforge_cli_app_root",
       "src_thumbforge_cli_app_version_callback"
     ],
-    "1": [
-      "src_thumbforge_cli_app",
-      "src_thumbforge_cli_app_main",
-      "src_thumbforge_cli_app_rationale_1",
-      "src_thumbforge_main",
-      "typer",
-      "typing"
-    ],
     "2": [
+      "importlib_metadata",
+      "src_thumbforge_init",
+      "src_thumbforge_init_rationale_1",
       "tests_test_version",
       "tests_test_version_test_help_exits_zero",
       "tests_test_version_test_version_flag_prints_version",
       "typer_testing"
     ],
     "3": [
-      "importlib_metadata",
-      "src_thumbforge_init",
-      "src_thumbforge_init_rationale_1"
+      "src_thumbforge_cli_app",
+      "src_thumbforge_cli_app_main",
+      "src_thumbforge_cli_app_rationale_1",
+      "src_thumbforge_main",
+      "typer",
+      "typing"
     ],
     "4": [
       "src_thumbforge_cli_init",
@@ -42,9 +50,9 @@
   },
   "cohesion": {
     "0": 0.2857142857142857,
-    "1": 0.4,
-    "2": 0.5,
-    "3": 0.6666666666666666,
+    "1": 0.2857142857142857,
+    "2": 0.2857142857142857,
+    "3": 0.4,
     "4": 1.0,
     "5": 1.0,
     "6": 1.0
@@ -54,6 +62,16 @@
       "id": "src_thumbforge_cli_app_root",
       "label": "root()",
       "degree": 7
+    },
+    {
+      "id": "scripts_check_graph_drift_structure",
+      "label": "structure()",
+      "degree": 3
+    },
+    {
+      "id": "scripts_check_graph_drift_main",
+      "label": "main()",
+      "degree": 2
     },
     {
       "id": "src_thumbforge_cli_app_version_callback",
@@ -66,13 +84,13 @@
       "degree": 2
     },
     {
-      "id": "src_thumbforge_cli_app_rationale_39",
-      "label": "thumbforge command-line interface.",
+      "id": "scripts_check_graph_drift_rationale_1",
+      "label": "Compare a committed graphify graph against a freshly extracted one. Only the…",
       "degree": 1
     },
     {
-      "id": "src_thumbforge_cli_app_rationale_1",
-      "label": "Root Typer application. Phase 0 ships only ``--version``. Sub-apps (fetch,…",
+      "id": "src_thumbforge_cli_app_rationale_39",
+      "label": "thumbforge command-line interface.",
       "degree": 1
     },
     {
@@ -81,27 +99,22 @@
       "degree": 1
     },
     {
+      "id": "src_thumbforge_cli_app_rationale_1",
+      "label": "Root Typer application. Phase 0 ships only ``--version``. Sub-apps (fetch,…",
+      "degree": 1
+    },
+    {
       "id": "src_thumbforge_cli_init_rationale_1",
       "label": "Typer command surface. Commands are thin; behaviour lives in…",
       "degree": 1
-    },
-    {
-      "id": "tests_conftest_rationale_1",
-      "label": "Shared pytest fixtures. Establishes ``tests/`` as the pytest root.",
-      "degree": 1
-    },
-    {
-      "id": "pkg_thumbforge",
-      "label": "thumbforge",
-      "degree": 0
     }
   ],
   "surprises": [],
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `root()` connect `Community 0` to `Community 1`?",
-      "why": "High betweenness centrality (0.290) - this node is a cross-community bridge."
+      "question": "Why does `root()` connect `Community 1` to `Community 3`?",
+      "why": "High betweenness centrality (0.161) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",

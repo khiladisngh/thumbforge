@@ -40,5 +40,11 @@
     "seen": 1789759266.282861,
     "ast_hash": "d6e858c43deb63d01c87c641ac33885b",
     "semantic_hash": "d6e858c43deb63d01c87c641ac33885b"
+  },
+  "scripts/check_graph_drift.py": {
+    "mtime": 1789759412.6613755,
+    "seen": 1789759425.9879627,
+    "ast_hash": "462e24d074b7708e5149217dfc35e14c",
+    "semantic_hash": "462e24d074b7708e5149217dfc35e14c"
   }
 }
