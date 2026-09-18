@@ -18,6 +18,7 @@ classifiers = [
   "Topic :: Multimedia :: Graphics",
 ]
 dependencies = [
+  "rich>=15.0.0",
   "typer",
 ]
 
@@ -57,6 +58,15 @@ target-version = "py314"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "TCH", "RUF"]
 
+[tool.ruff.lint.flake8-type-checking]
+# Pydantic resolves annotations at runtime, so its models' imports must stay importable.
+runtime-evaluated-base-classes = ["pydantic.BaseModel", "pydantic_settings.BaseSettings"]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer builds its parameters from runtime type hints; guarding those imports behind
+# TYPE_CHECKING makes the CLI fail at import time.
+"src/thumbforge/cli/*.py" = ["TC001", "TC002", "TC003"]
+
 [tool.pyright]
 strict = ["src"]
 pythonVersion = "3.14"
@@ -83,4 +93,14 @@ show_missing = true
 
 [tool.importlinter]
 root_package = "thumbforge"
-# contracts are added in Phase 1 (docs/specs/phase-1-skeleton.md)
+
+# Dependency rule (PLAN.md §2.2): cli may use every adapter; core stays pure; adapters know
+# only core; nothing imports cli. Only `core` and `cli` exist today, so the rule reduces to the
+# contract below. Extend it — and add the "adapters depend only on core" independence contract —
+# in the PRs that create storage/, providers/, sources/, templates/ and imaging/; import-linter
+# errors on a module that does not exist.
+[[tool.importlinter.contracts]]
+name = "core does not import cli"
+type = "forbidden"
+source_modules = ["thumbforge.core"]
+forbidden_modules = ["thumbforge.cli"]
