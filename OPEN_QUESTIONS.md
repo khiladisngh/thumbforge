@@ -53,24 +53,10 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 - Verify: compare `usage` in the JSON envelope for a text-only run vs an image run; look for any credit field.
 - Changes: `Cost` model fields and P8.3 cost report.
 
-### S9 — graphify on Windows with uv
+### S9 — graphify on Windows with uv — **closed**, see `docs/spikes/graphify.md`
 
-- Verify:
-    ```
-    uv tool install graphifyy
-    graphify install --project --platform agents
-    graphify .
-    graphify hook install; graphify hook status
-    ```
-    Time the build; confirm `graphify-out/{graph.html,GRAPH_REPORT.md,graph.json}` and `.agents/skills/`.
-- Changes: regeneration mode (post-commit hook vs CI vs manual) recorded in `AGENTS.md`; fallback is manual `uv tool run --from graphifyy graphify update .`.
-
-### S10 — Terminal image preview
-
-- Verify: `uv run --with rich-pixels python -c "from rich_pixels import Pixels; from rich.console import Console; Console().print(Pixels.from_image_path('test.jpg'))"` in Windows Terminal.
-- Changes: ADR 0002 preview approach; P5.4 fallback.
-
-### S11 — yt-dlp flat playlist fields
+- Verify: `uv tool install graphifyy && graphify extract . --code-only && graphify cluster-only . --no-label`
+- Result: working seamlessly under Windows with uv; generated `graphify-out/` committed to repo.
 
 - Verify: `uv run --with yt-dlp python -c "import yt_dlp,json; print(json.dumps(yt_dlp.YoutubeDL({'extract_flat':'in_playlist','quiet':True}).extract_info('<playlist url>', download=False)['entries'][0], indent=1))"`; confirm `playlist_index`, `channel_id`, `title`, `id`, `duration` are present.
 - Changes: `VideoMeta` fields and the P2.2 fixture recorder.
