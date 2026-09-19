@@ -183,7 +183,7 @@
       "file_type": "code",
       "norm_label": "asset",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L305"
+      "source_location": "L346"
     },
     {
       "id": "src_thumbforge_storage_models_base",
@@ -196,7 +196,7 @@
       "file_type": "code",
       "norm_label": "base",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L42"
+      "source_location": "L51"
     },
     {
       "id": "src_thumbforge_storage_models_channel",
@@ -209,7 +209,7 @@
       "file_type": "code",
       "norm_label": "channel",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L54"
+      "source_location": "L63"
     },
     {
       "id": "src_thumbforge_storage_models_iteration",
@@ -222,7 +222,7 @@
       "file_type": "code",
       "norm_label": "iteration",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L262"
+      "source_location": "L295"
     },
     {
       "id": "src_thumbforge_storage_models_playlist",
@@ -235,7 +235,7 @@
       "file_type": "code",
       "norm_label": "playlist",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L77"
+      "source_location": "L94"
     },
     {
       "id": "src_thumbforge_storage_models_playlistitem",
@@ -248,7 +248,7 @@
       "file_type": "code",
       "norm_label": "playlistitem",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L136"
+      "source_location": "L153"
     },
     {
       "id": "src_thumbforge_storage_models_providerprofile",
@@ -261,7 +261,7 @@
       "file_type": "code",
       "norm_label": "providerprofile",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L185"
+      "source_location": "L202"
     },
     {
       "id": "src_thumbforge_storage_models_run",
@@ -274,7 +274,7 @@
       "file_type": "code",
       "norm_label": "run",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L203"
+      "source_location": "L220"
     },
     {
       "id": "src_thumbforge_storage_models_template",
@@ -287,7 +287,7 @@
       "file_type": "code",
       "norm_label": "template",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L164"
+      "source_location": "L181"
     },
     {
       "id": "src_thumbforge_storage_models_video",
@@ -300,20 +300,7 @@
       "file_type": "code",
       "norm_label": "video",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L104"
-    },
-    {
-      "id": "src_thumbforge_core_errors_databaseerror",
-      "label": "DatabaseError",
-      "_callable": true,
-      "_callable_class": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "code",
-      "norm_label": "databaseerror",
-      "source_file": "src/thumbforge/core/errors.py",
-      "source_location": "L87"
+      "source_location": "L121"
     },
     {
       "id": "src_thumbforge_storage_db_dbstatus",
@@ -321,11 +308,24 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "file_type": "code",
       "norm_label": "dbstatus",
       "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L91"
+    },
+    {
+      "id": "src_thumbforge_core_errors_databaseerror",
+      "label": "DatabaseError",
+      "_callable": true,
+      "_callable_class": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "code",
+      "norm_label": "databaseerror",
+      "source_file": "src/thumbforge/core/errors.py",
       "source_location": "L87"
     },
     {
@@ -992,6 +992,18 @@
       "source_location": "L23"
     },
     {
+      "id": "src_thumbforge_storage_models_enum_values",
+      "label": "_enum_values()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "Community 1",
+      "file_type": "code",
+      "norm_label": "_enum_values()",
+      "source_file": "src/thumbforge/storage/models.py",
+      "source_location": "L37"
+    },
+    {
       "id": "src_thumbforge_storage_models_utcnow_iso",
       "label": "utcnow_iso()",
       "_callable": true,
@@ -1001,7 +1013,7 @@
       "file_type": "code",
       "norm_label": "utcnow_iso()",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L28"
+      "source_location": "L32"
     },
     {
       "id": "tests_unit_test_storage_models_test_check_constraint_channel_source",
@@ -1100,276 +1112,192 @@
       "source_location": "L224"
     },
     {
-      "id": "src_thumbforge_storage_db_alembic_config",
-      "label": "_alembic_config()",
+      "id": "src_thumbforge_cli_db_init",
+      "label": "init_()",
       "_callable": true,
       "_origin": "ast",
       "community": 10,
       "community_name": "Community 10",
       "file_type": "code",
-      "norm_label": "_alembic_config()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L106"
-    },
-    {
-      "id": "src_thumbforge_storage_db_get_db_status",
-      "label": "get_db_status()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "code",
-      "norm_label": "get_db_status()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L116"
-    },
-    {
-      "id": "src_thumbforge_storage_db_get_engine",
-      "label": "get_engine()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "code",
-      "norm_label": "get_engine()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L41"
-    },
-    {
-      "id": "src_thumbforge_storage_db_sqlite_url",
-      "label": "sqlite_url()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "code",
-      "norm_label": "sqlite_url()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L25"
-    },
-    {
-      "id": "src_thumbforge_storage_db_upgrade_db",
-      "label": "upgrade_db()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "code",
-      "norm_label": "upgrade_db()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L179"
-    },
-    {
-      "id": "src_thumbforge_storage_db_vacuum_db",
-      "label": "vacuum_db()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "code",
-      "norm_label": "vacuum_db()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L191"
-    },
-    {
-      "id": "src_thumbforge_storage_db_init_db",
-      "label": "init_db()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "init_db()",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L163"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_engine_pragmas_on_file",
-      "label": "test_engine_pragmas_on_file()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_engine_pragmas_on_file()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L35"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_engine_pragmas_on_memory",
-      "label": "test_engine_pragmas_on_memory()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_engine_pragmas_on_memory()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L51"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_get_db_status_nonexistent_and_initialized",
-      "label": "test_get_db_status_nonexistent_and_initialized()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_get_db_status_nonexistent_and_initialized()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L129"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_init_db_and_idempotence",
-      "label": "test_init_db_and_idempotence()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_init_db_and_idempotence()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L116"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_session_scope_commits_on_success",
-      "label": "test_session_scope_commits_on_success()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_session_scope_commits_on_success()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L66"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_session_scope_rolls_back_on_error",
-      "label": "test_session_scope_rolls_back_on_error()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_session_scope_rolls_back_on_error()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L90"
-    },
-    {
-      "id": "tests_unit_test_storage_db_test_sqlite_url_formats_path",
-      "label": "test_sqlite_url_formats_path()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_sqlite_url_formats_path()",
-      "source_file": "tests/unit/test_storage_db.py",
+      "norm_label": "init_()",
+      "source_file": "src/thumbforge/cli/db.py",
       "source_location": "L28"
     },
     {
-      "id": "tests_unit_test_storage_db_test_upgrade_db_on_fresh_file",
-      "label": "test_upgrade_db_on_fresh_file()",
+      "id": "src_thumbforge_cli_db_path",
+      "label": "path_()",
       "_callable": true,
       "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
+      "community": 10,
+      "community_name": "Community 10",
       "file_type": "code",
-      "norm_label": "test_upgrade_db_on_fresh_file()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L151"
+      "norm_label": "path_()",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L102"
     },
     {
-      "id": "tests_unit_test_storage_db_test_vacuum_db_success_and_missing_error",
-      "label": "test_vacuum_db_success_and_missing_error()",
+      "id": "src_thumbforge_cli_db_status",
+      "label": "status()",
       "_callable": true,
       "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
+      "community": 10,
+      "community_name": "Community 10",
       "file_type": "code",
-      "norm_label": "test_vacuum_db_success_and_missing_error()",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L159"
+      "norm_label": "status()",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "src_thumbforge_cli_db_upgrade",
+      "label": "upgrade()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "code",
+      "norm_label": "upgrade()",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L53"
+    },
+    {
+      "id": "src_thumbforge_cli_db_vacuum",
+      "label": "vacuum()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "code",
+      "norm_label": "vacuum()",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L118"
+    },
+    {
+      "id": "src_thumbforge_cli_render_emit",
+      "label": "emit()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "code",
+      "norm_label": "emit()",
+      "source_file": "src/thumbforge/cli/_render.py",
+      "source_location": "L102"
     },
     {
       "id": "src_thumbforge_storage_db_dbstatus_is_at_head",
       "label": ".is_at_head()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "file_type": "code",
       "norm_label": ".is_at_head()",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L97"
+      "source_location": "L101"
     },
     {
       "id": "src_thumbforge_storage_db_set_sqlite_pragmas",
       "label": "_set_sqlite_pragmas()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "file_type": "code",
       "norm_label": "_set_sqlite_pragmas()",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L32"
+      "source_location": "L34"
     },
     {
-      "id": "src_thumbforge_storage_db_session_factory",
-      "label": "session_factory()",
+      "id": "src_thumbforge_storage_db_alembic_config",
+      "label": "_alembic_config()",
       "_callable": true,
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "code",
-      "norm_label": "session_factory()",
+      "norm_label": "_alembic_config()",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L60"
+      "source_location": "L110"
     },
     {
-      "id": "src_thumbforge_storage_db_session_scope",
-      "label": "session_scope()",
+      "id": "src_thumbforge_storage_db_get_db_status",
+      "label": "get_db_status()",
       "_callable": true,
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "code",
-      "norm_label": "session_scope()",
+      "norm_label": "get_db_status()",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L66"
+      "source_location": "L120"
     },
     {
-      "id": "tests_integration_test_db_container_test_sqlite_database_in_container",
-      "label": "test_sqlite_database_in_container()",
+      "id": "src_thumbforge_storage_db_init_db",
+      "label": "init_db()",
       "_callable": true,
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "code",
-      "norm_label": "test_sqlite_database_in_container()",
-      "source_file": "tests/integration/test_db_container.py",
-      "source_location": "L19"
+      "norm_label": "init_db()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L170"
     },
     {
-      "id": "tests_unit_test_storage_models_db_session",
-      "label": "db_session()",
+      "id": "src_thumbforge_storage_db_sqlite_url",
+      "label": "sqlite_url()",
       "_callable": true,
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "code",
-      "norm_label": "db_session()",
-      "source_file": "tests/unit/test_storage_models.py",
-      "source_location": "L30"
+      "norm_label": "sqlite_url()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "src_thumbforge_storage_db_upgrade_db",
+      "label": "upgrade_db()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "code",
+      "norm_label": "upgrade_db()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L186"
+    },
+    {
+      "id": "tests_unit_test_storage_db_test_get_db_status_nonexistent_and_initialized",
+      "label": "test_get_db_status_nonexistent_and_initialized()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "code",
+      "norm_label": "test_get_db_status_nonexistent_and_initialized()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L129"
+    },
+    {
+      "id": "tests_unit_test_storage_db_test_upgrade_db_on_fresh_file",
+      "label": "test_upgrade_db_on_fresh_file()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "code",
+      "norm_label": "test_upgrade_db_on_fresh_file()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L151"
     },
     {
       "id": "src_thumbforge_storage_migrations_env_get_url",
       "label": "get_url()",
       "_callable": true,
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "code",
       "norm_label": "get_url()",
       "source_file": "src/thumbforge/storage/migrations/env.py",
@@ -1380,8 +1308,8 @@
       "label": "run_migrations_offline()",
       "_callable": true,
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "code",
       "norm_label": "run_migrations_offline()",
       "source_file": "src/thumbforge/storage/migrations/env.py",
@@ -1392,156 +1320,240 @@
       "label": "run_migrations_online()",
       "_callable": true,
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "code",
       "norm_label": "run_migrations_online()",
       "source_file": "src/thumbforge/storage/migrations/env.py",
       "source_location": "L44"
     },
     {
-      "id": "src_thumbforge_core_ids_new_id",
-      "label": "new_id()",
+      "id": "tests_unit_test_storage_db_test_engine_pragmas_on_file",
+      "label": "test_engine_pragmas_on_file()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
+      "community": 14,
+      "community_name": "Community 14",
       "file_type": "code",
-      "norm_label": "new_id()",
-      "source_file": "src/thumbforge/core/ids.py",
-      "source_location": "L21"
-    },
-    {
-      "id": "src_thumbforge_core_ids_sha256_bytes",
-      "label": "sha256_bytes()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "sha256_bytes()",
-      "source_file": "src/thumbforge/core/ids.py",
-      "source_location": "L27"
-    },
-    {
-      "id": "src_thumbforge_core_ids_sha256_file",
-      "label": "sha256_file()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "sha256_file()",
-      "source_file": "src/thumbforge/core/ids.py",
-      "source_location": "L32"
-    },
-    {
-      "id": "src_thumbforge_storage_migrations_versions_0001_initial_downgrade",
-      "label": "downgrade()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "downgrade()",
-      "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
-      "source_location": "L269"
-    },
-    {
-      "id": "src_thumbforge_storage_migrations_versions_0001_initial_upgrade",
-      "label": "upgrade()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "upgrade()",
-      "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
-      "source_location": "L26"
-    },
-    {
-      "id": "tests_conftest_isolate_user_environment",
-      "label": "isolate_user_environment()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "isolate_user_environment()",
-      "source_file": "tests/conftest.py",
-      "source_location": "L20"
-    },
-    {
-      "id": "tests_unit_test_ids_test_ids_are_26_char_crockford_base32",
-      "label": "test_ids_are_26_char_crockford_base32()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "test_ids_are_26_char_crockford_base32()",
-      "source_file": "tests/unit/test_ids.py",
-      "source_location": "L16"
-    },
-    {
-      "id": "tests_unit_test_ids_test_ids_are_unique",
-      "label": "test_ids_are_unique()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "test_ids_are_unique()",
-      "source_file": "tests/unit/test_ids.py",
-      "source_location": "L22"
-    },
-    {
-      "id": "tests_unit_test_ids_test_ids_sort_by_creation_time",
-      "label": "test_ids_sort_by_creation_time()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "test_ids_sort_by_creation_time()",
-      "source_file": "tests/unit/test_ids.py",
-      "source_location": "L26"
-    },
-    {
-      "id": "tests_unit_test_ids_test_sha256_file_matches_sha256_bytes",
-      "label": "test_sha256_file_matches_sha256_bytes()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "test_sha256_file_matches_sha256_bytes()",
-      "source_file": "tests/unit/test_ids.py",
+      "norm_label": "test_engine_pragmas_on_file()",
+      "source_file": "tests/unit/test_storage_db.py",
       "source_location": "L35"
     },
     {
-      "id": "tests_unit_test_migrations_test_alembic_check_no_drift",
-      "label": "test_alembic_check_no_drift()",
+      "id": "tests_unit_test_storage_db_test_engine_pragmas_on_memory",
+      "label": "test_engine_pragmas_on_memory()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
+      "community": 14,
+      "community_name": "Community 14",
       "file_type": "code",
-      "norm_label": "test_alembic_check_no_drift()",
-      "source_file": "tests/unit/test_migrations.py",
-      "source_location": "L65"
+      "norm_label": "test_engine_pragmas_on_memory()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L51"
     },
     {
-      "id": "tests_unit_test_migrations_test_migrations_upgrade_and_downgrade",
-      "label": "test_migrations_upgrade_and_downgrade()",
+      "id": "tests_unit_test_storage_db_test_init_db_and_idempotence",
+      "label": "test_init_db_and_idempotence()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "Community 14",
+      "file_type": "code",
+      "norm_label": "test_init_db_and_idempotence()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L116"
+    },
+    {
+      "id": "tests_unit_test_storage_db_test_sqlite_url_formats_path",
+      "label": "test_sqlite_url_formats_path()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "Community 14",
+      "file_type": "code",
+      "norm_label": "test_sqlite_url_formats_path()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "scripts_check_graph_drift_main",
+      "label": "main()",
       "_callable": true,
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "test_migrations_upgrade_and_downgrade()",
-      "source_file": "tests/unit/test_migrations.py",
-      "source_location": "L16"
+      "norm_label": "main()",
+      "source_file": "scripts/check_graph_drift.py",
+      "source_location": "L32"
+    },
+    {
+      "id": "scripts_check_graph_drift_structure",
+      "label": "structure()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "structure()",
+      "source_file": "scripts/check_graph_drift.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "src_thumbforge_cli_app_main",
+      "label": "main()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "main()",
+      "source_file": "src/thumbforge/cli/app.py",
+      "source_location": "L135"
+    },
+    {
+      "id": "src_thumbforge_cli_errors_app_context",
+      "label": "_app_context()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "_app_context()",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L22"
+    },
+    {
+      "id": "src_thumbforge_cli_errors_handle_errors",
+      "label": "handle_errors()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "handle_errors()",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L61"
+    },
+    {
+      "id": "src_thumbforge_cli_errors_handle_errors_wrapper",
+      "label": "wrapper()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "wrapper()",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L69"
+    },
+    {
+      "id": "src_thumbforge_cli_errors_is_json_mode",
+      "label": "_is_json_mode()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "_is_json_mode()",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L36"
+    },
+    {
+      "id": "src_thumbforge_cli_errors_report",
+      "label": "_report()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "_report()",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L40"
+    },
+    {
+      "id": "src_thumbforge_cli_render_panel",
+      "label": "panel()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "panel()",
+      "source_file": "src/thumbforge/cli/_render.py",
+      "source_location": "L87"
+    },
+    {
+      "id": "tests_unit_test_errors_test_error_maps_to_documented_exit_code",
+      "label": "test_error_maps_to_documented_exit_code()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "test_error_maps_to_documented_exit_code()",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L44"
+    },
+    {
+      "id": "tests_unit_test_errors_test_error_maps_to_documented_exit_code_boom",
+      "label": "boom()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "boom()",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L51"
+    },
+    {
+      "id": "tests_unit_test_errors_test_keyboard_interrupt_exits_130",
+      "label": "test_keyboard_interrupt_exits_130()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "test_keyboard_interrupt_exits_130()",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L72"
+    },
+    {
+      "id": "tests_unit_test_errors_test_keyboard_interrupt_exits_130_boom",
+      "label": "boom()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "boom()",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L77"
+    },
+    {
+      "id": "tests_unit_test_errors_test_unexpected_exception_is_not_swallowed",
+      "label": "test_unexpected_exception_is_not_swallowed()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "test_unexpected_exception_is_not_swallowed()",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L104"
+    },
+    {
+      "id": "tests_unit_test_errors_test_unexpected_exception_is_not_swallowed_boom",
+      "label": "boom()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "boom()",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L109"
     },
     {
       "id": "tests_unit_test_render_json_context",
@@ -1820,184 +1832,148 @@
       "source_location": "L117"
     },
     {
-      "id": "scripts_check_graph_drift_main",
-      "label": "main()",
+      "id": "src_thumbforge_core_ids_new_id",
+      "label": "new_id()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "main()",
-      "source_file": "scripts/check_graph_drift.py",
+      "norm_label": "new_id()",
+      "source_file": "src/thumbforge/core/ids.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "src_thumbforge_core_ids_sha256_bytes",
+      "label": "sha256_bytes()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "sha256_bytes()",
+      "source_file": "src/thumbforge/core/ids.py",
+      "source_location": "L27"
+    },
+    {
+      "id": "src_thumbforge_core_ids_sha256_file",
+      "label": "sha256_file()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "sha256_file()",
+      "source_file": "src/thumbforge/core/ids.py",
       "source_location": "L32"
     },
     {
-      "id": "scripts_check_graph_drift_structure",
-      "label": "structure()",
+      "id": "src_thumbforge_storage_migrations_versions_0001_initial_downgrade",
+      "label": "downgrade()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "structure()",
-      "source_file": "scripts/check_graph_drift.py",
+      "norm_label": "downgrade()",
+      "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
+      "source_location": "L269"
+    },
+    {
+      "id": "src_thumbforge_storage_migrations_versions_0001_initial_upgrade",
+      "label": "upgrade()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "upgrade()",
+      "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
+      "source_location": "L26"
+    },
+    {
+      "id": "tests_conftest_isolate_user_environment",
+      "label": "isolate_user_environment()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "isolate_user_environment()",
+      "source_file": "tests/conftest.py",
+      "source_location": "L20"
+    },
+    {
+      "id": "tests_unit_test_ids_test_ids_are_26_char_crockford_base32",
+      "label": "test_ids_are_26_char_crockford_base32()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "test_ids_are_26_char_crockford_base32()",
+      "source_file": "tests/unit/test_ids.py",
+      "source_location": "L16"
+    },
+    {
+      "id": "tests_unit_test_ids_test_ids_are_unique",
+      "label": "test_ids_are_unique()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "test_ids_are_unique()",
+      "source_file": "tests/unit/test_ids.py",
       "source_location": "L22"
     },
     {
-      "id": "src_thumbforge_cli_app_main",
-      "label": "main()",
+      "id": "tests_unit_test_ids_test_ids_sort_by_creation_time",
+      "label": "test_ids_sort_by_creation_time()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "main()",
-      "source_file": "src/thumbforge/cli/app.py",
-      "source_location": "L135"
+      "norm_label": "test_ids_sort_by_creation_time()",
+      "source_file": "tests/unit/test_ids.py",
+      "source_location": "L26"
     },
     {
-      "id": "src_thumbforge_cli_errors_app_context",
-      "label": "_app_context()",
+      "id": "tests_unit_test_ids_test_sha256_file_matches_sha256_bytes",
+      "label": "test_sha256_file_matches_sha256_bytes()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "_app_context()",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L22"
+      "norm_label": "test_sha256_file_matches_sha256_bytes()",
+      "source_file": "tests/unit/test_ids.py",
+      "source_location": "L35"
     },
     {
-      "id": "src_thumbforge_cli_errors_handle_errors",
-      "label": "handle_errors()",
+      "id": "tests_unit_test_migrations_test_alembic_check_no_drift",
+      "label": "test_alembic_check_no_drift()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "handle_errors()",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L61"
+      "norm_label": "test_alembic_check_no_drift()",
+      "source_file": "tests/unit/test_migrations.py",
+      "source_location": "L65"
     },
     {
-      "id": "src_thumbforge_cli_errors_handle_errors_wrapper",
-      "label": "wrapper()",
+      "id": "tests_unit_test_migrations_test_migrations_upgrade_and_downgrade",
+      "label": "test_migrations_upgrade_and_downgrade()",
       "_callable": true,
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "wrapper()",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L69"
-    },
-    {
-      "id": "src_thumbforge_cli_errors_is_json_mode",
-      "label": "_is_json_mode()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "_is_json_mode()",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L36"
-    },
-    {
-      "id": "src_thumbforge_cli_errors_report",
-      "label": "_report()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "_report()",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L40"
-    },
-    {
-      "id": "src_thumbforge_cli_render_panel",
-      "label": "panel()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "panel()",
-      "source_file": "src/thumbforge/cli/_render.py",
-      "source_location": "L87"
-    },
-    {
-      "id": "tests_unit_test_errors_test_error_maps_to_documented_exit_code",
-      "label": "test_error_maps_to_documented_exit_code()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "test_error_maps_to_documented_exit_code()",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L44"
-    },
-    {
-      "id": "tests_unit_test_errors_test_error_maps_to_documented_exit_code_boom",
-      "label": "boom()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "boom()",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L51"
-    },
-    {
-      "id": "tests_unit_test_errors_test_keyboard_interrupt_exits_130",
-      "label": "test_keyboard_interrupt_exits_130()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "test_keyboard_interrupt_exits_130()",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L72"
-    },
-    {
-      "id": "tests_unit_test_errors_test_keyboard_interrupt_exits_130_boom",
-      "label": "boom()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "boom()",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L77"
-    },
-    {
-      "id": "tests_unit_test_errors_test_unexpected_exception_is_not_swallowed",
-      "label": "test_unexpected_exception_is_not_swallowed()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "test_unexpected_exception_is_not_swallowed()",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L104"
-    },
-    {
-      "id": "tests_unit_test_errors_test_unexpected_exception_is_not_swallowed_boom",
-      "label": "boom()",
-      "_callable": true,
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "boom()",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L109"
+      "norm_label": "test_migrations_upgrade_and_downgrade()",
+      "source_file": "tests/unit/test_migrations.py",
+      "source_location": "L16"
     },
     {
       "id": "src_thumbforge_core_errors_partialbatcherror_init",
@@ -2648,76 +2624,112 @@
       "source_location": "L71"
     },
     {
-      "id": "src_thumbforge_cli_db_init",
-      "label": "init_()",
+      "id": "src_thumbforge_storage_db_get_engine",
+      "label": "get_engine()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "init_()",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L28"
+      "norm_label": "get_engine()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L45"
     },
     {
-      "id": "src_thumbforge_cli_db_path",
-      "label": "path_()",
+      "id": "src_thumbforge_storage_db_session_factory",
+      "label": "session_factory()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "path_()",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L102"
+      "norm_label": "session_factory()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L64"
     },
     {
-      "id": "src_thumbforge_cli_db_status",
-      "label": "status()",
+      "id": "src_thumbforge_storage_db_session_scope",
+      "label": "session_scope()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "status()",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L69"
+      "norm_label": "session_scope()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L70"
     },
     {
-      "id": "src_thumbforge_cli_db_upgrade",
-      "label": "upgrade()",
+      "id": "src_thumbforge_storage_db_vacuum_db",
+      "label": "vacuum_db()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "upgrade()",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L53"
+      "norm_label": "vacuum_db()",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L201"
     },
     {
-      "id": "src_thumbforge_cli_db_vacuum",
-      "label": "vacuum()",
+      "id": "tests_integration_test_db_container_test_sqlite_database_in_container",
+      "label": "test_sqlite_database_in_container()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "vacuum()",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L118"
+      "norm_label": "test_sqlite_database_in_container()",
+      "source_file": "tests/integration/test_db_container.py",
+      "source_location": "L19"
     },
     {
-      "id": "src_thumbforge_cli_render_emit",
-      "label": "emit()",
+      "id": "tests_unit_test_storage_db_test_session_scope_commits_on_success",
+      "label": "test_session_scope_commits_on_success()",
       "_callable": true,
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "emit()",
-      "source_file": "src/thumbforge/cli/_render.py",
-      "source_location": "L102"
+      "norm_label": "test_session_scope_commits_on_success()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L66"
+    },
+    {
+      "id": "tests_unit_test_storage_db_test_session_scope_rolls_back_on_error",
+      "label": "test_session_scope_rolls_back_on_error()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "Community 9",
+      "file_type": "code",
+      "norm_label": "test_session_scope_rolls_back_on_error()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L90"
+    },
+    {
+      "id": "tests_unit_test_storage_db_test_vacuum_db_success_and_missing_error",
+      "label": "test_vacuum_db_success_and_missing_error()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "Community 9",
+      "file_type": "code",
+      "norm_label": "test_vacuum_db_success_and_missing_error()",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L159"
+    },
+    {
+      "id": "tests_unit_test_storage_models_db_session",
+      "label": "db_session()",
+      "_callable": true,
+      "_origin": "ast",
+      "community": 9,
+      "community_name": "Community 9",
+      "file_type": "code",
+      "norm_label": "db_session()",
+      "source_file": "tests/unit/test_storage_models.py",
+      "source_location": "L30"
     },
     {
       "id": "any",
@@ -3050,6 +3062,17 @@
       "source_location": ""
     },
     {
+      "id": "e",
+      "label": "E",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "Community 1",
+      "file_type": "code",
+      "norm_label": "e",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "src_thumbforge_core_enums",
       "label": "enums.py",
       "_origin": "ast",
@@ -3182,7 +3205,7 @@
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_105",
+      "id": "src_thumbforge_storage_models_rationale_122",
       "label": "A YouTube video tracked for thumbnail generation.",
       "_origin": "ast",
       "community": 1,
@@ -3190,10 +3213,10 @@
       "file_type": "rationale",
       "norm_label": "a youtube video tracked for thumbnail generation.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L105"
+      "source_location": "L122"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_137",
+      "id": "src_thumbforge_storage_models_rationale_154",
       "label": "Link between a playlist and a video with sequence and part numbering.",
       "_origin": "ast",
       "community": 1,
@@ -3201,10 +3224,10 @@
       "file_type": "rationale",
       "norm_label": "link between a playlist and a video with sequence and part numbering.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L137"
+      "source_location": "L154"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_165",
+      "id": "src_thumbforge_storage_models_rationale_182",
       "label": "Versioned thumbnail layout specification and Jinja prompt template.",
       "_origin": "ast",
       "community": 1,
@@ -3212,10 +3235,10 @@
       "file_type": "rationale",
       "norm_label": "versioned thumbnail layout specification and jinja prompt template.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L165"
+      "source_location": "L182"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_186",
+      "id": "src_thumbforge_storage_models_rationale_203",
       "label": "Snapshot of provider identity and parameters used by runs.",
       "_origin": "ast",
       "community": 1,
@@ -3223,10 +3246,10 @@
       "file_type": "rationale",
       "norm_label": "snapshot of provider identity and parameters used by runs.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L186"
+      "source_location": "L203"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_204",
+      "id": "src_thumbforge_storage_models_rationale_221",
       "label": "A batch or hero execution that produces thumbnail iterations.",
       "_origin": "ast",
       "community": 1,
@@ -3234,10 +3257,10 @@
       "file_type": "rationale",
       "norm_label": "a batch or hero execution that produces thumbnail iterations.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L204"
+      "source_location": "L221"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_263",
+      "id": "src_thumbforge_storage_models_rationale_296",
       "label": "One generated thumbnail attempt slot.",
       "_origin": "ast",
       "community": 1,
@@ -3245,10 +3268,10 @@
       "file_type": "rationale",
       "norm_label": "one generated thumbnail attempt slot.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L263"
+      "source_location": "L296"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_29",
+      "id": "src_thumbforge_storage_models_rationale_33",
       "label": "Return the current UTC timestamp formatted as ISO-8601 string.",
       "_origin": "ast",
       "community": 1,
@@ -3256,10 +3279,10 @@
       "file_type": "rationale",
       "norm_label": "return the current utc timestamp formatted as iso-8601 string.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L29"
+      "source_location": "L33"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_306",
+      "id": "src_thumbforge_storage_models_rationale_347",
       "label": "Content-addressed image file stored in the local asset directory.",
       "_origin": "ast",
       "community": 1,
@@ -3267,10 +3290,21 @@
       "file_type": "rationale",
       "norm_label": "content-addressed image file stored in the local asset directory.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L306"
+      "source_location": "L347"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_43",
+      "id": "src_thumbforge_storage_models_rationale_38",
+      "label": "Extract serialized string values from an Enum class.",
+      "_origin": "ast",
+      "community": 1,
+      "community_name": "Community 1",
+      "file_type": "rationale",
+      "norm_label": "extract serialized string values from an enum class.",
+      "source_file": "src/thumbforge/storage/models.py",
+      "source_location": "L38"
+    },
+    {
+      "id": "src_thumbforge_storage_models_rationale_52",
       "label": "Base class for all thumbforge declarative ORM models.",
       "_origin": "ast",
       "community": 1,
@@ -3278,10 +3312,10 @@
       "file_type": "rationale",
       "norm_label": "base class for all thumbforge declarative orm models.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L43"
+      "source_location": "L52"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_55",
+      "id": "src_thumbforge_storage_models_rationale_64",
       "label": "A YouTube channel that owns playlists and videos.",
       "_origin": "ast",
       "community": 1,
@@ -3289,10 +3323,10 @@
       "file_type": "rationale",
       "norm_label": "a youtube channel that owns playlists and videos.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L55"
+      "source_location": "L64"
     },
     {
-      "id": "src_thumbforge_storage_models_rationale_78",
+      "id": "src_thumbforge_storage_models_rationale_95",
       "label": "A YouTube playlist containing videos in a defined order.",
       "_origin": "ast",
       "community": 1,
@@ -3300,7 +3334,7 @@
       "file_type": "rationale",
       "norm_label": "a youtube playlist containing videos in a defined order.",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L78"
+      "source_location": "L95"
     },
     {
       "id": "tests_unit_test_storage_models_rationale_1",
@@ -3314,154 +3348,176 @@
       "source_location": "L1"
     },
     {
-      "id": "config",
-      "label": "Config",
+      "id": "renderabletype",
+      "label": "RenderableType",
       "_origin": "ast",
       "community": 10,
       "community_name": "Community 10",
       "file_type": "code",
-      "norm_label": "config",
+      "norm_label": "renderabletype",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_storage_db_py_path",
-      "label": "Path",
+      "id": "src_thumbforge_cli_db",
+      "label": "cli/db.py",
       "_origin": "ast",
       "community": 10,
       "community_name": "Community 10",
       "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "src_thumbforge_core_errors_rationale_88",
-      "label": "A database operation failed (e.g. migration, lock, disk failure).",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "a database operation failed (e.g. migration, lock, disk failure).",
-      "source_file": "src/thumbforge/core/errors.py",
-      "source_location": "L88"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_107",
-      "label": "Build an Alembic configuration targeting ``db_path``.",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "build an alembic configuration targeting ``db_path``.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L107"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_117",
-      "label": "Inspect migration revision and file metadata for ``db_path``.",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "inspect migration revision and file metadata for ``db_path``.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L117"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_180",
-      "label": "Run Alembic upgrade to ``revision`` on ``db_path``.",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "run alembic upgrade to ``revision`` on ``db_path``.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L180"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_192",
-      "label": "Reclaim free space and truncate the WAL file.",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "reclaim free space and truncate the wal file.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L192"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_26",
-      "label": "Format a SQLite connection URL for SQLAlchemy.",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "format a sqlite connection url for sqlalchemy.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L26"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_42",
-      "label": "Create a SQLAlchemy engine configured for thumbforge SQLite usage.",
-      "_origin": "ast",
-      "community": 10,
-      "community_name": "Community 10",
-      "file_type": "rationale",
-      "norm_label": "create a sqlalchemy engine configured for thumbforge sqlite usage.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L42"
-    },
-    {
-      "id": "tests_unit_test_storage_db",
-      "label": "test_storage_db.py",
-      "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "code",
-      "norm_label": "test_storage_db.py",
-      "source_file": "tests/unit/test_storage_db.py",
+      "norm_label": "cli/db.py",
+      "source_file": "src/thumbforge/cli/db.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_unit_test_storage_db_py_path",
-      "label": "Path",
+      "id": "src_thumbforge_cli_db_py_command",
+      "label": "command",
       "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
+      "community": 10,
+      "community_name": "Community 10",
       "file_type": "code",
-      "norm_label": "path",
+      "norm_label": "command",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_storage_db_rationale_164",
-      "label": "Ensure directory exists and upgrade DB to head. Returns: Tuple of\u2026",
+      "id": "src_thumbforge_cli_db_py_context",
+      "label": "Context",
       "_origin": "ast",
-      "community": 11,
-      "community_name": "Community 11",
-      "file_type": "rationale",
-      "norm_label": "ensure directory exists and upgrade db to head. returns: tuple of...",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L164"
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "code",
+      "norm_label": "context",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "tests_unit_test_storage_db_rationale_1",
-      "label": "Unit tests for database engine, pragmas, sessions, and status helpers (ADR\u2026",
+      "id": "src_thumbforge_cli_db_py_handle_errors",
+      "label": "handle_errors",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "code",
+      "norm_label": "handle_errors",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "src_thumbforge_cli_render_py_jsonvalue",
+      "label": "JsonValue",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "code",
+      "norm_label": "jsonvalue",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "src_thumbforge_cli_db_rationale_1",
+      "label": "``thumbforge db`` \u2014 database lifecycle and migration management (ADR 0004).",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "``thumbforge db`` \u2014 database lifecycle and migration management (adr 0004).",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_thumbforge_cli_db_rationale_103",
+      "label": "Print the SQLite database file path.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "print the sqlite database file path.",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L103"
+    },
+    {
+      "id": "src_thumbforge_cli_db_rationale_119",
+      "label": "Reclaim unused disk space and checkpoint the Write-Ahead Log (WAL).",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "reclaim unused disk space and checkpoint the write-ahead log (wal).",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L119"
+    },
+    {
+      "id": "src_thumbforge_cli_db_rationale_29",
+      "label": "Create the database file and upgrade schema to Alembic head.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "create the database file and upgrade schema to alembic head.",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L29"
+    },
+    {
+      "id": "src_thumbforge_cli_db_rationale_54",
+      "label": "Apply pending Alembic migrations up to head.",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "apply pending alembic migrations up to head.",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L54"
+    },
+    {
+      "id": "src_thumbforge_cli_db_rationale_70",
+      "label": "Print current revision, head revision, pending count, file size, and journal\u2026",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "print current revision, head revision, pending count, file size, and journal...",
+      "source_file": "src/thumbforge/cli/db.py",
+      "source_location": "L70"
+    },
+    {
+      "id": "src_thumbforge_cli_render_rationale_109",
+      "label": "Print ``data`` as JSON in ``--json`` mode, otherwise print ``render()``.\u2026",
+      "_origin": "ast",
+      "community": 10,
+      "community_name": "Community 10",
+      "file_type": "rationale",
+      "norm_label": "print ``data`` as json in ``--json`` mode, otherwise print ``render()``....",
+      "source_file": "src/thumbforge/cli/_render.py",
+      "source_location": "L109"
+    },
+    {
+      "id": "connection",
+      "label": "Connection",
       "_origin": "ast",
       "community": 11,
       "community_name": "Community 11",
-      "file_type": "rationale",
-      "norm_label": "unit tests for database engine, pragmas, sessions, and status helpers (adr...",
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L1"
+      "file_type": "code",
+      "norm_label": "connection",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "connectionpoolentry",
+      "label": "ConnectionPoolEntry",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Community 11",
+      "file_type": "code",
+      "norm_label": "connectionpoolentry",
+      "source_file": "",
+      "source_location": ""
     },
     {
       "id": "src_thumbforge_storage_db",
       "label": "storage/db.py",
       "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "file_type": "code",
       "norm_label": "storage/db.py",
       "source_file": "src/thumbforge/storage/db.py",
@@ -3471,151 +3527,140 @@
       "id": "src_thumbforge_storage_db_rationale_1",
       "label": "Database engine, session management, and migration execution (PLAN.md \u00a73, ADR\u2026",
       "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "file_type": "rationale",
       "norm_label": "database engine, session management, and migration execution (plan.md \u00a73, adr...",
       "source_file": "src/thumbforge/storage/db.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_storage_db_rationale_33",
-      "label": "Apply PRAGMA statements required by ADR 0004 on every SQLite connection.",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
-      "file_type": "rationale",
-      "norm_label": "apply pragma statements required by adr 0004 on every sqlite connection.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L33"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_88",
-      "label": "Migration status and storage health metadata.",
-      "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
-      "file_type": "rationale",
-      "norm_label": "migration status and storage health metadata.",
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L88"
-    },
-    {
-      "id": "src_thumbforge_storage_db_rationale_98",
+      "id": "src_thumbforge_storage_db_rationale_102",
       "label": "Whether the database is fully migrated to the latest revision.",
       "_origin": "ast",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "file_type": "rationale",
       "norm_label": "whether the database is fully migrated to the latest revision.",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L98"
+      "source_location": "L102"
     },
     {
-      "id": "engine",
-      "label": "Engine",
+      "id": "src_thumbforge_storage_db_rationale_37",
+      "label": "Apply PRAGMA statements required by ADR 0004 on every SQLite connection.",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 11,
+      "community_name": "Community 11",
+      "file_type": "rationale",
+      "norm_label": "apply pragma statements required by adr 0004 on every sqlite connection.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L37"
+    },
+    {
+      "id": "src_thumbforge_storage_db_rationale_92",
+      "label": "Migration status and storage health metadata.",
+      "_origin": "ast",
+      "community": 11,
+      "community_name": "Community 11",
+      "file_type": "rationale",
+      "norm_label": "migration status and storage health metadata.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L92"
+    },
+    {
+      "id": "config",
+      "label": "Config",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "code",
-      "norm_label": "engine",
+      "norm_label": "config",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "integration",
-      "label": "integration",
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
-      "file_type": "code",
-      "norm_label": "integration",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "session",
-      "label": "Session",
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
-      "file_type": "code",
-      "norm_label": "session",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "sessionmaker",
-      "label": "sessionmaker",
-      "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
-      "file_type": "code",
-      "norm_label": "sessionmaker",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "tests_integration_test_db_container_py_path",
+      "id": "src_thumbforge_storage_db_py_path",
       "label": "Path",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "code",
       "norm_label": "path",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "tests_unit_test_storage_models_py_path",
-      "label": "Path",
+      "id": "src_thumbforge_core_errors_rationale_88",
+      "label": "A database operation failed (e.g. migration, lock, disk failure).",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "rationale",
+      "norm_label": "a database operation failed (e.g. migration, lock, disk failure).",
+      "source_file": "src/thumbforge/core/errors.py",
+      "source_location": "L88"
     },
     {
-      "id": "src_thumbforge_storage_db_rationale_61",
-      "label": "Create a thread-safe sessionmaker bound to ``engine``.",
+      "id": "src_thumbforge_storage_db_rationale_111",
+      "label": "Build an Alembic configuration targeting ``db_path``.",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "rationale",
-      "norm_label": "create a thread-safe sessionmaker bound to ``engine``.",
+      "norm_label": "build an alembic configuration targeting ``db_path``.",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L61"
+      "source_location": "L111"
     },
     {
-      "id": "src_thumbforge_storage_db_rationale_69",
-      "label": "Transactional context manager: commits on clean exit, rolls back on error.",
+      "id": "src_thumbforge_storage_db_rationale_121",
+      "label": "Inspect migration revision and file metadata for ``db_path``.",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "rationale",
-      "norm_label": "transactional context manager: commits on clean exit, rolls back on error.",
+      "norm_label": "inspect migration revision and file metadata for ``db_path``.",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L69"
+      "source_location": "L121"
     },
     {
-      "id": "tests_integration_test_db_container_rationale_20",
-      "label": "Verify that a database initialized on host can be mounted and read in a Linux\u2026",
+      "id": "src_thumbforge_storage_db_rationale_171",
+      "label": "Ensure directory exists and upgrade DB to head. Returns: Tuple of\u2026",
       "_origin": "ast",
-      "community": 13,
-      "community_name": "Community 13",
+      "community": 12,
+      "community_name": "Community 12",
       "file_type": "rationale",
-      "norm_label": "verify that a database initialized on host can be mounted and read in a linux...",
-      "source_file": "tests/integration/test_db_container.py",
-      "source_location": "L20"
+      "norm_label": "ensure directory exists and upgrade db to head. returns: tuple of...",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L171"
+    },
+    {
+      "id": "src_thumbforge_storage_db_rationale_187",
+      "label": "Run Alembic upgrade to ``revision`` on ``db_path``.",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "rationale",
+      "norm_label": "run alembic upgrade to ``revision`` on ``db_path``.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L187"
+    },
+    {
+      "id": "src_thumbforge_storage_db_rationale_28",
+      "label": "Format a SQLite connection URL for SQLAlchemy.",
+      "_origin": "ast",
+      "community": 12,
+      "community_name": "Community 12",
+      "file_type": "rationale",
+      "norm_label": "format a sqlite connection url for sqlalchemy.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L28"
     },
     {
       "id": "src_thumbforge_storage_migrations_env",
       "label": "env.py",
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "code",
       "norm_label": "env.py",
       "source_file": "src/thumbforge/storage/migrations/env.py",
@@ -3625,8 +3670,8 @@
       "id": "src_thumbforge_storage_migrations_env_rationale_1",
       "label": "Alembic environment configuration for thumbforge (ADR 0004).",
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "rationale",
       "norm_label": "alembic environment configuration for thumbforge (adr 0004).",
       "source_file": "src/thumbforge/storage/migrations/env.py",
@@ -3636,8 +3681,8 @@
       "id": "src_thumbforge_storage_migrations_env_rationale_18",
       "label": "Resolve database URL from config options or active thumbforge settings.",
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "rationale",
       "norm_label": "resolve database url from config options or active thumbforge settings.",
       "source_file": "src/thumbforge/storage/migrations/env.py",
@@ -3647,8 +3692,8 @@
       "id": "src_thumbforge_storage_migrations_env_rationale_30",
       "label": "Run migrations in 'offline' mode with SQL script output.",
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "rationale",
       "norm_label": "run migrations in 'offline' mode with sql script output.",
       "source_file": "src/thumbforge/storage/migrations/env.py",
@@ -3658,12 +3703,45 @@
       "id": "src_thumbforge_storage_migrations_env_rationale_45",
       "label": "Run migrations in 'online' mode against a live database.",
       "_origin": "ast",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "file_type": "rationale",
       "norm_label": "run migrations in 'online' mode against a live database.",
       "source_file": "src/thumbforge/storage/migrations/env.py",
       "source_location": "L45"
+    },
+    {
+      "id": "tests_unit_test_storage_db",
+      "label": "test_storage_db.py",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "Community 14",
+      "file_type": "code",
+      "norm_label": "test_storage_db.py",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_unit_test_storage_db_py_path",
+      "label": "Path",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "Community 14",
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tests_unit_test_storage_db_rationale_1",
+      "label": "Unit tests for database engine, pragmas, sessions, and status helpers (ADR\u2026",
+      "_origin": "ast",
+      "community": 14,
+      "community_name": "Community 14",
+      "file_type": "rationale",
+      "norm_label": "unit tests for database engine, pragmas, sessions, and status helpers (adr...",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L1"
     },
     {
       "id": "src_thumbforge_init",
@@ -3765,6 +3843,17 @@
       "source_location": ""
     },
     {
+      "id": "appcontext",
+      "label": "AppContext",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "appcontext",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
       "id": "console",
       "label": "Console",
       "_origin": "ast",
@@ -3776,136 +3865,92 @@
       "source_location": ""
     },
     {
-      "id": "fixture",
-      "label": "fixture",
+      "id": "p",
+      "label": "P",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "fixture",
+      "norm_label": "p",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "monkeypatch",
-      "label": "MonkeyPatch",
+      "id": "r",
+      "label": "R",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "monkeypatch",
+      "norm_label": "r",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_core_ids",
-      "label": "ids.py",
+      "id": "scripts_check_graph_drift",
+      "label": "check_graph_drift.py",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "ids.py",
-      "source_file": "src/thumbforge/core/ids.py",
+      "norm_label": "check_graph_drift.py",
+      "source_file": "scripts/check_graph_drift.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_core_ids_py_path",
-      "label": "Path",
+      "id": "src_thumbforge_cli_app",
+      "label": "app.py",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "src_thumbforge_storage_migrations_versions_0001_initial",
-      "label": "0001_initial.py",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "0001_initial.py",
-      "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
+      "norm_label": "app.py",
+      "source_file": "src/thumbforge/cli/app.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_conftest",
-      "label": "conftest.py",
+      "id": "src_thumbforge_cli_errors",
+      "label": "_errors.py",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "conftest.py",
-      "source_file": "tests/conftest.py",
+      "norm_label": "_errors.py",
+      "source_file": "src/thumbforge/cli/_errors.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_conftest_py_monkeypatch",
-      "label": "MonkeyPatch",
+      "id": "src_thumbforge_cli_render",
+      "label": "_render.py",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "monkeypatch",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "tests_conftest_py_path",
-      "label": "Path",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
-    },
-    {
-      "id": "tests_integration_test_db_container",
-      "label": "test_db_container.py",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "test_db_container.py",
-      "source_file": "tests/integration/test_db_container.py",
+      "norm_label": "_render.py",
+      "source_file": "src/thumbforge/cli/_render.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_unit_test_ids",
-      "label": "unit/test_ids.py",
+      "id": "src_thumbforge_main",
+      "label": "__main__.py",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "unit/test_ids.py",
-      "source_file": "tests/unit/test_ids.py",
+      "norm_label": "__main__.py",
+      "source_file": "src/thumbforge/__main__.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_unit_test_migrations",
-      "label": "test_migrations.py",
+      "id": "tests_unit_test_errors",
+      "label": "test_errors.py",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "code",
-      "norm_label": "test_migrations.py",
-      "source_file": "tests/unit/test_migrations.py",
+      "norm_label": "test_errors.py",
+      "source_file": "tests/unit/test_errors.py",
       "source_location": "L1"
-    },
-    {
-      "id": "tests_unit_test_migrations_py_path",
-      "label": "Path",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "code",
-      "norm_label": "path",
-      "source_file": "",
-      "source_location": ""
     },
     {
       "id": "tests_unit_test_render",
@@ -3930,103 +3975,103 @@
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_core_ids_rationale_1",
-      "label": "Identifier and content-hash helpers. ULIDs are used for primary keys: they sort\u2026",
+      "id": "thumbforgeerror",
+      "label": "ThumbforgeError",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "code",
+      "norm_label": "thumbforgeerror",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "scripts_check_graph_drift_rationale_1",
+      "label": "Compare a committed graphify graph against a freshly extracted one. Only the\u2026",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "rationale",
-      "norm_label": "identifier and content-hash helpers. ulids are used for primary keys: they sort...",
-      "source_file": "src/thumbforge/core/ids.py",
+      "norm_label": "compare a committed graphify graph against a freshly extracted one. only the...",
+      "source_file": "scripts/check_graph_drift.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_core_ids_rationale_22",
-      "label": "Return a 26-character Crockford base32 ULID: 48-bit timestamp + 80 random bits.",
+      "id": "src_thumbforge_cli_app_rationale_1",
+      "label": "Root Typer application: global flags, context construction, sub-app\u2026",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "rationale",
-      "norm_label": "return a 26-character crockford base32 ulid: 48-bit timestamp + 80 random bits.",
-      "source_file": "src/thumbforge/core/ids.py",
-      "source_location": "L22"
-    },
-    {
-      "id": "src_thumbforge_core_ids_rationale_28",
-      "label": "Return the hex SHA-256 of ``data``.",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "rationale",
-      "norm_label": "return the hex sha-256 of ``data``.",
-      "source_file": "src/thumbforge/core/ids.py",
-      "source_location": "L28"
-    },
-    {
-      "id": "src_thumbforge_core_ids_rationale_33",
-      "label": "Return the hex SHA-256 of a file, read in chunks so large images stay off the\u2026",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "rationale",
-      "norm_label": "return the hex sha-256 of a file, read in chunks so large images stay off the...",
-      "source_file": "src/thumbforge/core/ids.py",
-      "source_location": "L33"
-    },
-    {
-      "id": "tests_conftest_rationale_1",
-      "label": "Shared fixtures. Establishes ``tests/`` as the pytest root.",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "rationale",
-      "norm_label": "shared fixtures. establishes ``tests/`` as the pytest root.",
-      "source_file": "tests/conftest.py",
+      "norm_label": "root typer application: global flags, context construction, sub-app...",
+      "source_file": "src/thumbforge/cli/app.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_conftest_rationale_21",
-      "label": "Redirect every user directory into ``tmp_path`` and clear ``THUMBFORGE_*``.\u2026",
+      "id": "src_thumbforge_cli_errors_rationale_1",
+      "label": "Turn exceptions into process exits. The only module permitted to exit the\u2026",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "rationale",
-      "norm_label": "redirect every user directory into ``tmp_path`` and clear ``thumbforge_*``....",
-      "source_file": "tests/conftest.py",
-      "source_location": "L21"
-    },
-    {
-      "id": "tests_integration_test_db_container_rationale_1",
-      "label": "Integration tests using Testcontainers for database verification (ADR 0004).",
-      "_origin": "ast",
-      "community": 2,
-      "community_name": "Community 2",
-      "file_type": "rationale",
-      "norm_label": "integration tests using testcontainers for database verification (adr 0004).",
-      "source_file": "tests/integration/test_db_container.py",
+      "norm_label": "turn exceptions into process exits. the only module permitted to exit the...",
+      "source_file": "src/thumbforge/cli/_errors.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_unit_test_migrations_rationale_1",
-      "label": "Unit tests for Alembic migrations and drift detection (ADR 0004, Phase 1 spec).",
+      "id": "src_thumbforge_cli_errors_rationale_23",
+      "label": "Find the :class:`AppContext` the root callback stored on the Click context.\u2026",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "rationale",
-      "norm_label": "unit tests for alembic migrations and drift detection (adr 0004, phase 1 spec).",
-      "source_file": "tests/unit/test_migrations.py",
+      "norm_label": "find the :class:`appcontext` the root callback stored on the click context....",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L23"
+    },
+    {
+      "id": "src_thumbforge_cli_errors_rationale_62",
+      "label": "Map ``ThumbforgeError`` and ``KeyboardInterrupt`` onto exit codes. Unexpected\u2026",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "rationale",
+      "norm_label": "map ``thumbforgeerror`` and ``keyboardinterrupt`` onto exit codes. unexpected...",
+      "source_file": "src/thumbforge/cli/_errors.py",
+      "source_location": "L62"
+    },
+    {
+      "id": "src_thumbforge_cli_render_rationale_1",
+      "label": "The only module allowed to write to stdout. Every command produces one of two\u2026",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "rationale",
+      "norm_label": "the only module allowed to write to stdout. every command produces one of two...",
+      "source_file": "src/thumbforge/cli/_render.py",
       "source_location": "L1"
     },
     {
-      "id": "tests_unit_test_migrations_rationale_66",
-      "label": "CI gate: assert alembic check reports no drift between ORM models and\u2026",
+      "id": "src_thumbforge_cli_render_rationale_88",
+      "label": "Build a titled Rich panel.",
       "_origin": "ast",
       "community": 2,
       "community_name": "Community 2",
       "file_type": "rationale",
-      "norm_label": "ci gate: assert alembic check reports no drift between orm models and...",
-      "source_file": "tests/unit/test_migrations.py",
-      "source_location": "L66"
+      "norm_label": "build a titled rich panel.",
+      "source_file": "src/thumbforge/cli/_render.py",
+      "source_location": "L88"
+    },
+    {
+      "id": "tests_unit_test_errors_rationale_1",
+      "label": "The exit-code contract: a script parsing our status codes must never be\u2026",
+      "_origin": "ast",
+      "community": 2,
+      "community_name": "Community 2",
+      "file_type": "rationale",
+      "norm_label": "the exit-code contract: a script parsing our status codes must never be...",
+      "source_file": "tests/unit/test_errors.py",
+      "source_location": "L1"
     },
     {
       "id": "handle_errors",
@@ -4560,202 +4605,235 @@
       "source_location": ""
     },
     {
-      "id": "appcontext",
-      "label": "AppContext",
+      "id": "fixture",
+      "label": "fixture",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "appcontext",
+      "norm_label": "fixture",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "p",
-      "label": "P",
+      "id": "monkeypatch",
+      "label": "MonkeyPatch",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "p",
+      "norm_label": "monkeypatch",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "r",
-      "label": "R",
+      "id": "src_thumbforge_core_ids",
+      "label": "ids.py",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "r",
+      "norm_label": "ids.py",
+      "source_file": "src/thumbforge/core/ids.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "src_thumbforge_core_ids_py_path",
+      "label": "Path",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "path",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "scripts_check_graph_drift",
-      "label": "check_graph_drift.py",
+      "id": "src_thumbforge_storage_migrations_versions_0001_initial",
+      "label": "0001_initial.py",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "check_graph_drift.py",
-      "source_file": "scripts/check_graph_drift.py",
+      "norm_label": "0001_initial.py",
+      "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_cli_app",
-      "label": "app.py",
+      "id": "tests_conftest",
+      "label": "conftest.py",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "app.py",
-      "source_file": "src/thumbforge/cli/app.py",
+      "norm_label": "conftest.py",
+      "source_file": "tests/conftest.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_cli_errors",
-      "label": "_errors.py",
+      "id": "tests_conftest_py_monkeypatch",
+      "label": "MonkeyPatch",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "code",
-      "norm_label": "_errors.py",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_thumbforge_cli_render",
-      "label": "_render.py",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "_render.py",
-      "source_file": "src/thumbforge/cli/_render.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_thumbforge_main",
-      "label": "__main__.py",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "__main__.py",
-      "source_file": "src/thumbforge/__main__.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "tests_unit_test_errors",
-      "label": "test_errors.py",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "test_errors.py",
-      "source_file": "tests/unit/test_errors.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "thumbforgeerror",
-      "label": "ThumbforgeError",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "code",
-      "norm_label": "thumbforgeerror",
+      "norm_label": "monkeypatch",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "scripts_check_graph_drift_rationale_1",
-      "label": "Compare a committed graphify graph against a freshly extracted one. Only the\u2026",
+      "id": "tests_conftest_py_path",
+      "label": "Path",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
-      "file_type": "rationale",
-      "norm_label": "compare a committed graphify graph against a freshly extracted one. only the...",
-      "source_file": "scripts/check_graph_drift.py",
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "",
+      "source_location": ""
+    },
+    {
+      "id": "tests_integration_test_db_container",
+      "label": "test_db_container.py",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "code",
+      "norm_label": "test_db_container.py",
+      "source_file": "tests/integration/test_db_container.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_cli_app_rationale_1",
-      "label": "Root Typer application: global flags, context construction, sub-app\u2026",
+      "id": "tests_unit_test_ids",
+      "label": "unit/test_ids.py",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
-      "file_type": "rationale",
-      "norm_label": "root typer application: global flags, context construction, sub-app...",
-      "source_file": "src/thumbforge/cli/app.py",
+      "file_type": "code",
+      "norm_label": "unit/test_ids.py",
+      "source_file": "tests/unit/test_ids.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_cli_errors_rationale_1",
-      "label": "Turn exceptions into process exits. The only module permitted to exit the\u2026",
+      "id": "tests_unit_test_migrations",
+      "label": "test_migrations.py",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
-      "file_type": "rationale",
-      "norm_label": "turn exceptions into process exits. the only module permitted to exit the...",
-      "source_file": "src/thumbforge/cli/_errors.py",
+      "file_type": "code",
+      "norm_label": "test_migrations.py",
+      "source_file": "tests/unit/test_migrations.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_cli_errors_rationale_23",
-      "label": "Find the :class:`AppContext` the root callback stored on the Click context.\u2026",
+      "id": "tests_unit_test_migrations_py_path",
+      "label": "Path",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
-      "file_type": "rationale",
-      "norm_label": "find the :class:`appcontext` the root callback stored on the click context....",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L23"
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_errors_rationale_62",
-      "label": "Map ``ThumbforgeError`` and ``KeyboardInterrupt`` onto exit codes. Unexpected\u2026",
+      "id": "src_thumbforge_core_ids_rationale_1",
+      "label": "Identifier and content-hash helpers. ULIDs are used for primary keys: they sort\u2026",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "rationale",
-      "norm_label": "map ``thumbforgeerror`` and ``keyboardinterrupt`` onto exit codes. unexpected...",
-      "source_file": "src/thumbforge/cli/_errors.py",
-      "source_location": "L62"
-    },
-    {
-      "id": "src_thumbforge_cli_render_rationale_1",
-      "label": "The only module allowed to write to stdout. Every command produces one of two\u2026",
-      "_origin": "ast",
-      "community": 4,
-      "community_name": "Community 4",
-      "file_type": "rationale",
-      "norm_label": "the only module allowed to write to stdout. every command produces one of two...",
-      "source_file": "src/thumbforge/cli/_render.py",
+      "norm_label": "identifier and content-hash helpers. ulids are used for primary keys: they sort...",
+      "source_file": "src/thumbforge/core/ids.py",
       "source_location": "L1"
     },
     {
-      "id": "src_thumbforge_cli_render_rationale_88",
-      "label": "Build a titled Rich panel.",
+      "id": "src_thumbforge_core_ids_rationale_22",
+      "label": "Return a 26-character Crockford base32 ULID: 48-bit timestamp + 80 random bits.",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "rationale",
-      "norm_label": "build a titled rich panel.",
-      "source_file": "src/thumbforge/cli/_render.py",
-      "source_location": "L88"
+      "norm_label": "return a 26-character crockford base32 ulid: 48-bit timestamp + 80 random bits.",
+      "source_file": "src/thumbforge/core/ids.py",
+      "source_location": "L22"
     },
     {
-      "id": "tests_unit_test_errors_rationale_1",
-      "label": "The exit-code contract: a script parsing our status codes must never be\u2026",
+      "id": "src_thumbforge_core_ids_rationale_28",
+      "label": "Return the hex SHA-256 of ``data``.",
       "_origin": "ast",
       "community": 4,
       "community_name": "Community 4",
       "file_type": "rationale",
-      "norm_label": "the exit-code contract: a script parsing our status codes must never be...",
-      "source_file": "tests/unit/test_errors.py",
+      "norm_label": "return the hex sha-256 of ``data``.",
+      "source_file": "src/thumbforge/core/ids.py",
+      "source_location": "L28"
+    },
+    {
+      "id": "src_thumbforge_core_ids_rationale_33",
+      "label": "Return the hex SHA-256 of a file, read in chunks so large images stay off the\u2026",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "rationale",
+      "norm_label": "return the hex sha-256 of a file, read in chunks so large images stay off the...",
+      "source_file": "src/thumbforge/core/ids.py",
+      "source_location": "L33"
+    },
+    {
+      "id": "tests_conftest_rationale_1",
+      "label": "Shared fixtures. Establishes ``tests/`` as the pytest root.",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "rationale",
+      "norm_label": "shared fixtures. establishes ``tests/`` as the pytest root.",
+      "source_file": "tests/conftest.py",
       "source_location": "L1"
+    },
+    {
+      "id": "tests_conftest_rationale_21",
+      "label": "Redirect every user directory into ``tmp_path`` and clear ``THUMBFORGE_*``.\u2026",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "rationale",
+      "norm_label": "redirect every user directory into ``tmp_path`` and clear ``thumbforge_*``....",
+      "source_file": "tests/conftest.py",
+      "source_location": "L21"
+    },
+    {
+      "id": "tests_integration_test_db_container_rationale_1",
+      "label": "Integration tests using Testcontainers for database verification (ADR 0004).",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "rationale",
+      "norm_label": "integration tests using testcontainers for database verification (adr 0004).",
+      "source_file": "tests/integration/test_db_container.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_unit_test_migrations_rationale_1",
+      "label": "Unit tests for Alembic migrations and drift detection (ADR 0004, Phase 1 spec).",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "rationale",
+      "norm_label": "unit tests for alembic migrations and drift detection (adr 0004, phase 1 spec).",
+      "source_file": "tests/unit/test_migrations.py",
+      "source_location": "L1"
+    },
+    {
+      "id": "tests_unit_test_migrations_rationale_66",
+      "label": "CI gate: assert alembic check reports no drift between ORM models and\u2026",
+      "_origin": "ast",
+      "community": 4,
+      "community_name": "Community 4",
+      "file_type": "rationale",
+      "norm_label": "ci gate: assert alembic check reports no drift between orm models and...",
+      "source_file": "tests/unit/test_migrations.py",
+      "source_location": "L66"
     },
     {
       "id": "tests_unit_test_errors_py_thumbforgeerror",
@@ -5495,147 +5573,125 @@
       "source_location": "L72"
     },
     {
-      "id": "renderabletype",
-      "label": "RenderableType",
+      "id": "engine",
+      "label": "Engine",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "renderabletype",
+      "norm_label": "engine",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_db",
-      "label": "cli/db.py",
+      "id": "integration",
+      "label": "integration",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "cli/db.py",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L1"
-    },
-    {
-      "id": "src_thumbforge_cli_db_py_command",
-      "label": "command",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "Community 9",
-      "file_type": "code",
-      "norm_label": "command",
+      "norm_label": "integration",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_db_py_context",
-      "label": "Context",
+      "id": "session",
+      "label": "Session",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "context",
+      "norm_label": "session",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_db_py_handle_errors",
-      "label": "handle_errors",
+      "id": "sessionmaker",
+      "label": "sessionmaker",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "handle_errors",
+      "norm_label": "sessionmaker",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_render_py_jsonvalue",
-      "label": "JsonValue",
+      "id": "tests_integration_test_db_container_py_path",
+      "label": "Path",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "code",
-      "norm_label": "jsonvalue",
+      "norm_label": "path",
       "source_file": "",
       "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_db_rationale_1",
-      "label": "``thumbforge db`` \u2014 database lifecycle and migration management (ADR 0004).",
+      "id": "tests_unit_test_storage_models_py_path",
+      "label": "Path",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
-      "file_type": "rationale",
-      "norm_label": "``thumbforge db`` \u2014 database lifecycle and migration management (adr 0004).",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L1"
+      "file_type": "code",
+      "norm_label": "path",
+      "source_file": "",
+      "source_location": ""
     },
     {
-      "id": "src_thumbforge_cli_db_rationale_103",
-      "label": "Print the SQLite database file path.",
+      "id": "src_thumbforge_storage_db_rationale_202",
+      "label": "Reclaim free space and truncate the WAL file.",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "rationale",
-      "norm_label": "print the sqlite database file path.",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L103"
+      "norm_label": "reclaim free space and truncate the wal file.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L202"
     },
     {
-      "id": "src_thumbforge_cli_db_rationale_119",
-      "label": "Reclaim unused disk space and checkpoint the Write-Ahead Log (WAL).",
+      "id": "src_thumbforge_storage_db_rationale_46",
+      "label": "Create a SQLAlchemy engine configured for thumbforge SQLite usage.",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "rationale",
-      "norm_label": "reclaim unused disk space and checkpoint the write-ahead log (wal).",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L119"
+      "norm_label": "create a sqlalchemy engine configured for thumbforge sqlite usage.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L46"
     },
     {
-      "id": "src_thumbforge_cli_db_rationale_29",
-      "label": "Create the database file and upgrade schema to Alembic head.",
+      "id": "src_thumbforge_storage_db_rationale_65",
+      "label": "Create a thread-safe sessionmaker bound to ``engine``.",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "rationale",
-      "norm_label": "create the database file and upgrade schema to alembic head.",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L29"
+      "norm_label": "create a thread-safe sessionmaker bound to ``engine``.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L65"
     },
     {
-      "id": "src_thumbforge_cli_db_rationale_54",
-      "label": "Apply pending Alembic migrations up to head.",
+      "id": "src_thumbforge_storage_db_rationale_73",
+      "label": "Transactional context manager: commits on clean exit, rolls back on error.",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "rationale",
-      "norm_label": "apply pending alembic migrations up to head.",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L54"
+      "norm_label": "transactional context manager: commits on clean exit, rolls back on error.",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L73"
     },
     {
-      "id": "src_thumbforge_cli_db_rationale_70",
-      "label": "Print current revision, head revision, pending count, file size, and journal\u2026",
+      "id": "tests_integration_test_db_container_rationale_20",
+      "label": "Verify that a database initialized on host can be mounted and read in a Linux\u2026",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "rationale",
-      "norm_label": "print current revision, head revision, pending count, file size, and journal...",
-      "source_file": "src/thumbforge/cli/db.py",
-      "source_location": "L70"
-    },
-    {
-      "id": "src_thumbforge_cli_render_rationale_109",
-      "label": "Print ``data`` as JSON in ``--json`` mode, otherwise print ``render()``.\u2026",
-      "_origin": "ast",
-      "community": 9,
-      "community_name": "Community 9",
-      "file_type": "rationale",
-      "norm_label": "print ``data`` as json in ``--json`` mode, otherwise print ``render()``....",
-      "source_file": "src/thumbforge/cli/_render.py",
-      "source_location": "L109"
+      "norm_label": "verify that a database initialized on host can be mounted and read in a linux...",
+      "source_file": "tests/integration/test_db_container.py",
+      "source_location": "L20"
     },
     {
       "id": "platformdirs",
@@ -5710,6 +5766,18 @@
       "type": "external"
     },
     {
+      "id": "enum",
+      "label": "enum",
+      "_origin": "semantic",
+      "community": 1,
+      "community_name": "Community 1",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "enum",
+      "source_file": "",
+      "type": "external"
+    },
+    {
       "id": "sqlalchemy",
       "label": "sqlalchemy",
       "_origin": "semantic",
@@ -5749,8 +5817,8 @@
       "id": "alembic_config",
       "label": "alembic_config",
       "_origin": "semantic",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "external": true,
       "file_type": "concept",
       "norm_label": "alembic_config",
@@ -5761,8 +5829,8 @@
       "id": "alembic_runtime_migration",
       "label": "alembic_runtime_migration",
       "_origin": "semantic",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "external": true,
       "file_type": "concept",
       "norm_label": "alembic_runtime_migration",
@@ -5773,8 +5841,8 @@
       "id": "alembic_script",
       "label": "alembic_script",
       "_origin": "semantic",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "external": true,
       "file_type": "concept",
       "norm_label": "alembic_script",
@@ -5785,8 +5853,8 @@
       "id": "contextlib",
       "label": "contextlib",
       "_origin": "semantic",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "external": true,
       "file_type": "concept",
       "norm_label": "contextlib",
@@ -5797,8 +5865,8 @@
       "id": "sqlalchemy_orm",
       "label": "sqlalchemy_orm",
       "_origin": "semantic",
-      "community": 12,
-      "community_name": "Community 12",
+      "community": 11,
+      "community_name": "Community 11",
       "external": true,
       "file_type": "concept",
       "norm_label": "sqlalchemy_orm",
@@ -5809,8 +5877,8 @@
       "id": "alembic",
       "label": "alembic",
       "_origin": "semantic",
-      "community": 14,
-      "community_name": "Community 14",
+      "community": 13,
+      "community_name": "Community 13",
       "external": true,
       "file_type": "concept",
       "norm_label": "alembic",
@@ -5830,134 +5898,146 @@
       "type": "external"
     },
     {
-      "id": "collections_abc",
-      "label": "collections_abc",
+      "id": "dataclasses",
+      "label": "dataclasses",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "collections_abc",
+      "norm_label": "dataclasses",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "hashlib",
-      "label": "hashlib",
+      "id": "functools",
+      "label": "functools",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "hashlib",
+      "norm_label": "functools",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "os",
-      "label": "os",
+      "id": "json",
+      "label": "json",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "os",
+      "norm_label": "json",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "pathlib",
-      "label": "pathlib",
+      "id": "rich_console",
+      "label": "rich_console",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "pathlib",
+      "norm_label": "rich_console",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "pytest",
-      "label": "pytest",
+      "id": "rich_panel",
+      "label": "rich_panel",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "pytest",
+      "norm_label": "rich_panel",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "structlog",
-      "label": "structlog",
+      "id": "rich_table",
+      "label": "rich_table",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "structlog",
+      "norm_label": "rich_table",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "testcontainers_core_container",
-      "label": "testcontainers_core_container",
+      "id": "sys",
+      "label": "sys",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "testcontainers_core_container",
+      "norm_label": "sys",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "thumbforge",
-      "label": "thumbforge",
+      "id": "thumbforge_cli",
+      "label": "thumbforge_cli",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "thumbforge",
+      "norm_label": "thumbforge_cli",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "thumbforge_core",
-      "label": "thumbforge_core",
+      "id": "thumbforge_cli_errors",
+      "label": "thumbforge_cli_errors",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "thumbforge_core",
+      "norm_label": "thumbforge_cli_errors",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "time",
-      "label": "time",
+      "id": "thumbforge_cli_render",
+      "label": "thumbforge_cli_render",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "time",
+      "norm_label": "thumbforge_cli_render",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "typing",
-      "label": "typing",
+      "id": "thumbforge_core_errors",
+      "label": "thumbforge_core_errors",
       "_origin": "semantic",
       "community": 2,
       "community_name": "Community 2",
       "external": true,
       "file_type": "concept",
-      "norm_label": "typing",
+      "norm_label": "thumbforge_core_errors",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "typer",
+      "label": "typer",
+      "_origin": "semantic",
+      "community": 2,
+      "community_name": "Community 2",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "typer",
       "source_file": "",
       "type": "external"
     },
@@ -5998,146 +6078,134 @@
       "type": "external"
     },
     {
-      "id": "dataclasses",
-      "label": "dataclasses",
+      "id": "collections_abc",
+      "label": "collections_abc",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "dataclasses",
+      "norm_label": "collections_abc",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "functools",
-      "label": "functools",
+      "id": "hashlib",
+      "label": "hashlib",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "functools",
+      "norm_label": "hashlib",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "json",
-      "label": "json",
+      "id": "os",
+      "label": "os",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "json",
+      "norm_label": "os",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "rich_console",
-      "label": "rich_console",
+      "id": "pathlib",
+      "label": "pathlib",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "rich_console",
+      "norm_label": "pathlib",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "rich_panel",
-      "label": "rich_panel",
+      "id": "pytest",
+      "label": "pytest",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "rich_panel",
+      "norm_label": "pytest",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "rich_table",
-      "label": "rich_table",
+      "id": "structlog",
+      "label": "structlog",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "rich_table",
+      "norm_label": "structlog",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "sys",
-      "label": "sys",
+      "id": "testcontainers_core_container",
+      "label": "testcontainers_core_container",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "sys",
+      "norm_label": "testcontainers_core_container",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "thumbforge_cli",
-      "label": "thumbforge_cli",
+      "id": "thumbforge",
+      "label": "thumbforge",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "thumbforge_cli",
+      "norm_label": "thumbforge",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "thumbforge_cli_errors",
-      "label": "thumbforge_cli_errors",
+      "id": "thumbforge_core",
+      "label": "thumbforge_core",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "thumbforge_cli_errors",
+      "norm_label": "thumbforge_core",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "thumbforge_cli_render",
-      "label": "thumbforge_cli_render",
+      "id": "time",
+      "label": "time",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "thumbforge_cli_render",
+      "norm_label": "time",
       "source_file": "",
       "type": "external"
     },
     {
-      "id": "thumbforge_core_errors",
-      "label": "thumbforge_core_errors",
+      "id": "typing",
+      "label": "typing",
       "_origin": "semantic",
       "community": 4,
       "community_name": "Community 4",
       "external": true,
       "file_type": "concept",
-      "norm_label": "thumbforge_core_errors",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "typer",
-      "label": "typer",
-      "_origin": "semantic",
-      "community": 4,
-      "community_name": "Community 4",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "typer",
+      "norm_label": "typing",
       "source_file": "",
       "type": "external"
     },
@@ -6150,18 +6218,6 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "thumbforge_storage_db",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "enum",
-      "label": "enum",
-      "_origin": "semantic",
-      "community": 5,
-      "community_name": "Community 5",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "enum",
       "source_file": "",
       "type": "external"
     },
@@ -6222,6 +6278,39 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "re",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "sqlalchemy_pool",
+      "label": "sqlalchemy_pool",
+      "community": 11,
+      "community_name": "Community 11",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "sqlalchemy_pool",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "sqlite3",
+      "label": "sqlite3",
+      "community": 11,
+      "community_name": "Community 11",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "sqlite3",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "thumbforge_core_enums",
+      "label": "thumbforge_core_enums",
+      "community": 14,
+      "community_name": "Community 14",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "thumbforge_core_enums",
       "source_file": "",
       "type": "external"
     }
@@ -6908,7 +6997,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L110",
+      "source_location": "L114",
       "weight": 1.0
     },
     {
@@ -6920,7 +7009,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L118",
+      "source_location": "L122",
       "weight": 1.0
     },
     {
@@ -6932,7 +7021,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L124",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -6944,7 +7033,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L133",
+      "source_location": "L137",
       "weight": 1.0
     },
     {
@@ -6956,7 +7045,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L50",
+      "source_location": "L54",
       "weight": 1.0
     },
     {
@@ -6968,7 +7057,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L170",
+      "source_location": "L177",
       "weight": 1.0
     },
     {
@@ -6980,7 +7069,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L174",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -6992,7 +7081,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L73",
+      "source_location": "L77",
       "weight": 1.0
     },
     {
@@ -7004,7 +7093,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L182",
+      "source_location": "L189",
       "weight": 1.0
     },
     {
@@ -7016,7 +7105,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L187",
+      "source_location": "L197",
       "weight": 1.0
     },
     {
@@ -7028,7 +7117,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L198",
+      "source_location": "L208",
       "weight": 1.0
     },
     {
@@ -8148,6 +8237,42 @@
       "weight": 1.0
     },
     {
+      "source": "tests_unit_test_storage_db_test_vacuum_db_success_and_missing_error",
+      "target": "src_thumbforge_storage_db_get_engine",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L165",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_unit_test_storage_db_test_vacuum_db_success_and_missing_error",
+      "target": "src_thumbforge_storage_db_session_factory",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L166",
+      "weight": 1.0
+    },
+    {
+      "source": "tests_unit_test_storage_db_test_vacuum_db_success_and_missing_error",
+      "target": "src_thumbforge_storage_db_session_scope",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "tests/unit/test_storage_db.py",
+      "source_location": "L168",
+      "weight": 1.0
+    },
+    {
       "source": "tests_unit_test_storage_models_db_session",
       "target": "src_thumbforge_storage_db_init_db",
       "relation": "calls",
@@ -8840,7 +8965,7 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L60",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -8852,7 +8977,19 @@
       "confidence_score": 1.0,
       "context": "generic_arg",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L66",
+      "source_location": "L70",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_models_enum_values",
+      "target": "e",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "generic_arg",
+      "source_file": "src/thumbforge/storage/models.py",
+      "source_location": "L37",
       "weight": 1.0
     },
     {
@@ -9468,6 +9605,18 @@
       "weight": 1.0
     },
     {
+      "source": "src_thumbforge_storage_db",
+      "target": "sqlite3",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
       "source": "src_thumbforge_storage_init",
       "target": "src_thumbforge_storage_models_asset",
       "relation": "imports",
@@ -9777,54 +9926,6 @@
       "context": "import",
       "source_file": "src/thumbforge/storage/migrations/versions/0001_initial.py",
       "source_location": "L13",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_models",
-      "target": "src_thumbforge_core_enums_assetkind",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L24",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_models",
-      "target": "src_thumbforge_core_enums_channelsource",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L24",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_models",
-      "target": "src_thumbforge_core_enums_runkind",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L24",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_models",
-      "target": "src_thumbforge_core_enums_runstatus",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L24",
       "weight": 1.0
     },
     {
@@ -10856,7 +10957,19 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L20",
+      "source_location": "L21",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db",
+      "target": "sqlalchemy_pool",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L23",
       "weight": 1.0
     },
     {
@@ -10993,6 +11106,18 @@
     },
     {
       "source": "src_thumbforge_storage_models",
+      "target": "sqlalchemy",
+      "relation": "imports_from",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "src/thumbforge/storage/models.py",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_models",
       "target": "sqlalchemy_orm",
       "relation": "imports_from",
       "_origin": "ast",
@@ -11000,19 +11125,19 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L17",
+      "source_location": "L21",
       "weight": 1.0
     },
     {
       "source": "src_thumbforge_storage_models",
-      "target": "src_thumbforge_core_enums",
+      "target": "thumbforge_core_enums",
       "relation": "imports_from",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L24",
+      "source_location": "L28",
       "weight": 1.0
     },
     {
@@ -11024,7 +11149,7 @@
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L25",
+      "source_location": "L29",
       "weight": 1.0
     },
     {
@@ -11041,14 +11166,14 @@
     },
     {
       "source": "src_thumbforge_storage_models",
-      "target": "sqlalchemy",
+      "target": "enum",
       "relation": "imports_from",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "import",
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L7",
+      "source_location": "L6",
       "weight": 1.0
     },
     {
@@ -11581,7 +11706,7 @@
     },
     {
       "source": "tests_unit_test_storage_db",
-      "target": "src_thumbforge_core_enums",
+      "target": "thumbforge_core_enums",
       "relation": "imports_from",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -12068,7 +12193,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L106",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -12080,7 +12205,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L116",
+      "source_location": "L120",
       "weight": 1.0
     },
     {
@@ -12092,7 +12217,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L41",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -12104,7 +12229,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L163",
+      "source_location": "L170",
       "weight": 1.0
     },
     {
@@ -12116,7 +12241,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L60",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -12128,7 +12253,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L66",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
@@ -12140,19 +12265,31 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L66",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
       "source": "src_thumbforge_storage_db_set_sqlite_pragmas",
-      "target": "any",
+      "target": "connection",
       "relation": "references",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L32",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_set_sqlite_pragmas",
+      "target": "connectionpoolentry",
+      "relation": "references",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "parameter_type",
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L34",
       "weight": 1.0
     },
     {
@@ -12164,7 +12301,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L25",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -12176,7 +12313,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L179",
+      "source_location": "L186",
       "weight": 1.0
     },
     {
@@ -12188,7 +12325,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L191",
+      "source_location": "L201",
       "weight": 1.0
     },
     {
@@ -13040,7 +13177,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L106",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -13052,7 +13189,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L41",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -13064,7 +13201,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L60",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -13991,7 +14128,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L106",
+      "source_location": "L110",
       "weight": 1.0
     },
     {
@@ -14002,7 +14139,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L116",
+      "source_location": "L120",
       "weight": 1.0
     },
     {
@@ -14013,7 +14150,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L163",
+      "source_location": "L170",
       "weight": 1.0
     },
     {
@@ -14024,7 +14161,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L179",
+      "source_location": "L186",
       "weight": 1.0
     },
     {
@@ -14035,7 +14172,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L191",
+      "source_location": "L201",
       "weight": 1.0
     },
     {
@@ -14046,7 +14183,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L25",
+      "source_location": "L27",
       "weight": 1.0
     },
     {
@@ -14057,7 +14194,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L32",
+      "source_location": "L34",
       "weight": 1.0
     },
     {
@@ -14068,7 +14205,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L41",
+      "source_location": "L45",
       "weight": 1.0
     },
     {
@@ -14079,7 +14216,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L60",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -14090,7 +14227,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L66",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
@@ -14101,7 +14238,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L87",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -14167,7 +14304,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L104",
+      "source_location": "L121",
       "weight": 1.0
     },
     {
@@ -14178,7 +14315,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L136",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -14189,7 +14326,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L164",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -14200,7 +14337,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L185",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
@@ -14211,7 +14348,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L203",
+      "source_location": "L220",
       "weight": 1.0
     },
     {
@@ -14222,7 +14359,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L262",
+      "source_location": "L295",
       "weight": 1.0
     },
     {
@@ -14233,7 +14370,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L28",
+      "source_location": "L32",
       "weight": 1.0
     },
     {
@@ -14244,7 +14381,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L305",
+      "source_location": "L346",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_models",
+      "target": "src_thumbforge_storage_models_enum_values",
+      "relation": "contains",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/models.py",
+      "source_location": "L37",
       "weight": 1.0
     },
     {
@@ -14255,7 +14403,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L42",
+      "source_location": "L51",
       "weight": 1.0
     },
     {
@@ -14266,7 +14414,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L54",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -14277,7 +14425,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L77",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -15729,7 +15877,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L305",
+      "source_location": "L346",
       "weight": 1.0
     },
     {
@@ -15740,7 +15888,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L42",
+      "source_location": "L51",
       "weight": 1.0
     },
     {
@@ -15751,7 +15899,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L54",
+      "source_location": "L63",
       "weight": 1.0
     },
     {
@@ -15762,7 +15910,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L262",
+      "source_location": "L295",
       "weight": 1.0
     },
     {
@@ -15773,7 +15921,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L77",
+      "source_location": "L94",
       "weight": 1.0
     },
     {
@@ -15784,7 +15932,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L136",
+      "source_location": "L153",
       "weight": 1.0
     },
     {
@@ -15795,7 +15943,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L185",
+      "source_location": "L202",
       "weight": 1.0
     },
     {
@@ -15806,7 +15954,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L203",
+      "source_location": "L220",
       "weight": 1.0
     },
     {
@@ -15817,7 +15965,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L164",
+      "source_location": "L181",
       "weight": 1.0
     },
     {
@@ -15828,7 +15976,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L104",
+      "source_location": "L121",
       "weight": 1.0
     },
     {
@@ -15949,7 +16097,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L97",
+      "source_location": "L101",
       "weight": 1.0
     },
     {
@@ -16822,135 +16970,135 @@
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_db_rationale_107",
-      "target": "src_thumbforge_storage_db_alembic_config",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L107",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_117",
-      "target": "src_thumbforge_storage_db_get_db_status",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L117",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_164",
-      "target": "src_thumbforge_storage_db_init_db",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L164",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_180",
-      "target": "src_thumbforge_storage_db_upgrade_db",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L180",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_192",
-      "target": "src_thumbforge_storage_db_vacuum_db",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L192",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_26",
-      "target": "src_thumbforge_storage_db_sqlite_url",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L26",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_33",
-      "target": "src_thumbforge_storage_db_set_sqlite_pragmas",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L33",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_42",
-      "target": "src_thumbforge_storage_db_get_engine",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L42",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_61",
-      "target": "src_thumbforge_storage_db_session_factory",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L61",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_69",
-      "target": "src_thumbforge_storage_db_session_scope",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L69",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_88",
-      "target": "src_thumbforge_storage_db_dbstatus",
-      "relation": "rationale_for",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L88",
-      "weight": 1.0
-    },
-    {
-      "source": "src_thumbforge_storage_db_rationale_98",
+      "source": "src_thumbforge_storage_db_rationale_102",
       "target": "src_thumbforge_storage_db_dbstatus_is_at_head",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L98",
+      "source_location": "L102",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_111",
+      "target": "src_thumbforge_storage_db_alembic_config",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L111",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_121",
+      "target": "src_thumbforge_storage_db_get_db_status",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_171",
+      "target": "src_thumbforge_storage_db_init_db",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L171",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_187",
+      "target": "src_thumbforge_storage_db_upgrade_db",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L187",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_202",
+      "target": "src_thumbforge_storage_db_vacuum_db",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L202",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_28",
+      "target": "src_thumbforge_storage_db_sqlite_url",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L28",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_37",
+      "target": "src_thumbforge_storage_db_set_sqlite_pragmas",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L37",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_46",
+      "target": "src_thumbforge_storage_db_get_engine",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L46",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_65",
+      "target": "src_thumbforge_storage_db_session_factory",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L65",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_73",
+      "target": "src_thumbforge_storage_db_session_scope",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L73",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_db_rationale_92",
+      "target": "src_thumbforge_storage_db_dbstatus",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/db.py",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -17020,124 +17168,135 @@
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_105",
+      "source": "src_thumbforge_storage_models_rationale_122",
       "target": "src_thumbforge_storage_models_video",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L105",
+      "source_location": "L122",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_137",
+      "source": "src_thumbforge_storage_models_rationale_154",
       "target": "src_thumbforge_storage_models_playlistitem",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L137",
+      "source_location": "L154",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_165",
+      "source": "src_thumbforge_storage_models_rationale_182",
       "target": "src_thumbforge_storage_models_template",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L165",
+      "source_location": "L182",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_186",
+      "source": "src_thumbforge_storage_models_rationale_203",
       "target": "src_thumbforge_storage_models_providerprofile",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L186",
+      "source_location": "L203",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_204",
+      "source": "src_thumbforge_storage_models_rationale_221",
       "target": "src_thumbforge_storage_models_run",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L204",
+      "source_location": "L221",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_263",
+      "source": "src_thumbforge_storage_models_rationale_296",
       "target": "src_thumbforge_storage_models_iteration",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L263",
+      "source_location": "L296",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_29",
+      "source": "src_thumbforge_storage_models_rationale_33",
       "target": "src_thumbforge_storage_models_utcnow_iso",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L29",
+      "source_location": "L33",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_306",
+      "source": "src_thumbforge_storage_models_rationale_347",
       "target": "src_thumbforge_storage_models_asset",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L306",
+      "source_location": "L347",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_43",
+      "source": "src_thumbforge_storage_models_rationale_38",
+      "target": "src_thumbforge_storage_models_enum_values",
+      "relation": "rationale_for",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/thumbforge/storage/models.py",
+      "source_location": "L38",
+      "weight": 1.0
+    },
+    {
+      "source": "src_thumbforge_storage_models_rationale_52",
       "target": "src_thumbforge_storage_models_base",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L43",
+      "source_location": "L52",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_55",
+      "source": "src_thumbforge_storage_models_rationale_64",
       "target": "src_thumbforge_storage_models_channel",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L55",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_models_rationale_78",
+      "source": "src_thumbforge_storage_models_rationale_95",
       "target": "src_thumbforge_storage_models_playlist",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/models.py",
-      "source_location": "L78",
+      "source_location": "L95",
       "weight": 1.0
     },
     {
@@ -17512,7 +17671,7 @@
       "confidence_score": 0.85,
       "context": "argument",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L56",
+      "source_location": "L60",
       "weight": 1.0
     },
     {
@@ -17692,7 +17851,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L140",
+      "source_location": "L144",
       "weight": 1.0
     },
     {
@@ -17704,7 +17863,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L186",
+      "source_location": "L193",
       "weight": 1.0
     },
     {
@@ -17716,7 +17875,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "src/thumbforge/storage/db.py",
-      "source_location": "L194",
+      "source_location": "L204",
       "weight": 1.0
     },
     {
@@ -17979,17 +18138,6 @@
       "weight": 0.8
     },
     {
-      "source": "tests_unit_test_storage_db_test_session_scope_commits_on_success",
-      "target": "src_thumbforge_core_enums_channelsource",
-      "relation": "uses",
-      "_origin": "ast",
-      "confidence": "INFERRED",
-      "confidence_score": 0.95,
-      "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L78",
-      "weight": 0.8
-    },
-    {
       "source": "tests_unit_test_storage_db_test_session_scope_rolls_back_on_error",
       "target": "src_thumbforge_storage_models_channel",
       "relation": "uses",
@@ -18001,14 +18149,14 @@
       "weight": 0.8
     },
     {
-      "source": "tests_unit_test_storage_db_test_session_scope_rolls_back_on_error",
-      "target": "src_thumbforge_core_enums_channelsource",
+      "source": "tests_unit_test_storage_db_test_vacuum_db_success_and_missing_error",
+      "target": "src_thumbforge_storage_models_channel",
       "relation": "uses",
       "_origin": "ast",
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/unit/test_storage_db.py",
-      "source_location": "L105",
+      "source_location": "L171",
       "weight": 0.8
     },
     {
@@ -18431,5 +18579,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "b0f0cda1b4aa5be10231000823c0f41192adcf6e"
+  "built_at_commit": "854d660a619c72fe2c2ad2c5f94deb2f6553463b"
 }

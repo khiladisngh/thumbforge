@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 537 nodes · 1054 edges · 43 communities (15 shown, 28 thin omitted)
-- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 81 edges (avg confidence: 0.91)
+- 545 nodes · 1059 edges · 43 communities (15 shown, 28 thin omitted)
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 80 edges (avg confidence: 0.91)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b0f0cda1`
+- Built from commit: `854d660a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -61,10 +61,10 @@
 ## God Nodes (most connected - your core abstractions)
 1. `load_settings()` - 22 edges
 2. `emit()` - 20 edges
-3. `get_engine()` - 18 edges
+3. `get_engine()` - 19 edges
 4. `set_values()` - 17 edges
-5. `configure_logging()` - 17 edges
-6. `root()` - 17 edges
+5. `root()` - 17 edges
+6. `configure_logging()` - 17 edges
 7. `get_logger()` - 16 edges
 8. `init_db()` - 15 edges
 9. `Base` - 14 edges
@@ -77,10 +77,10 @@
   tests/unit/test_settings.py → src/thumbforge/settings.py
 - `test_sqlite_database_in_container()` --uses--> `ChannelSource`  [INFERRED]
   tests/integration/test_db_container.py → src/thumbforge/core/enums.py
-- `test_session_scope_commits_on_success()` --uses--> `ChannelSource`  [INFERRED]
-  tests/unit/test_storage_db.py → src/thumbforge/core/enums.py
-- `test_session_scope_rolls_back_on_error()` --uses--> `ChannelSource`  [INFERRED]
-  tests/unit/test_storage_db.py → src/thumbforge/core/enums.py
+- `test_sqlite_database_in_container()` --uses--> `Channel`  [INFERRED]
+  tests/integration/test_db_container.py → src/thumbforge/storage/models.py
+- `test_session_scope_commits_on_success()` --uses--> `Channel`  [INFERRED]
+  tests/unit/test_storage_db.py → src/thumbforge/storage/models.py
 
 ## Import Cycles
 - None detected.
@@ -92,24 +92,24 @@ Cohesion: 0.05
 Nodes (74): Any, BaseModel, BaseSettings, model_validator, platformdirs, pydantic, pydantic_settings, Self (+66 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.09
-Nodes (48): datetime, DeclarativeBase, sqlalchemy, sqlalchemy_exc, AssetKind, ChannelSource, Domain enumerations for thumbforge lifecycle and data classification (PLAN.md…, Lifecycle classification of a thumbnail generation run. (+40 more)
+Cohesion: 0.08
+Nodes (52): datetime, DeclarativeBase, E, enum, sqlalchemy, sqlalchemy_exc, AssetKind, ChannelSource (+44 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.05
-Nodes (40): collections_abc, Console, fixture, hashlib, MonkeyPatch, os, pathlib, pytest (+32 more)
+Cohesion: 0.06
+Nodes (42): AppContext, Console, dataclasses, functools, json, P, R, rich_console (+34 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.07
 Nodes (48): BoundLogger, callback, CaptureFixture, Context, count, envvar, is_eager, LogFormat (+40 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.07
-Nodes (36): AppContext, dataclasses, functools, json, P, R, rich_console, rich_panel (+28 more)
+Cohesion: 0.06
+Nodes (34): collections_abc, fixture, hashlib, MonkeyPatch, os, pathlib, pytest, new_id() (+26 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.06
-Nodes (39): enum, Exception, IntEnum, ComplianceError, ExitCode, NotFoundError, PartialBatchError, ProviderAuthError (+31 more)
+Cohesion: 0.07
+Nodes (38): Exception, IntEnum, ComplianceError, ExitCode, NotFoundError, PartialBatchError, ProviderAuthError, ProviderError (+30 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.07
@@ -124,43 +124,43 @@ Cohesion: 0.12
 Nodes (23): parametrize, re, find_secret_keys(), is_secret_key(), Secret detection shared by configuration loading and logging (ADR 0014, ADR…, Split a key into lowercase words across separators and camelCase boundaries., Return whether ``key`` names a secret. Matching is on word boundaries, not raw…, Return the dotted paths of every secret-looking key in a nested structure. (+15 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.20
-Nodes (18): RenderableType, init_(), path_(), command, Context, handle_errors, ``thumbforge db`` — database lifecycle and migration management (ADR 0004)., Print the SQLite database file path. (+10 more)
+Cohesion: 0.17
+Nodes (20): Engine, integration, Session, sessionmaker, get_engine(), Reclaim free space and truncate the WAL file., Create a SQLAlchemy engine configured for thumbforge SQLite usage., Create a thread-safe sessionmaker bound to ``engine``. (+12 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.20
-Nodes (16): Config, DatabaseError, A database operation failed (e.g. migration, lock, disk failure)., _alembic_config(), get_db_status(), get_engine(), Path, Build an Alembic configuration targeting ``db_path``. (+8 more)
+Nodes (18): RenderableType, init_(), path_(), command, Context, handle_errors, ``thumbforge db`` — database lifecycle and migration management (ADR 0004)., Print the SQLite database file path. (+10 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.26
-Nodes (13): init_db(), Ensure directory exists and upgrade DB to head. Returns: Tuple of…, Path, Unit tests for database engine, pragmas, sessions, and status helpers (ADR…, test_engine_pragmas_on_file(), test_engine_pragmas_on_memory(), test_get_db_status_nonexistent_and_initialized(), test_init_db_and_idempotence() (+5 more)
+Cohesion: 0.12
+Nodes (15): alembic_config, alembic_runtime_migration, alembic_script, Connection, ConnectionPoolEntry, contextlib, sqlalchemy_orm, sqlalchemy_pool (+7 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.15
-Nodes (11): alembic_config, alembic_runtime_migration, alembic_script, contextlib, sqlalchemy_orm, DbStatus, Database engine, session management, and migration execution (PLAN.md §3, ADR…, Apply PRAGMA statements required by ADR 0004 on every SQLite connection. (+3 more)
+Cohesion: 0.20
+Nodes (16): Config, DatabaseError, A database operation failed (e.g. migration, lock, disk failure)., _alembic_config(), get_db_status(), init_db(), Path, Build an Alembic configuration targeting ``db_path``. (+8 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.22
-Nodes (13): Engine, integration, Session, sessionmaker, Create a thread-safe sessionmaker bound to ``engine``., Transactional context manager: commits on clean exit, rolls back on error., session_factory(), session_scope() (+5 more)
-
-### Community 14 - "Community 14"
 Cohesion: 0.28
 Nodes (8): alembic, get_url(), Alembic environment configuration for thumbforge (ADR 0004)., Resolve database URL from config options or active thumbforge settings., Run migrations in 'offline' mode with SQL script output., Run migrations in 'online' mode against a live database., run_migrations_offline(), run_migrations_online()
 
+### Community 14 - "Community 14"
+Cohesion: 0.32
+Nodes (7): Path, Unit tests for database engine, pragmas, sessions, and status helpers (ADR…, test_engine_pragmas_on_file(), test_engine_pragmas_on_memory(), test_init_db_and_idempotence(), test_sqlite_url_formats_path(), thumbforge_core_enums
+
 ## Knowledge Gaps
 - **1 isolated node(s):** `thumbforge`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 242 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 248 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **28 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `root()` connect `Community 3` to `Community 0`, `Community 4`, `Community 6`?**
-  _High betweenness centrality (0.049) - this node is a cross-community bridge._
-- **Why does `SettingsError` connect `Community 0` to `Community 3`, `Community 4`, `Community 5`, `Community 6`?**
-  _High betweenness centrality (0.047) - this node is a cross-community bridge._
-- **Why does `load_settings()` connect `Community 0` to `Community 3`, `Community 14`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
+- **Why does `root()` connect `Community 3` to `Community 0`, `Community 2`, `Community 6`?**
+  _High betweenness centrality (0.048) - this node is a cross-community bridge._
+- **Why does `SettingsError` connect `Community 0` to `Community 2`, `Community 3`, `Community 5`, `Community 6`?**
+  _High betweenness centrality (0.046) - this node is a cross-community bridge._
+- **Why does `load_settings()` connect `Community 0` to `Community 3`, `Community 13`?**
+  _High betweenness centrality (0.034) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `load_settings()` (e.g. with `root()` and `SettingsError`) actually correct?**
   _`load_settings()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 4 inferred relationships involving `emit()` (e.g. with `test_json_mode_output_round_trips()` and `test_non_finite_floats_are_rejected()`) actually correct?**

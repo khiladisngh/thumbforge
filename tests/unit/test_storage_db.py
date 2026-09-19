@@ -162,5 +162,30 @@ def test_vacuum_db_success_and_missing_error(tmp_path: Path) -> None:
         vacuum_db(db_file)
 
     init_db(db_file)
+    engine = get_engine(db_file)
+    factory = session_factory(engine)
+    # Insert and delete rows to create reclaimable pages in SQLite
+    with session_scope(factory) as session:
+        for idx in range(50):
+            session.add(
+                Channel(
+                    youtube_id=f"UC_VAC_{idx}",
+                    title=f"Channel {idx}",
+                    url=f"https://youtube.com/@c{idx}",
+                    source=ChannelSource.YTDLP,
+                )
+            )
+    with session_scope(factory) as session:
+        session.query(Channel).delete()
+    engine.dispose()
+
     vacuum_db(db_file)
     assert db_file.exists()
+
+    engine = get_engine(db_file)
+    try:
+        with engine.connect() as conn:
+            freelist = conn.execute(text("PRAGMA freelist_count;")).scalar()
+            assert freelist == 0
+    finally:
+        engine.dispose()

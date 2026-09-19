@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from enum import Enum
 
 from sqlalchemy import (
     Boolean,
@@ -13,6 +14,9 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+)
+from sqlalchemy import (
+    Enum as sa_Enum,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -28,6 +32,11 @@ from thumbforge.core.ids import new_id
 def utcnow_iso() -> str:
     """Return the current UTC timestamp formatted as ISO-8601 string."""
     return datetime.now(UTC).isoformat()
+
+
+def _enum_values[E: Enum](enum_cls: type[E]) -> list[str]:
+    """Extract serialized string values from an Enum class."""
+    return [str(e.value) for e in enum_cls]
 
 
 NAMING_CONVENTION = {
@@ -61,7 +70,15 @@ class Channel(Base):
     youtube_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
     title: Mapped[str] = mapped_column(String, nullable=False)
     url: Mapped[str] = mapped_column(String, nullable=False)
-    source: Mapped[str] = mapped_column(String, nullable=False)
+    source: Mapped[ChannelSource] = mapped_column(
+        sa_Enum(
+            ChannelSource,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
     fetched_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
     updated_at: Mapped[str] = mapped_column(
@@ -210,8 +227,24 @@ class Run(Base):
     )
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
-    kind: Mapped[str] = mapped_column(String, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False)
+    kind: Mapped[RunKind] = mapped_column(
+        sa_Enum(
+            RunKind,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
+    status: Mapped[RunStatus] = mapped_column(
+        sa_Enum(
+            RunStatus,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
     template_id: Mapped[str] = mapped_column(
         String, ForeignKey("template.id", ondelete="RESTRICT"), nullable=False
     )
@@ -274,7 +307,15 @@ class Iteration(Base):
     )
     ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     idempotency_key: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    status: Mapped[str] = mapped_column(String, nullable=False)
+    status: Mapped[RunStatus] = mapped_column(
+        sa_Enum(
+            RunStatus,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
     prompt_text: Mapped[str] = mapped_column(Text, nullable=False)
     seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     raw_asset_id: Mapped[str | None] = mapped_column(
@@ -315,7 +356,15 @@ class Asset(Base):
     width: Mapped[int] = mapped_column(Integer, nullable=False)
     height: Mapped[int] = mapped_column(Integer, nullable=False)
     bytes: Mapped[int] = mapped_column(Integer, nullable=False)
-    kind: Mapped[str] = mapped_column(String, nullable=False)
+    kind: Mapped[AssetKind] = mapped_column(
+        sa_Enum(
+            AssetKind,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+    )
     compliant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     compliance_report_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)

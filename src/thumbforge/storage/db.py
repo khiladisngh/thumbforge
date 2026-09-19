@@ -5,7 +5,7 @@ from __future__ import annotations
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from alembic import command
 from alembic.config import Config
@@ -17,8 +17,10 @@ from sqlalchemy.orm import Session, sessionmaker
 from thumbforge.core.errors import DatabaseError
 
 if TYPE_CHECKING:
+    import sqlite3
     from collections.abc import Generator
 
+    from sqlalchemy.pool import ConnectionPoolEntry
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
@@ -29,7 +31,9 @@ def sqlite_url(db_path: Path) -> str:
     )
 
 
-def _set_sqlite_pragmas(dbapi_connection: Any, _connection_record: Any) -> None:
+def _set_sqlite_pragmas(
+    dbapi_connection: sqlite3.Connection, _connection_record: ConnectionPoolEntry
+) -> None:
     """Apply PRAGMA statements required by ADR 0004 on every SQLite connection."""
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL;")
@@ -137,7 +141,10 @@ def get_db_status(db_path: Path) -> DbStatus:
             context = MigrationContext.configure(conn)
             current_rev = context.get_current_revision()
     except Exception as exc:
-        raise DatabaseError(f"Failed to inspect database at {db_path}: {exc}") from exc
+        raise DatabaseError(
+            f"Failed to inspect database at {db_path}: {exc}",
+            hint="verify database file permissions and disk health",
+        ) from exc
     finally:
         engine.dispose()
 
@@ -183,7 +190,10 @@ def upgrade_db(db_path: Path, revision: str = "head") -> str:
     try:
         command.upgrade(cfg, revision)
     except Exception as exc:
-        raise DatabaseError(f"Database migration failed: {exc}") from exc
+        raise DatabaseError(
+            f"Database migration failed: {exc}",
+            hint="check database locks and migration script syntax",
+        ) from exc
     status = get_db_status(db_path)
     return status.current_revision or ""
 
@@ -201,6 +211,9 @@ def vacuum_db(db_path: Path) -> None:
             conn.execute(text("VACUUM;"))
             conn.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
     except Exception as exc:
-        raise DatabaseError(f"Failed to vacuum database: {exc}") from exc
+        raise DatabaseError(
+            f"Failed to vacuum database: {exc}",
+            hint="ensure no other processes are actively holding database locks",
+        ) from exc
     finally:
         engine.dispose()
