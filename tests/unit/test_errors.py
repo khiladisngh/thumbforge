@@ -6,9 +6,11 @@ import json
 
 import pytest
 import typer
+from rich.console import Console
 from typer.testing import CliRunner
 
 from thumbforge.cli._errors import handle_errors
+from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import (
     ComplianceError,
     ExitCode,
@@ -78,6 +80,27 @@ def test_keyboard_interrupt_exits_130() -> None:
     assert runner.invoke(app, []).exit_code == int(ExitCode.INTERRUPTED)
 
 
+def test_keyboard_interrupt_in_json_mode_emits_one_line_on_stderr() -> None:
+    """Ctrl-C during a batch must still leave machine mode with parseable output."""
+    app = typer.Typer()
+
+    @app.callback()
+    def root(ctx: typer.Context) -> None:
+        ctx.obj = AppContext(console=Console(), json_mode=True)
+
+    @app.command()
+    @handle_errors
+    def boom(ctx: typer.Context) -> None:
+        raise KeyboardInterrupt
+
+    result = CliRunner().invoke(app, ["boom"])
+    assert result.exit_code == int(ExitCode.INTERRUPTED)
+    assert result.stdout == ""
+    lines = [line for line in result.stderr.splitlines() if line.strip()]
+    assert len(lines) == 1, f"diagnostic was split across lines: {lines!r}"
+    assert json.loads(lines[0]) == {"error": "interrupted", "exit_code": 130}
+
+
 def test_unexpected_exception_is_not_swallowed() -> None:
     app = typer.Typer()
 
@@ -91,31 +114,35 @@ def test_unexpected_exception_is_not_swallowed() -> None:
     assert isinstance(result.exception, ValueError)
 
 
-def test_json_mode_emits_machine_readable_diagnostic() -> None:
-    from thumbforge.cli._render import AppContext
-
+def test_json_mode_emits_one_parseable_line_on_stderr_and_nothing_on_stdout() -> None:
+    """Machine mode contract: stdout carries command output, stderr carries the diagnostic."""
     app = typer.Typer()
 
     @app.callback()
     def root(ctx: typer.Context) -> None:
-        from rich.console import Console
-
         ctx.obj = AppContext(console=Console(), json_mode=True)
 
     @app.command()
     @handle_errors
     def boom(ctx: typer.Context) -> None:
-        raise ComplianceError("image is 4:3", hint="crop to 16:9")
+        # Long enough that Rich would have soft-wrapped it across lines.
+        raise ComplianceError(
+            "image is 4:3 but 16:9 is required; " + "and this message keeps going " * 6,
+            hint="crop to 16:9",
+        )
 
-    result = runner.invoke(app, ["boom"])
+    separated = CliRunner()
+    result = separated.invoke(app, ["boom"])
     assert result.exit_code == 5
-    payload = json.loads(result.output)
-    assert payload == {
-        "error": "compliance",
-        "message": "image is 4:3",
-        "exit_code": 5,
-        "hint": "crop to 16:9",
-    }
+    assert result.stdout == ""
+
+    lines = [line for line in result.stderr.splitlines() if line.strip()]
+    assert len(lines) == 1, f"diagnostic was split across lines: {lines!r}"
+    payload = json.loads(lines[0])
+    assert payload["error"] == "compliance"
+    assert payload["exit_code"] == 5
+    assert payload["hint"] == "crop to 16:9"
+    assert payload["message"].startswith("image is 4:3 but 16:9 is required;")
 
 
 def test_only_transient_and_timeout_are_retryable() -> None:

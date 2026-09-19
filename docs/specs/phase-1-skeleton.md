@@ -106,6 +106,28 @@ Copied from `PLAN.md` §7.3:
 - Rich progress bars and tables go to **stdout**; logs go to **stderr**. They never interleave.
 - Provider subprocess stdout/stderr are captured per iteration to `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
 
+Stream contract in `--json` mode, enforced by `cli/_errors.py`. Verify with a command that
+fails, for example a missing config path:
+
+```
+$ thumbforge --json --config /nonexistent/config.toml config show > out.json 2> err.jsonl; echo $?
+2
+$ wc -l < out.json          # stdout carries command output only; nothing on failure
+0
+$ wc -l < err.jsonl         # exactly one physical line, however long the message
+1
+$ jq -c . < err.jsonl
+{"error":"settings","message":"...","exit_code":2,"hint":"..."}
+```
+
+- **stdout** carries command output only: exactly one JSON document per successful invocation, nothing when the command fails.
+- **stderr** carries the diagnostic: one line of JSON with `error`, `message`, `exit_code`, plus `hint` when present. `KeyboardInterrupt` yields `{"error": "interrupted", "exit_code": 130}` and exit `130`.
+
+> Implementation note, not an acceptance criterion: diagnostics are written with
+> `sys.stderr.write(json.dumps(...) + "\n")` rather than `Console.print_json`, because the
+> latter pretty-prints and soft-wraps at terminal width, which would split a long message
+> across lines and break the one-line guarantee above.
+
 Level mapping from global flags: default `WARNING` on stderr (file handler always at `DEBUG`), `-v` → `INFO`, `-vv` → `DEBUG`, `--quiet` → `ERROR`. `[logging] level` sets the default when no flag is given. `--no-color` sets `ConsoleRenderer(colors=False)`.
 
 ### Database (`storage/db.py`, `storage/migrations/`)
@@ -188,7 +210,7 @@ Exit codes (`PLAN.md` §5.1):
 | `6`   | partial batch — some items failed; run is resumable             |
 | `130` | interrupted (SIGINT)                                            |
 
-`cli/_errors.py` wraps every command: catches `ThumbforgeError`, prints `code: message` and `hint` to stderr (JSON object when `--json`), exits with `exit_code`. Anything else is logged with traceback and exits `1`. Implementation: a single decorator `@handle_errors` applied by `cli/app.py` to every registered command callback, plus a `KeyboardInterrupt` branch that exits `130`. JSON error shape: `{"error": {"code": "...", "message": "...", "hint": "..." | null, "exit_code": N}}`.
+`cli/_errors.py` wraps every command: catches `ThumbforgeError`, prints `code: message` and `hint` to stderr (one line of JSON when `--json`), exits with `exit_code`. Anything else is logged with traceback and exits `1`. Implementation: a single decorator `@handle_errors` applied by `cli/app.py` to every registered command callback, plus a `KeyboardInterrupt` branch that exits `130`. The JSON error shape is flat, as specified in the stream contract above: `{"error": "<code>", "message": "...", "exit_code": N}` plus `"hint"` when the error carries one. It is deliberately not nested under an `error` object — one shape, defined in one place.
 
 ### Root app (`cli/app.py`)
 

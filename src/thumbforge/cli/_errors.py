@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import functools
 import json
+import sys
 from collections.abc import Callable, Mapping
 
 import typer
@@ -32,15 +33,12 @@ def _app_context(args: tuple[object, ...], kwargs: Mapping[str, object]) -> AppC
     return None
 
 
-def _stderr(app_ctx: AppContext | None) -> tuple[Console, bool]:
-    """Return the stderr console and whether the invocation wants JSON diagnostics."""
-    json_mode = bool(app_ctx is not None and app_ctx.json_mode)
-    return Console(stderr=True, no_color=json_mode, highlight=False), json_mode
+def _is_json_mode(app_ctx: AppContext | None) -> bool:
+    return app_ctx is not None and app_ctx.json_mode
 
 
 def _report(app_ctx: AppContext | None, error: ThumbforgeError) -> None:
-    console, json_mode = _stderr(app_ctx)
-    if json_mode:
+    if _is_json_mode(app_ctx):
         payload: dict[str, str | int] = {
             "error": error.code,
             "message": error.message,
@@ -48,8 +46,13 @@ def _report(app_ctx: AppContext | None, error: ThumbforgeError) -> None:
         }
         if error.hint:
             payload["hint"] = error.hint
-        console.print_json(json.dumps(payload))
+        # Written directly rather than through Rich: `Console.print_json` pretty-prints and
+        # soft-wraps at terminal width, which can split a long message across lines and break
+        # whatever is parsing it.
+        sys.stderr.write(json.dumps(payload) + "\n")
+        sys.stderr.flush()
         return
+    console = Console(stderr=True, highlight=False)
     console.print(f"[bold red]{error.code}[/]: {error.message}")
     if error.hint:
         console.print(f"[dim]hint:[/] {error.hint}")
@@ -71,8 +74,11 @@ def handle_errors[**P, R](func: Callable[P, R]) -> Callable[P, R]:
             _report(app_ctx, error)
             raise typer.Exit(int(error.exit_code)) from error
         except KeyboardInterrupt as error:
-            console, _ = _stderr(app_ctx)
-            console.print("[yellow]interrupted[/]")
+            if _is_json_mode(app_ctx):
+                sys.stderr.write(json.dumps({"error": "interrupted", "exit_code": 130}) + "\n")
+                sys.stderr.flush()
+            else:
+                Console(stderr=True, highlight=False).print("[yellow]interrupted[/]")
             raise typer.Exit(int(ExitCode.INTERRUPTED)) from error
 
     return wrapper
