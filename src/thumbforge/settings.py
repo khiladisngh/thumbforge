@@ -11,6 +11,8 @@ being used and is sitting in plaintext.
 
 from __future__ import annotations
 
+import os
+import tempfile
 import tomllib
 from collections.abc import Mapping
 from pathlib import Path
@@ -106,8 +108,31 @@ class LoggingSettings(BaseModel):
     format: Literal["console", "json"] = "console"
 
 
+class ConfigSchema(BaseModel):
+    """The shape of ``config.toml``, with no environment involvement.
+
+    Kept separate from :class:`Settings` so a file can be validated on its own. Validating
+    through ``Settings`` would overlay ``THUMBFORGE_*`` values, letting an environment variable
+    mask an invalid value in the file — which would then be written to disk and fail later,
+    once that variable is gone.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    general: GeneralSettings = Field(default_factory=GeneralSettings)
+    output: OutputSettings = Field(default_factory=OutputSettings)
+    batch: BatchSettings = Field(default_factory=BatchSettings)
+    providers: ProviderSettings = Field(default_factory=ProviderSettings)
+    logging: LoggingSettings = Field(default_factory=LoggingSettings)
+
+
 class Settings(BaseSettings):
-    """Effective configuration for one invocation."""
+    """Effective configuration for one invocation: defaults, then file, then environment.
+
+    The sections are redeclared rather than inherited from :class:`ConfigSchema`: pydantic
+    requires a different ``model_config`` here (a ``SettingsConfigDict`` carrying the env
+    prefix), and inheriting one while overriding the other is an incompatible override.
+    """
 
     model_config = SettingsConfigDict(
         env_prefix="THUMBFORGE_",
@@ -235,9 +260,41 @@ def _format_validation_error(error: ValidationError) -> str:
     return "; ".join(parts)
 
 
+def _atomic_write(path: Path, payload: bytes) -> None:
+    """Replace ``path`` atomically: write a sibling temp file, fsync, then rename.
+
+    A direct write leaves a truncated file visible if the process dies mid-write, and a
+    concurrent reader can observe a partial document. ``os.replace`` is atomic on POSIX and
+    Windows when source and destination share a directory.
+    """
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle, temp_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    temp_path = Path(temp_name)
+    try:
+        with os.fdopen(handle, "wb") as stream:
+            stream.write(payload)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temp_path, path)
+    except BaseException:
+        temp_path.unlink(missing_ok=True)
+        raise
+
+
+def write_default_config(config_path: Path, *, force: bool = False) -> Path:
+    """Write the commented default configuration, refusing to clobber unless ``force``."""
+    if config_path.exists() and not force:
+        msg = f"{config_path} already exists"
+        raise SettingsError(msg, hint="pass --force to overwrite it")
+    _atomic_write(config_path, default_config_toml().encode("utf-8"))
+    return config_path
+
+
 def default_config_toml() -> str:
     """Render the default configuration as commented TOML for ``config init``."""
-    defaults = Settings()
+    # ConfigSchema, not Settings: `Settings()` would read THUMBFORGE_* and bake the current
+    # shell's overrides into the file as if they were defaults.
+    defaults = ConfigSchema()
     return f"""\
 # thumbforge configuration
 # Every value below is a default; delete a line to keep following the default.
@@ -313,15 +370,17 @@ def set_values(config_path: Path, assignments: Mapping[str, str]) -> dict[str, o
 
     _reject_secrets(data, config_path)
     try:
-        Settings.from_sources(data)
+        # ConfigSchema, not Settings: the file must stand on its own, or a THUMBFORGE_*
+        # override could mask an invalid value and we would persist a file that breaks the
+        # next run without that variable set.
+        ConfigSchema.model_validate(data)
     except ValidationError as error:
         shown = ", ".join(f"{k}={v!r}" for k, v in assignments.items())
         msg = f"{shown} is invalid: {_format_validation_error(error)}"
         raise SettingsError(msg) from error
 
     config_path.parent.mkdir(parents=True, exist_ok=True)
-    with config_path.open("wb") as handle:
-        tomli_w.dump(data, handle)
+    _atomic_write(config_path, tomli_w.dumps(data).encode("utf-8"))
     return parsed_values
 
 

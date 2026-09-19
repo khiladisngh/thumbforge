@@ -7,7 +7,13 @@ from typing import TYPE_CHECKING
 import pytest
 
 from thumbforge.core.errors import SettingsError
-from thumbforge.settings import Settings, load_settings, set_values
+from thumbforge.settings import (
+    ConfigSchema,
+    default_config_toml,
+    load_settings,
+    set_values,
+    write_default_config,
+)
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -82,7 +88,7 @@ def test_malformed_toml_reports_the_file(tmp_path: Path) -> None:
 
 def test_non_16_9_output_is_rejected() -> None:
     with pytest.raises(ValueError, match="16:9"):
-        Settings(output={"width": 1920, "height": 1000})  # pyright: ignore[reportArgumentType]
+        ConfigSchema(output={"width": 1920, "height": 1000})  # pyright: ignore[reportArgumentType]
 
 
 def test_linked_keys_can_be_set_together(tmp_path: Path) -> None:
@@ -119,3 +125,43 @@ def test_setting_a_secret_key_is_refused(tmp_path: Path) -> None:
 def test_dotted_key_must_name_a_section(tmp_path: Path) -> None:
     with pytest.raises(SettingsError, match="dotted key"):
         set_values(tmp_path / "config.toml", {"width": "1280"})
+
+
+def test_init_defaults_ignore_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A generated config must contain defaults, not whatever the current shell exports."""
+    monkeypatch.setenv("THUMBFORGE_OUTPUT__QUALITY", "33")
+    rendered = default_config_toml()
+    assert "quality = 90" in rendered
+    assert "quality = 33" not in rendered
+
+
+def test_environment_cannot_mask_an_invalid_file_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A valid env override must not let an invalid assignment be written to disk."""
+    config = tmp_path / "config.toml"
+    monkeypatch.setenv("THUMBFORGE_OUTPUT__QUALITY", "80")
+    with pytest.raises(SettingsError):
+        set_values(config, {"output.quality": "500"})  # out of range regardless of the env
+    assert not config.exists()
+
+
+def test_write_is_atomic_and_leaves_no_temp_files(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    write_default_config(config)
+    set_values(config, {"output.quality": "75"})
+    siblings = {p.name for p in tmp_path.iterdir()}
+    assert siblings == {"config.toml"}, f"temp files left behind: {siblings}"
+
+
+def test_write_default_config_refuses_to_clobber(tmp_path: Path) -> None:
+    config = tmp_path / "config.toml"
+    write_default_config(config)
+    config.write_text("[output]\nquality = 60\n", encoding="utf-8")
+
+    with pytest.raises(SettingsError, match="already exists"):
+        write_default_config(config)
+    assert "quality = 60" in config.read_text(encoding="utf-8")
+
+    write_default_config(config, force=True)
+    assert "quality = 90" in config.read_text(encoding="utf-8")

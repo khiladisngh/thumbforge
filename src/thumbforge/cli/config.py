@@ -15,9 +15,9 @@ from thumbforge.cli._render import AppContext, JsonValue, emit, kv
 from thumbforge.core.errors import SettingsError
 from thumbforge.settings import (
     default_config_path,
-    default_config_toml,
     load_settings,
     set_values,
+    write_default_config,
 )
 
 app = typer.Typer(
@@ -49,13 +49,7 @@ def init_(
 ) -> None:
     """Write a commented configuration file with every default."""
     app_ctx = _context(ctx)
-    path = _config_path(app_ctx)
-    if path.exists() and not force:
-        msg = f"{path} already exists"
-        raise SettingsError(msg, hint="pass --force to overwrite it")
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(default_config_toml(), encoding="utf-8")
+    path = write_default_config(_config_path(app_ctx), force=force)
     emit(
         app_ctx,
         {"written": str(path)},
