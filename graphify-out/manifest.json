@@ -60,8 +60,8 @@
     "semantic_hash": "a7022e459a815cd0aa34239313bbb54c"
   },
   "src/thumbforge/core/errors.py": {
-    "mtime": 1789836847.1449454,
-    "seen": 1789836870.0775135,
+    "mtime": 1789841487.6175466,
+    "seen": 1789841692.100063,
     "ast_hash": "2d0b0c9b55f603da0a669e2b6c35e02e",
     "semantic_hash": "2d0b0c9b55f603da0a669e2b6c35e02e"
   },
@@ -72,10 +72,10 @@
     "semantic_hash": "61c605cf2f7d85831402dbb489f00e68"
   },
   "tests/unit/test_errors.py": {
-    "mtime": 1789793470.964823,
-    "seen": 1789793958.5137467,
-    "ast_hash": "20a912be54fa4fdf985c8ba1d30e102c",
-    "semantic_hash": "20a912be54fa4fdf985c8ba1d30e102c"
+    "mtime": 1789841658.8510323,
+    "seen": 1789841692.101796,
+    "ast_hash": "11da420bfb9ca8dd961b5677baf31e30",
+    "semantic_hash": "11da420bfb9ca8dd961b5677baf31e30"
   },
   "tests/unit/test_ids.py": {
     "mtime": 1789793470.964823,
@@ -138,20 +138,20 @@
     "semantic_hash": "db32c66e4d8e668e930a342d75453458"
   },
   "src/thumbforge/cli/db.py": {
-    "mtime": 1789841134.3969078,
-    "seen": 1789841204.3317988,
+    "mtime": 1789841487.6175466,
+    "seen": 1789841692.099803,
     "ast_hash": "39403e6a178477f6e4ed8b85d9be9e77",
     "semantic_hash": "39403e6a178477f6e4ed8b85d9be9e77"
   },
   "src/thumbforge/storage/__init__.py": {
-    "mtime": 1789836306.3728228,
-    "seen": 1789836870.077954,
-    "ast_hash": "c9f615e86c74c3c322164e77f4127cee",
-    "semantic_hash": "c9f615e86c74c3c322164e77f4127cee"
+    "mtime": 1789841650.264486,
+    "seen": 1789841692.1005528,
+    "ast_hash": "5cf6ee8ac1537829d2b767321a2c04ac",
+    "semantic_hash": "5cf6ee8ac1537829d2b767321a2c04ac"
   },
   "src/thumbforge/storage/db.py": {
-    "mtime": 1789841121.6463356,
-    "seen": 1789841204.3327224,
+    "mtime": 1789841487.6185472,
+    "seen": 1789841692.1005564,
     "ast_hash": "f7e1984cdfbdbb254c7e0b58d9a84796",
     "semantic_hash": "f7e1984cdfbdbb254c7e0b58d9a84796"
   },
@@ -216,15 +216,15 @@
     "semantic_hash": "4684ce467bc23ba4368ea1a25b3ab525"
   },
   "src/thumbforge/storage/assets.py": {
-    "mtime": 1789841166.3163166,
-    "seen": 1789841204.3327208,
-    "ast_hash": "0e56b1b8fa8a2b63d8adf91b0dd47f7b",
-    "semantic_hash": "0e56b1b8fa8a2b63d8adf91b0dd47f7b"
+    "mtime": 1789841650.2638757,
+    "seen": 1789841692.1005547,
+    "ast_hash": "20770e57cfda74d089fc9a7a688776c4",
+    "semantic_hash": "20770e57cfda74d089fc9a7a688776c4"
   },
   "tests/unit/test_assets.py": {
-    "mtime": 1789841162.261576,
-    "seen": 1789841204.3335202,
-    "ast_hash": "7dab3c2eb696e271c53b72040095cd79",
-    "semantic_hash": "7dab3c2eb696e271c53b72040095cd79"
+    "mtime": 1789841650.264486,
+    "seen": 1789841692.1016688,
+    "ast_hash": "f9611eae0257aafed0d6bad2fccf4eae",
+    "semantic_hash": "f9611eae0257aafed0d6bad2fccf4eae"
   }
 }

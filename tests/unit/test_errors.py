@@ -12,7 +12,9 @@ from typer.testing import CliRunner
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import (
+    AssetError,
     ComplianceError,
+    DatabaseError,
     ExitCode,
     NotFoundError,
     PartialBatchError,
@@ -37,6 +39,8 @@ CASES = [
     (ComplianceError, 5),
     (PartialBatchError, 6),
     (SourceError, 1),
+    (DatabaseError, 1),
+    (AssetError, 1),
 ]
 
 
