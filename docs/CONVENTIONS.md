@@ -36,35 +36,43 @@ Regenerate after any structural source change and commit `graphify-out/` (see `A
 graphify extract . --code-only && graphify cluster-only . --no-label
 ```
 
-CI runs an advisory drift check (`graphify drift (advisory)`, `continue-on-error`) that re-extracts
-and compares node/edge **sets** — never a byte diff, since `graph.json` embeds `built_at_commit`.
-Reproduce it locally by diffing a copy of the committed graph against a fresh extract; use the
-ignored `.drift-` prefix for the scratch copy:
+CI runs an advisory drift check (`graphify drift (advisory)`, `continue-on-error`, not one of
+branch protection's required contexts) that re-extracts and compares node/edge **sets** — never a
+byte diff, since `graph.json` embeds `built_at_commit`. Reproduce it locally by diffing a copy of
+the committed graph against a fresh extract; keep scratch files under the ignored `.pytest_tmp/`:
 
 ```
-cp graphify-out/graph.json .drift-committed.json
+cp graphify-out/graph.json .pytest_tmp/committed-graph.json
 graphify extract . --code-only
-uv run python scripts/check_graph_drift.py .drift-committed.json graphify-out/graph.json
+uv run python scripts/check_graph_drift.py .pytest_tmp/committed-graph.json graphify-out/graph.json
 ```
-
-Both CI and the recipe above extract **incrementally on top of the committed `graphify-out/`**,
-which is the intended semantics: the question is whether the author regenerated after their change,
-not what a clean-room build would produce. Deleting `graphify-out/cache/` does not affect this —
-the incremental state lives in `graphify-out/.graphify_analysis.json` and `manifest.json`.
-
-Do **not** `rm -rf graphify-out` to force a clean-room extract and compare that: a from-scratch
-build diverges materially from the incrementally maintained one (measured on `1c279a3`:
-612 nodes/1179 edges committed versus 577/1282 from scratch), so such a check could never pass
-while the graph is maintained incrementally.
-
-Incremental extraction is also mildly non-deterministic across machines: local and CI can qualify
-the same symbol differently (`references parametrize` versus `references <module>_parametrize`)
-with node and edge counts identical. That is id-resolution noise, not a structural change; the
-check is advisory and is not one of branch protection's required contexts, and a later commit's
-extract normally clears it.
 
 Regenerate as the **last** step before `git add`, after formatters have run — otherwise their edits
 shift line spans and reintroduce drift.
+
+### Rebuild from scratch when counts diverge
+
+`graphify extract` is incremental and **never prunes symbols deleted from source**, so the
+committed graph accumulates staleness that neither the incremental extract nor the CI drift check
+can see — the check compares incrementally on top of whatever is already committed, so a phantom
+present in both sides cancels out. A clean rebuild is the ground truth:
+
+```
+rm -rf graphify-out
+graphify extract . --code-only && graphify cluster-only . --no-label
+```
+
+Measured at `3ff0f30`, the incremental graph had drifted to 612 nodes/1179 edges against 577/1282
+from scratch. The clean build has *fewer* nodes but *more* edges, and is strictly more accurate: it
+had dropped a phantom node for the `AssetStoreError` alias deleted two PRs earlier, added the
+`test_ids.py`/`test_render.py` module nodes the stale graph was missing, and resolved 11 unresolved
+import placeholders (`imports_from thumbforge_cli_errors`) into real cross-module edges
+(`imports src_thumbforge_cli_errors_handle_errors`).
+
+Because `AGENTS.md` points every agent at `GRAPH_REPORT.md` first, a stale graph misleads later
+work. Rebuild clean after deleting or renaming exported symbols, and whenever node/edge counts
+diverge noticeably from the committed graph. Note that a clean rebuild is a large diff and shifts
+ids, so give it its own PR rather than burying it in a feature change.
 
 ## Documentation
 
