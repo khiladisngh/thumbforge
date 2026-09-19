@@ -2479,7 +2479,7 @@
       "file_type": "code",
       "norm_label": ".path_for()",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L150"
+      "source_location": "L156"
     },
     {
       "id": "src_thumbforge_storage_assets_assetstore_put",
@@ -2503,7 +2503,7 @@
       "file_type": "code",
       "norm_label": ".verify()",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L154"
+      "source_location": "L160"
     },
     {
       "id": "tests_unit_test_cli_db_test_db_init_creates_database_and_is_idempotent",
@@ -5758,7 +5758,7 @@
       "source_location": "L33"
     },
     {
-      "id": "src_thumbforge_storage_assets_rationale_151",
+      "id": "src_thumbforge_storage_assets_rationale_157",
       "label": "Return the absolute path on disk for ``asset``.",
       "_origin": "ast",
       "community": 7,
@@ -5766,10 +5766,10 @@
       "file_type": "rationale",
       "norm_label": "return the absolute path on disk for ``asset``.",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L151"
+      "source_location": "L157"
     },
     {
-      "id": "src_thumbforge_storage_assets_rationale_155",
+      "id": "src_thumbforge_storage_assets_rationale_161",
       "label": "Re-hash the file on disk and report whether it matches ``asset.sha256``.",
       "_origin": "ast",
       "community": 7,
@@ -5777,7 +5777,7 @@
       "file_type": "rationale",
       "norm_label": "re-hash the file on disk and report whether it matches ``asset.sha256``.",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L155"
+      "source_location": "L161"
     },
     {
       "id": "src_thumbforge_storage_assets_rationale_44",
@@ -7477,7 +7477,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L156",
+      "source_location": "L162",
       "weight": 1.0
     },
     {
@@ -12865,7 +12865,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L150",
+      "source_location": "L156",
       "weight": 1.0
     },
     {
@@ -12901,7 +12901,7 @@
       "confidence_score": 1.0,
       "context": "parameter_type",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L154",
+      "source_location": "L160",
       "weight": 1.0
     },
     {
@@ -13957,7 +13957,7 @@
       "confidence_score": 1.0,
       "context": "return_type",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L150",
+      "source_location": "L156",
       "weight": 1.0
     },
     {
@@ -17055,7 +17055,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L150",
+      "source_location": "L156",
       "weight": 1.0
     },
     {
@@ -17066,7 +17066,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L154",
+      "source_location": "L160",
       "weight": 1.0
     },
     {
@@ -17983,25 +17983,25 @@
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_assets_rationale_151",
+      "source": "src_thumbforge_storage_assets_rationale_157",
       "target": "src_thumbforge_storage_assets_assetstore_path_for",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L151",
+      "source_location": "L157",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_storage_assets_rationale_155",
+      "source": "src_thumbforge_storage_assets_rationale_161",
       "target": "src_thumbforge_storage_assets_assetstore_verify",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L155",
+      "source_location": "L161",
       "weight": 1.0
     },
     {
@@ -19023,7 +19023,7 @@
       "confidence_score": 0.85,
       "context": "call",
       "source_file": "src/thumbforge/storage/assets.py",
-      "source_location": "L159",
+      "source_location": "L165",
       "weight": 1.0
     },
     {
@@ -19907,5 +19907,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "17c47f4d6b4c9eaea0b50394f047eb6595205dfb"
+  "built_at_commit": "8a73f2168203cb47a20766b239d4ff138460efd7"
 }

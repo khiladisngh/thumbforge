@@ -216,10 +216,10 @@
     "semantic_hash": "4684ce467bc23ba4368ea1a25b3ab525"
   },
   "src/thumbforge/storage/assets.py": {
-    "mtime": 1789837817.5749867,
-    "seen": 1789837847.6070464,
-    "ast_hash": "9510d0a9ac922fd5b1924efefe025a39",
-    "semantic_hash": "9510d0a9ac922fd5b1924efefe025a39"
+    "mtime": 1789838029.261171,
+    "seen": 1789838052.8693366,
+    "ast_hash": "b64de2093b490bca30f7c3b6ac056b3c",
+    "semantic_hash": "b64de2093b490bca30f7c3b6ac056b3c"
   },
   "tests/unit/test_assets.py": {
     "mtime": 1789837410.0109394,

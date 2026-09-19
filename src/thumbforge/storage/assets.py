@@ -107,11 +107,17 @@ class AssetStore:
                 created_target = False
                 tmp_path.unlink(missing_ok=True)
             except OSError:
-                # Fallback for filesystems where hard links are unsupported
-                if not target_path.exists():
-                    tmp_path.replace(target_path)
+                # Fallback for filesystems where hard links are unsupported:
+                # atomic exclusive creation (O_CREAT | O_EXCL) never overwrites existing target
+                try:
+                    with tmp_path.open("rb") as src_f, target_path.open("xb") as dst_f:
+                        shutil.copyfileobj(src_f, dst_f)
+                        dst_f.flush()
+                        os.fsync(dst_f.fileno())
                     created_target = True
-                else:
+                except FileExistsError:
+                    created_target = False
+                finally:
                     tmp_path.unlink(missing_ok=True)
             rel_path = target_path.relative_to(self.data_dir).as_posix()
 
