@@ -1,6 +1,6 @@
 # Phase 1 — Skeleton
 
-Status: Proposed
+Status: Implemented (P1.1–P1.6)
 ROADMAP tasks: P1.1, P1.2, P1.3, P1.4, P1.5, P1.6
 ADRs: `docs/adr/0002-typer-rich-cli.md`, `docs/adr/0003-settings-toml-platformdirs.md`, `docs/adr/0004-sqlite-sqlalchemy-alembic.md`, `docs/adr/0011-content-addressed-assets.md`, `docs/adr/0014-secrets-env-keyring.md`, `docs/adr/0015-structlog-logging.md`
 
@@ -10,12 +10,12 @@ Phase 1 turns the empty package into a runnable CLI with every cross-cutting ser
 
 - **P1.1 settings** — `src/thumbforge/settings.py`, `cli/config.py` (`config show|path|set|init`).
 - **P1.2 logging** — `src/thumbforge/logging.py`.
-- **P1.3 database** — `storage/db.py`, `storage/models.py` (all tables from `PLAN.md` §3), `storage/migrations/`, `cli/db.py` (`db init|upgrade|status|path|vacuum`).
-- **P1.4 asset store** — `storage/assets.py`.
+- **P1.3 database** — `src/thumbforge/core/enums.py` (domain enums), `storage/db.py` (engine, sessions, WAL, migrations), `storage/models.py` (all tables from `PLAN.md` §3), `storage/migrations/`, `cli/db.py` (`db init|upgrade|status|path|vacuum`).
+- **P1.4 asset store** — `storage/assets.py` (content-addressed `AssetStore`, Pillow MIME sniffing, verify drift check).
 - **P1.5 errors + root app** — `core/errors.py`, `cli/_errors.py`, `cli/app.py`, `cli/_render.py`.
 - **P1.6 import-linter** — `[tool.importlinter]` contracts in `pyproject.toml`; CI step `uv run lint-imports`.
 
-Runtime dependencies added: `typer`, `rich`, `pydantic`, `pydantic-settings`, `platformdirs`, `sqlalchemy`, `alembic`, `structlog`, `tenacity`, `keyring`, `python-ulid`.
+Runtime dependencies added: `typer`, `rich`, `pydantic`, `pydantic-settings`, `platformdirs`, `sqlalchemy`, `alembic`, `structlog`, `tenacity`, `keyring`, `python-ulid`, `pillow`.
 
 ## Non-goals
 
@@ -201,7 +201,7 @@ ThumbforgeError(code: str, exit_code: int, hint: str | None)
 └── TemplateError            exit 2
 ```
 
-Plus `SettingsError` (exit 2) and `ProviderRegistryError` (exit 1), both defined in Phase 1 so later phases only raise them.
+Plus `SettingsError` (exit 2), `DatabaseError` (exit 1), and `ProviderRegistryError` (exit 1), all defined in Phase 1 so later phases only raise them.
 
 Exit codes (`PLAN.md` §5.1):
 
@@ -275,7 +275,7 @@ CI step added to `ci.yml` after `pyright`: `uv run lint-imports`. Pre-commit hoo
 - `thumbforge db init` creates the DB with `alembic current` = head; `thumbforge db status` prints `current == head`, `journal_mode = wal`.
 - `thumbforge --json config show` prints a single JSON object parseable by `json.loads`, containing keys `general`, `output`, `batch`, `providers`, `logging` with the defaults above.
 - `thumbforge nope` exits `2` with Typer's usage error.
-- `thumbforge -vv db status` emits console-rendered lines on stderr containing `level`, `timestamp` and `event`.
+- `thumbforge -vv db status` emits console-rendered lines on stderr containing the log event, ISO timestamp, and level.
 - `thumbforge --json db status 2>err.jsonl` yields one parseable JSON object per line in `err.jsonl`, each with `run_id` absent and `event` present.
 - A TOML with `api_key = "x"` under any table makes `thumbforge config show` exit `2` and print the keyring/env hint.
 - `AssetStore.put(b"...", "raw")` twice returns the same `asset.id`; the file exists at `<data_dir>/assets/<sha256[:2]>/<sha256>.<ext>`; `<data_dir>/tmp/` is empty afterwards; `verify` returns `False` after the file is modified on disk.
