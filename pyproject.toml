@@ -18,10 +18,12 @@ classifiers = [
   "Topic :: Multimedia :: Graphics",
 ]
 dependencies = [
+  "alembic>=1.14",
   "platformdirs>=4.11.10",
   "pydantic>=2.13.5",
   "pydantic-settings>=2.15.0",
   "rich>=15.0.0",
+  "sqlalchemy>=2.0",
   "structlog>=26.1.0",
   "tomli-w>=1.2.0",
   "typer",
@@ -105,7 +107,22 @@ root_package = "thumbforge"
 # in the PRs that create storage/, providers/, sources/, templates/ and imaging/; import-linter
 # errors on a module that does not exist.
 [[tool.importlinter.contracts]]
-name = "core does not import cli"
+name = "nothing imports cli"
+type = "forbidden"
+source_modules = [
+  "thumbforge.core",
+  "thumbforge.storage",
+  "thumbforge.settings",
+  "thumbforge.logging",
+]
+forbidden_modules = ["thumbforge.cli"]
+
+[[tool.importlinter.contracts]]
+name = "core is pure"
 type = "forbidden"
 source_modules = ["thumbforge.core"]
-forbidden_modules = ["thumbforge.cli"]
+forbidden_modules = [
+  "thumbforge.storage",
+  "thumbforge.cli",
+  "thumbforge.settings",
+]
