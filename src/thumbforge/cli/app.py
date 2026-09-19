@@ -9,6 +9,7 @@ meaning; see docs/ROADMAP.md.
 from __future__ import annotations
 
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Annotated
 
@@ -17,7 +18,10 @@ from rich.console import Console
 
 from thumbforge import __version__
 from thumbforge.cli import config as config_cli
+from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
+from thumbforge.logging import configure_logging, get_logger, level_from_flags
+from thumbforge.settings import load_settings
 
 app = typer.Typer(
     name="thumbforge",
@@ -35,6 +39,7 @@ def _version_callback(value: bool) -> None:
 
 
 @app.callback()
+@handle_errors
 def root(
     ctx: typer.Context,
     config: Annotated[
@@ -49,6 +54,11 @@ def root(
         bool,
         typer.Option("--json", help="Emit a single JSON document instead of Rich output."),
     ] = False,
+    verbose: Annotated[
+        int,
+        typer.Option("-v", "--verbose", count=True, help="-v for INFO, -vv for DEBUG."),
+    ] = 0,
+    quiet: Annotated[bool, typer.Option("--quiet", help="Only log errors.")] = False,
     no_color: Annotated[bool, typer.Option("--no-color", help="Disable colour output.")] = False,
     version: Annotated[
         bool,
@@ -66,11 +76,37 @@ def root(
         no_color=no_color or json_mode,
         highlight=not json_mode,
     )
+    # Set the context before anything that can fail: handle_errors reads it to decide between
+    # JSON and Rich diagnostics, and a broken config.toml must still report as JSON under
+    # --json.
     ctx.obj = AppContext(
         console=console,
         json_mode=json_mode,
         config_path=config,
         data_dir=data_dir,
+    )
+
+    settings = load_settings(config_path=config, data_dir=data_dir)
+    configure_logging(
+        level=level_from_flags(
+            verbose=verbose,
+            quiet=quiet,
+            configured=settings.logging.level,
+        ),
+        # --json implies JSON logs: a machine reading stdout should not have to parse
+        # human-formatted diagnostics on stderr.
+        fmt="json" if json_mode else settings.logging.format,
+        log_file=settings.log_file,
+        color=not (no_color or json_mode),
+    )
+    ctx.obj = replace(ctx.obj, settings=settings)
+
+    get_logger(__name__).debug(
+        "cli configured",
+        config=str(config) if config else None,
+        data_dir=str(settings.general.data_dir),
+        command=ctx.invoked_subcommand,
+        version=__version__,
     )
 
 
