@@ -81,9 +81,9 @@ def panel(title: str, body: str) -> Panel:
 
 def kv(mapping: Mapping[str, object], *, title: str | None = None) -> Table:
     """Build a two-column key/value table, the default shape for ``show``-style commands."""
-    rendered = Table(title=title, box=None, show_header=False)
-    rendered.add_column(style="bold cyan")
-    rendered.add_column()
+    rendered = Table(title=title, box=None, show_header=False, pad_edge=False)
+    rendered.add_column(style="bold cyan", no_wrap=True)
+    rendered.add_column(overflow="fold")
     for key, value in mapping.items():
         rendered.add_row(key, "" if value is None else str(value))
     return rendered
@@ -94,6 +94,7 @@ def emit(
     data: JsonValue,
     *,
     render: Callable[[], RenderableType] | None = None,
+    soft_wrap: bool = False,
 ) -> None:
     """Print ``data`` as JSON in ``--json`` mode, otherwise print ``render()``.
 
@@ -107,4 +108,4 @@ def emit(
     if ctx.json_mode:
         ctx.console.print_json(json.dumps(data, allow_nan=False))
         return
-    ctx.console.print(render() if render is not None else data)
+    ctx.console.print(render() if render is not None else data, soft_wrap=soft_wrap)

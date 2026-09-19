@@ -113,6 +113,7 @@ def path_(ctx: typer.Context) -> None:
         app_ctx,
         {"path": str(db_path)},
         render=lambda: str(db_path),
+        soft_wrap=True,
     )
 
 

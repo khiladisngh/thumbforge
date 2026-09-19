@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises:
-Create Date: 2026-09-19 12:34:18.989102
+Create Date: 2026-09-19 12:54:50.876334
 
 """
 
@@ -15,6 +15,7 @@ from alembic import op
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
 # revision identifiers, used by Alembic.
 revision: str = "0001"
 down_revision: str | Sequence[str] | None = None
@@ -40,10 +41,10 @@ def upgrade() -> None:
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
         sa.CheckConstraint(
-            "kind IN ('raw', 'final', 'reference', 'preview')", name="ck_asset_kind"
+            "kind IN ('raw', 'final', 'reference', 'preview')", name=op.f("ck_asset_ck_asset_kind")
         ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("sha256"),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_asset")),
+        sa.UniqueConstraint("sha256", name=op.f("uq_asset_sha256")),
     )
     op.create_table(
         "channel",
@@ -55,9 +56,9 @@ def upgrade() -> None:
         sa.Column("fetched_at", sa.String(), nullable=False),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.CheckConstraint("source IN ('ytdlp', 'api')", name="ck_channel_source"),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("youtube_id"),
+        sa.CheckConstraint("source IN ('ytdlp', 'api')", name=op.f("ck_channel_ck_channel_source")),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_channel")),
+        sa.UniqueConstraint("youtube_id", name=op.f("uq_channel_youtube_id")),
     )
     op.create_table(
         "provider_profile",
@@ -68,8 +69,8 @@ def upgrade() -> None:
         sa.Column("params_json", sa.Text(), nullable=False),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("name"),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_provider_profile")),
+        sa.UniqueConstraint("name", name=op.f("uq_provider_profile_name")),
     )
     op.create_table(
         "template",
@@ -82,7 +83,7 @@ def upgrade() -> None:
         sa.Column("is_builtin", sa.Boolean(), nullable=False),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_template")),
         sa.UniqueConstraint("name", "version", name="uq_template_name_version"),
     )
     op.create_table(
@@ -97,9 +98,14 @@ def upgrade() -> None:
         sa.Column("fetched_at", sa.String(), nullable=False),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(["channel_id"], ["channel.id"], ondelete="RESTRICT"),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("youtube_id"),
+        sa.ForeignKeyConstraint(
+            ["channel_id"],
+            ["channel.id"],
+            name=op.f("fk_playlist_channel_id_channel"),
+            ondelete="RESTRICT",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_playlist")),
+        sa.UniqueConstraint("youtube_id", name=op.f("uq_playlist_youtube_id")),
     )
     op.create_table(
         "video",
@@ -115,9 +121,14 @@ def upgrade() -> None:
         sa.Column("fetched_at", sa.String(), nullable=False),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(["channel_id"], ["channel.id"], ondelete="RESTRICT"),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("youtube_id"),
+        sa.ForeignKeyConstraint(
+            ["channel_id"],
+            ["channel.id"],
+            name=op.f("fk_video_channel_id_channel"),
+            ondelete="RESTRICT",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_video")),
+        sa.UniqueConstraint("youtube_id", name=op.f("uq_video_youtube_id")),
     )
     op.create_table(
         "playlist_item",
@@ -129,9 +140,19 @@ def upgrade() -> None:
         sa.Column("part_label", sa.String(), nullable=True),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.ForeignKeyConstraint(["playlist_id"], ["playlist.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["video_id"], ["video.id"], ondelete="RESTRICT"),
-        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(
+            ["playlist_id"],
+            ["playlist.id"],
+            name=op.f("fk_playlist_item_playlist_id_playlist"),
+            ondelete="CASCADE",
+        ),
+        sa.ForeignKeyConstraint(
+            ["video_id"],
+            ["video.id"],
+            name=op.f("fk_playlist_item_video_id_video"),
+            ondelete="RESTRICT",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_playlist_item")),
         sa.UniqueConstraint("playlist_id", "position", name="uq_playlist_item_playlist_position"),
         sa.UniqueConstraint("playlist_id", "video_id", name="uq_playlist_item_playlist_video"),
     )
@@ -152,20 +173,45 @@ def upgrade() -> None:
         sa.Column("error_text", sa.Text(), nullable=True),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.CheckConstraint("kind IN ('hero', 'iterate', 'batch')", name="ck_run_kind"),
+        sa.CheckConstraint("kind IN ('hero', 'iterate', 'batch')", name=op.f("ck_run_ck_run_kind")),
         sa.CheckConstraint(
             "status IN ('pending', 'running', 'paused', 'completed', 'failed', 'cancelled')",
-            name="ck_run_status",
+            name=op.f("ck_run_ck_run_status"),
         ),
-        sa.ForeignKeyConstraint(["parent_run_id"], ["run.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["playlist_id"], ["playlist.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(
-            ["provider_profile_id"], ["provider_profile.id"], ondelete="RESTRICT"
+            ["parent_run_id"],
+            ["run.id"],
+            name=op.f("fk_run_parent_run_id_run"),
+            ondelete="RESTRICT",
         ),
-        sa.ForeignKeyConstraint(["reference_asset_id"], ["asset.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["template_id"], ["template.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["video_id"], ["video.id"], ondelete="RESTRICT"),
-        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(
+            ["playlist_id"],
+            ["playlist.id"],
+            name=op.f("fk_run_playlist_id_playlist"),
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["provider_profile_id"],
+            ["provider_profile.id"],
+            name=op.f("fk_run_provider_profile_id_provider_profile"),
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["reference_asset_id"],
+            ["asset.id"],
+            name=op.f("fk_run_reference_asset_id_asset"),
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["template_id"],
+            ["template.id"],
+            name=op.f("fk_run_template_id_template"),
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["video_id"], ["video.id"], name=op.f("fk_run_video_id_video"), ondelete="RESTRICT"
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_run")),
     )
     op.create_table(
         "iteration",
@@ -191,14 +237,31 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.String(), nullable=False),
         sa.CheckConstraint(
             "status IN ('pending', 'running', 'paused', 'completed', 'failed', 'cancelled')",
-            name="ck_iteration_status",
+            name=op.f("ck_iteration_ck_iteration_status"),
         ),
-        sa.ForeignKeyConstraint(["final_asset_id"], ["asset.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["raw_asset_id"], ["asset.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(["run_id"], ["run.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["video_id"], ["video.id"], ondelete="RESTRICT"),
-        sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("idempotency_key"),
+        sa.ForeignKeyConstraint(
+            ["final_asset_id"],
+            ["asset.id"],
+            name=op.f("fk_iteration_final_asset_id_asset"),
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["raw_asset_id"],
+            ["asset.id"],
+            name=op.f("fk_iteration_raw_asset_id_asset"),
+            ondelete="RESTRICT",
+        ),
+        sa.ForeignKeyConstraint(
+            ["run_id"], ["run.id"], name=op.f("fk_iteration_run_id_run"), ondelete="CASCADE"
+        ),
+        sa.ForeignKeyConstraint(
+            ["video_id"],
+            ["video.id"],
+            name=op.f("fk_iteration_video_id_video"),
+            ondelete="RESTRICT",
+        ),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_iteration")),
+        sa.UniqueConstraint("idempotency_key", name=op.f("uq_iteration_idempotency_key")),
     )
     # ### end Alembic commands ###
 
