@@ -180,10 +180,10 @@
     "semantic_hash": "b083e441921d66313d9b87f564710fee"
   },
   "tests/unit/test_cli_db.py": {
-    "mtime": 1789835044.510647,
-    "seen": 1789835104.8651314,
-    "ast_hash": "d5cc2e32bdd28458046082404c716166",
-    "semantic_hash": "d5cc2e32bdd28458046082404c716166"
+    "mtime": 1789835200.7897115,
+    "seen": 1789835308.775132,
+    "ast_hash": "53c2d142452274940da39122ec8bee72",
+    "semantic_hash": "53c2d142452274940da39122ec8bee72"
   },
   "tests/unit/test_migrations.py": {
     "mtime": 1789801722.3646963,
