@@ -20,8 +20,9 @@ from thumbforge import __version__
 from thumbforge.cli import config as config_cli
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
+from thumbforge.core.errors import SettingsError
 from thumbforge.logging import configure_logging, get_logger, level_from_flags
-from thumbforge.settings import load_settings
+from thumbforge.settings import Settings, load_settings
 
 app = typer.Typer(
     name="thumbforge",
@@ -86,27 +87,43 @@ def root(
         data_dir=data_dir,
     )
 
-    settings = load_settings(config_path=config, data_dir=data_dir)
+    # A broken config.toml must not block `config init --force`, which is what the parse
+    # error tells the user to run. The failure is captured here and re-raised by
+    # AppContext.require_settings(), which only the commands that read configuration call.
+    # (`config set` still needs a parseable file to merge into, but it fails through the
+    # command's own handler rather than a traceback from the callback.)
+    settings: Settings | None = None
+    settings_error: SettingsError | None = None
+    try:
+        settings = load_settings(config_path=config, data_dir=data_dir)
+    except SettingsError as error:
+        settings_error = error
+
+    # model_construct, not Settings(): if the *environment* is what is invalid, constructing
+    # normally would raise a raw ValidationError here and produce a traceback instead of the
+    # SettingsError we just captured. This needs pure defaults, no sources, no validation.
+    defaults = settings if settings is not None else Settings.model_construct()
     configure_logging(
         level=level_from_flags(
             verbose=verbose,
             quiet=quiet,
-            configured=settings.logging.level,
+            configured=defaults.logging.level,
         ),
         # --json implies JSON logs: a machine reading stdout should not have to parse
         # human-formatted diagnostics on stderr.
-        fmt="json" if json_mode else settings.logging.format,
-        log_file=settings.log_file,
+        fmt="json" if json_mode else defaults.logging.format,
+        log_file=defaults.log_file,
         color=not (no_color or json_mode),
     )
-    ctx.obj = replace(ctx.obj, settings=settings)
+    ctx.obj = replace(ctx.obj, settings=settings, settings_error=settings_error)
 
     get_logger(__name__).debug(
         "cli configured",
         config=str(config) if config else None,
-        data_dir=str(settings.general.data_dir),
+        data_dir=str(defaults.general.data_dir),
         command=ctx.invoked_subcommand,
         version=__version__,
+        config_error=str(settings_error) if settings_error else None,
     )
 
 

@@ -2,7 +2,9 @@
 
 ## Status
 
-`Accepted` — 2026-09-19
+`Superseded by [ADR 0017](0017-logging-verbosity-and-redaction.md)` — 2026-09-19
+
+The structlog decision itself stands; only the verbosity mapping and the redaction mechanism below were revised. See ADR 0017.
 
 ## Context
 

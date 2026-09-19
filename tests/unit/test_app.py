@@ -56,3 +56,29 @@ def test_broken_config_reports_rich_without_json_mode(tmp_path: Path) -> None:
     assert result.exit_code == 2
     assert "settings" in result.stderr
     assert "hint" in result.stderr
+
+
+def test_repair_commands_work_against_a_broken_config(tmp_path: Path) -> None:
+    """The hint tells users to run `config init --force`; that must actually be possible."""
+    config = tmp_path / "config.toml"
+    config.write_text("[output\nbroken\n", encoding="utf-8")
+
+    # The command the error message recommends.
+    forced = runner.invoke(app, ["--config", str(config), "config", "init", "--force"])
+    assert forced.exit_code == 0, forced.stderr
+    assert "quality = 90" in config.read_text(encoding="utf-8")
+
+    # And the file is usable again afterwards.
+    assert runner.invoke(app, ["--config", str(config), "config", "path"]).exit_code == 0
+
+
+def test_config_set_also_works_against_a_broken_config(tmp_path: Path) -> None:
+    """`config set` still needs a parseable file, but must fail cleanly rather than crash."""
+    config = tmp_path / "config.toml"
+    config.write_text("[output\nbroken\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["--config", str(config), "config", "set", "output.quality=85"])
+
+    assert result.exit_code == 2  # the file is still unparseable, reported cleanly
+    payload = result.stderr
+    assert "not valid TOML" in payload

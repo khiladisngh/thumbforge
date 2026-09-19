@@ -21,7 +21,10 @@ from typing import TYPE_CHECKING, Literal
 
 import structlog
 
+from thumbforge.core.redaction import REDACTED, is_secret_key, redact
+
 if TYPE_CHECKING:
+    from collections.abc import MutableMapping
     from pathlib import Path
 
     from structlog.stdlib import BoundLogger
@@ -32,6 +35,24 @@ LogFormat = Literal["console", "json"]
 _LOG_BYTES = 5 * 1024 * 1024
 _LOG_BACKUPS = 5
 
+
+def redact_secrets(
+    _logger: object,
+    _method: str,
+    event_dict: MutableMapping[str, object],
+) -> MutableMapping[str, object]:
+    """Replace secret-looking values anywhere in the event dict (ADR 0017).
+
+    Logs reach disk and bug reports, so a provider key must never survive to a renderer. A
+    secret is as likely to arrive nested — ``settings={"api_key": ...}`` — as at the top level,
+    so the walk is recursive. The deny-list is shared with the settings loader via
+    :mod:`thumbforge.core.redaction`.
+    """
+    for key in event_dict:
+        event_dict[key] = REDACTED if is_secret_key(key) else redact(event_dict[key])
+    return event_dict
+
+
 #: Processors applied to every event, whatever its origin, before rendering.
 _SHARED_PROCESSORS: list[structlog.typing.Processor] = [
     structlog.contextvars.merge_contextvars,
@@ -40,6 +61,7 @@ _SHARED_PROCESSORS: list[structlog.typing.Processor] = [
     structlog.processors.TimeStamper(fmt="iso", utc=True),
     structlog.processors.StackInfoRenderer(),
     structlog.processors.format_exc_info,
+    redact_secrets,
 ]
 
 

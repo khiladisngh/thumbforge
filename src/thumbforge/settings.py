@@ -24,12 +24,11 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from thumbforge.core.errors import SettingsError
+from thumbforge.core.redaction import find_secret_keys
 
 APP_NAME = "thumbforge"
 
-#: Key suffixes that indicate a secret. Matched case-insensitively against the final
-#: dotted-path segment of every value loaded from TOML.
-_SECRET_SUFFIXES = ("_key", "_token", "_secret", "_password")
+# Secret detection lives in core.redaction so settings and logging share one deny-list.
 
 _SECRET_HINT = (
     "set THUMBFORGE_PROVIDERS__<KEY>__API_KEY in the environment, "
@@ -190,21 +189,6 @@ def _deep_merge(base: dict[str, Any], override: Mapping[str, Any]) -> dict[str, 
     return base
 
 
-def _secret_keys(data: object, prefix: str = "") -> list[str]:
-    """Return the dotted paths of every secret-looking key in a nested mapping."""
-    found: list[str] = []
-    if not isinstance(data, Mapping):
-        return found
-    items = cast("Mapping[object, object]", data)
-    for raw_key, value in items.items():
-        key = str(raw_key)
-        path = f"{prefix}.{key}" if prefix else key
-        if key.lower().endswith(_SECRET_SUFFIXES):
-            found.append(path)
-        found.extend(_secret_keys(value, path))
-    return found
-
-
 def _read_toml(path: Path) -> dict[str, Any]:
     try:
         with path.open("rb") as handle:
@@ -219,7 +203,7 @@ def _read_toml(path: Path) -> dict[str, Any]:
 
 
 def _reject_secrets(data: dict[str, Any], path: Path) -> None:
-    secrets = _secret_keys(data)
+    secrets = find_secret_keys(data)
     if not secrets:
         return
     msg = f"{path} contains secret-looking keys: {', '.join(sorted(secrets))}"

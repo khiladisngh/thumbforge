@@ -20,17 +20,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture(autouse=True)
-def _reset_logging() -> object:
-    """Leave the root logger clean so tests cannot leak handlers into each other."""
-    yield
-    clear_context()
-    root = logging.getLogger()
-    for handler in list(root.handlers):
-        root.removeHandler(handler)
-        handler.close()
-
-
 @pytest.mark.parametrize(
     ("verbose", "quiet", "configured", "expected"),
     [
@@ -140,3 +129,48 @@ def test_unusable_log_file_degrades_to_console_instead_of_failing(
     # Console logging still works after the failure.
     get_logger("thumbforge.test").info("still alive")
     assert "still alive" in capsys.readouterr().err
+
+
+def test_secret_looking_fields_are_redacted(capsys: pytest.CaptureFixture[str]) -> None:
+    """Logs land on disk and in bug reports; a key must never survive to a renderer."""
+    configure_logging(level="INFO", fmt="json")
+    get_logger("thumbforge.test").info(
+        "provider call",
+        api_key="sk-live-123",
+        access_token="tok-abc",
+        client_secret="shh",
+        db_password="hunter2",
+        provider="antigravity",
+    )
+    payload = json.loads(capsys.readouterr().err.strip())
+
+    assert payload["provider"] == "antigravity"  # ordinary fields survive
+    for field in ("api_key", "access_token", "client_secret", "db_password"):
+        assert payload[field] == "***redacted***"
+    assert "sk-live-123" not in json.dumps(payload)
+
+
+def test_redaction_also_covers_bound_context(capsys: pytest.CaptureFixture[str]) -> None:
+    configure_logging(level="INFO", fmt="json")
+    bind(api_key="sk-bound")
+    get_logger("thumbforge.test").info("started")
+    payload = json.loads(capsys.readouterr().err.strip())
+    assert payload["api_key"] == "***redacted***"
+
+
+def test_redaction_reaches_nested_structures(capsys: pytest.CaptureFixture[str]) -> None:
+    """A secret is as likely to arrive inside a settings dump as at the top level."""
+    configure_logging(level="INFO", fmt="json")
+    get_logger("thumbforge.test").info(
+        "provider configured",
+        settings={"providers": {"openai": {"api_key": "sk-nested"}}, "width": 1920},
+        candidates=[{"access_token": "tok-in-list"}],
+    )
+    rendered = capsys.readouterr().err
+    payload = json.loads(rendered)
+
+    assert "sk-nested" not in rendered
+    assert "tok-in-list" not in rendered
+    assert payload["settings"]["providers"]["openai"]["api_key"] == "***redacted***"
+    assert payload["candidates"][0]["access_token"] == "***redacted***"
+    assert payload["settings"]["width"] == 1920

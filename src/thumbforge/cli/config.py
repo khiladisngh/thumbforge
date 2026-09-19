@@ -10,12 +10,11 @@ import tomli_w
 import typer
 from rich.syntax import Syntax
 
+from thumbforge import settings as settings_module
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext, JsonValue, emit, kv
 from thumbforge.core.errors import SettingsError
 from thumbforge.settings import (
-    default_config_path,
-    load_settings,
     set_values,
     write_default_config,
 )
@@ -36,7 +35,8 @@ def _context(ctx: typer.Context) -> AppContext:
 
 
 def _config_path(app_ctx: AppContext) -> Path:
-    return app_ctx.config_path or default_config_path()
+    # Resolved through the module so tests can redirect platformdirs in one place.
+    return app_ctx.config_path or settings_module.default_config_path()
 
 
 @app.command("init")
@@ -62,7 +62,7 @@ def init_(
 def show(ctx: typer.Context) -> None:
     """Print the effective configuration: defaults, overlaid by the file, then the environment."""
     app_ctx = _context(ctx)
-    settings = load_settings(config_path=app_ctx.config_path, data_dir=app_ctx.data_dir)
+    settings = app_ctx.require_settings()
     data: JsonValue = settings.model_dump(mode="json")
     emit(
         app_ctx,
@@ -81,7 +81,7 @@ def show(ctx: typer.Context) -> None:
 def path_(ctx: typer.Context) -> None:
     """Print the paths thumbforge reads and writes."""
     app_ctx = _context(ctx)
-    settings = load_settings(config_path=app_ctx.config_path, data_dir=app_ctx.data_dir)
+    settings = app_ctx.require_settings()
     paths = {
         "config": str(_config_path(app_ctx)),
         "data_dir": str(settings.general.data_dir),
