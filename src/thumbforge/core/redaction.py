@@ -7,20 +7,43 @@ is a secret for one is therefore a secret for the other.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Final, cast
 
-#: Key suffixes that mark a value as secret. Matched case-insensitively.
-SECRET_SUFFIXES: Final[tuple[str, ...]] = ("_key", "_token", "_secret", "_password")
+#: Final word of a key that marks it secret: ``api_key``, ``apiKey``, ``X-API-KEY``.
+SECRET_WORDS: Final[frozenset[str]] = frozenset(
+    {"key", "token", "secret", "password", "passwd", "credentials", "credential"}
+)
+
+#: Whole keys that are secret but do not end in one of the words above.
+SECRET_NAMES: Final[frozenset[str]] = frozenset(
+    {"authorization", "auth", "cookie", "setcookie", "proxyauthorization"}
+)
 
 #: What a redacted value is replaced with. Replacing rather than dropping keeps the fact that a
 #: field was present visible, which matters when triaging a log.
 REDACTED: Final[str] = "***redacted***"
 
+_WORD = re.compile(r"[A-Z]+(?![a-z])|[A-Z][a-z]*|[a-z]+|[0-9]+")
+
+
+def _words(key: str) -> list[str]:
+    """Split a key into lowercase words across separators and camelCase boundaries."""
+    return [match.group().lower() for match in _WORD.finditer(key)]
+
 
 def is_secret_key(key: str) -> bool:
-    """Return whether ``key`` names a secret."""
-    return key.lower().endswith(SECRET_SUFFIXES)
+    """Return whether ``key`` names a secret.
+
+    Matching is on word boundaries, not raw suffixes, so naming style does not decide whether a
+    credential is protected — ``Authorization``, ``apiKey``, ``api_key`` and ``X-API-KEY`` are
+    all secret — while ordinary words that merely end in one are not: ``monkey`` is not a key.
+    """
+    words = _words(key)
+    if not words:
+        return False
+    return "".join(words) in SECRET_NAMES or words[-1] in SECRET_WORDS
 
 
 def find_secret_keys(data: object, prefix: str = "") -> list[str]:

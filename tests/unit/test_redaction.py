@@ -1,0 +1,55 @@
+"""Which keys count as secret, and that redaction never mutates the caller's data."""
+
+from __future__ import annotations
+
+import pytest
+
+from thumbforge.core.redaction import REDACTED, find_secret_keys, is_secret_key, redact
+
+
+@pytest.mark.parametrize(
+    "key",
+    [
+        "api_key",
+        "apiKey",
+        "X-API-KEY",
+        "ApiKey",
+        "access_token",
+        "refreshToken",
+        "client_secret",
+        "password",
+        "db_password",
+        "credentials",
+        "Authorization",
+        "Cookie",
+        "Set-Cookie",
+    ],
+)
+def test_credential_names_are_secret(key: str) -> None:
+    assert is_secret_key(key)
+
+
+@pytest.mark.parametrize(
+    "key",
+    ["monkey", "turkey", "keyboard", "width", "data_dir", "default_template", "tokenizer", ""],
+)
+def test_ordinary_names_are_not_secret(key: str) -> None:
+    """Word-boundary matching, not raw suffixes: `monkey` must not be treated as a key."""
+    assert not is_secret_key(key)
+
+
+def test_redaction_does_not_mutate_the_caller_structure() -> None:
+    """Logging observes data; it must never alter a caller's dict."""
+    original = {"providers": {"openai": {"api_key": "sk-live"}}, "width": 1920}
+    result = redact(original)
+
+    assert original["providers"] == {"openai": {"api_key": "sk-live"}}
+    assert result == {"providers": {"openai": {"api_key": REDACTED}}, "width": 1920}
+
+
+def test_find_secret_keys_reports_dotted_paths() -> None:
+    found = find_secret_keys(
+        {"providers": {"openai": {"api_key": "x"}}, "items": [{"access_token": "y"}]}
+    )
+    assert "providers.openai.api_key" in found
+    assert "items[0].access_token" in found
