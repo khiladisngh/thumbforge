@@ -11,10 +11,14 @@ import json
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
+
+if TYPE_CHECKING:
+    from thumbforge.settings import Settings
 
 type JsonValue = str | int | float | bool | Sequence[JsonValue] | Mapping[str, JsonValue] | None
 """What a command may emit in ``--json`` mode.
@@ -35,6 +39,7 @@ class AppContext:
     json_mode: bool
     config_path: Path | None = None
     data_dir: Path | None = None
+    settings: Settings | None = None
 
 
 def table(

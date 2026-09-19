@@ -67,14 +67,16 @@ def handle_errors[**P, R](func: Callable[P, R]) -> Callable[P, R]:
 
     @functools.wraps(func)
     def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
-        app_ctx = _app_context(args, kwargs)
         try:
             return func(*args, **kwargs)
         except ThumbforgeError as error:
-            _report(app_ctx, error)
+            # Resolved here, not before the call: the root callback populates ctx.obj as part
+            # of its body, so a failure inside it would otherwise be reported with no context
+            # and ignore --json.
+            _report(_app_context(args, kwargs), error)
             raise typer.Exit(int(error.exit_code)) from error
         except KeyboardInterrupt as error:
-            if _is_json_mode(app_ctx):
+            if _is_json_mode(_app_context(args, kwargs)):
                 sys.stderr.write(json.dumps({"error": "interrupted", "exit_code": 130}) + "\n")
                 sys.stderr.flush()
             else:
