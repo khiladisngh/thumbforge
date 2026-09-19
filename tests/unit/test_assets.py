@@ -3,23 +3,43 @@
 from __future__ import annotations
 
 import io
+import os
+import time
+from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
 import pytest
 from PIL import Image
 
 from thumbforge.core.enums import AssetKind
+from thumbforge.core.errors import DatabaseError
 from thumbforge.storage.assets import AssetStore, AssetStoreError
-from thumbforge.storage.db import get_engine, init_db, session_factory
+from thumbforge.storage.db import (
+    get_engine,
+    init_db,
+    session_factory,
+    session_scope,
+    vacuum_db,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
+    from sqlalchemy.orm import Session, sessionmaker
+
+
+def _backdate(*paths: Path, age_seconds: float = 7200) -> None:
+    """Age files past the vacuum grace window without sleeping."""
+    stamp = time.time() - age_seconds
+    for path in paths:
+        os.utime(path, (stamp, stamp))
+
 
 def _make_png_bytes(
     width: int = 1920, height: int = 1080, color: tuple[int, int, int] = (255, 0, 0)
 ) -> bytes:
+    """Generate synthetic PNG image bytes for testing."""
     img = Image.new("RGB", (width, height), color=color)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -29,6 +49,7 @@ def _make_png_bytes(
 def _make_jpeg_bytes(
     width: int = 1280, height: int = 720, color: tuple[int, int, int] = (0, 255, 0)
 ) -> bytes:
+    """Generate synthetic JPEG image bytes for testing."""
     img = Image.new("RGB", (width, height), color=color)
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
@@ -37,6 +58,7 @@ def _make_jpeg_bytes(
 
 @pytest.fixture
 def asset_store(tmp_path: Path) -> Generator[AssetStore]:
+    """Provide an initialized AssetStore backed by a temporary SQLite database."""
     data_dir = tmp_path / "data"
     db_path = data_dir / "thumbforge.sqlite3"
     init_db(db_path)
@@ -163,37 +185,95 @@ def test_put_unsupported_mime_raises(asset_store: AssetStore) -> None:
     assert len(list(asset_store.tmp_dir.iterdir())) == 0
 
 
-def test_put_cleans_up_orphaned_file_on_insert_failure(
+def test_put_leaves_published_file_for_vacuum_on_insert_failure(
     asset_store: AssetStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    """A failed insert never unlinks the published file, and a retry adopts it.
+
+    A published path is content-addressed and may already be referenced by a concurrent
+    call, so `put` must not delete it; ADR 0011 assigns orphan reclamation to `db vacuum`.
+    """
     png_data = _make_png_bytes(300, 300)
-
-    # Cause an unexpected failure during DB insertion
-    from contextlib import contextmanager
-
-    original_scope = asset_store.session_factory
-
-    call_count = 0
+    real_scope = session_scope
+    calls = 0
 
     @contextmanager
-    def failing_session_scope(_factory):
-        nonlocal call_count
-        call_count += 1
-        if call_count == 1:
-            # First call is deduplication check: allow it
-            from thumbforge.storage.db import session_scope as real_scope
-
-            with real_scope(original_scope) as s:
-                yield s
-        else:
-            # Second call is row insert: simulate database write failure
-            raise RuntimeError("simulated DB crash after replace")
+    def failing_session_scope(factory: sessionmaker[Session]) -> Generator[Session]:
+        nonlocal calls
+        calls += 1
+        if calls == 1:  # the deduplication query
+            with real_scope(factory) as session:
+                yield session
+        else:  # the row insert
+            raise RuntimeError("simulated DB crash after publication")
 
     monkeypatch.setattr("thumbforge.storage.assets.session_scope", failing_session_scope)
-
-    with pytest.raises(RuntimeError, match="simulated DB crash after replace"):
+    with pytest.raises(RuntimeError, match="simulated DB crash after publication"):
         asset_store.put(png_data, kind=AssetKind.FINAL)
 
-    # No orphaned file should remain in assets_dir
-    assert len(list(asset_store.assets_dir.glob("**/*.png"))) == 0
+    orphans = list(asset_store.assets_dir.glob("**/*.png"))
+    assert len(orphans) == 1, "published file must survive for db vacuum to reclaim"
+    assert orphans[0].read_bytes() == png_data
     assert len(list(asset_store.tmp_dir.iterdir())) == 0
+
+    # Retrying with a working session adopts the orphan rather than failing on it.
+    monkeypatch.undo()
+    asset = asset_store.put(png_data, kind=AssetKind.FINAL)
+    assert asset_store.path_for(asset) == orphans[0]
+    assert asset_store.verify(asset) is True
+
+
+def test_vacuum_reclaims_expired_orphans_and_spares_referenced_files(
+    asset_store: AssetStore, tmp_path: Path
+) -> None:
+    """`db vacuum` deletes expired unreferenced files and stale tmp entries (ADR 0011)."""
+    kept = asset_store.put(_make_png_bytes(120, 120), kind=AssetKind.FINAL)
+    kept_path = asset_store.path_for(kept)
+
+    # An orphan with no asset row, and a leftover temp file from a crashed write.
+    orphan = asset_store.assets_dir / "ab" / f"{'ab' * 32}.png"
+    orphan.parent.mkdir(parents=True, exist_ok=True)
+    orphan.write_bytes(b"orphaned bytes")
+    stale_tmp = asset_store.tmp_dir / "01ABCDEF"
+    stale_tmp.write_bytes(b"interrupted write")
+
+    # Backdate past the default window; a zero/negative grace is rejected outright.
+    _backdate(orphan, stale_tmp)
+    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3")
+
+    assert reclaimed == 2
+    assert not orphan.exists()
+    assert not stale_tmp.exists()
+    assert kept_path.is_file(), "a referenced asset file must never be reclaimed"
+    assert asset_store.verify(kept) is True
+
+
+def test_vacuum_spares_files_inside_the_grace_window(
+    asset_store: AssetStore, tmp_path: Path
+) -> None:
+    """A file from an in-flight `put` is newer than the grace age, so vacuum leaves it.
+
+    `put` publishes before it inserts, so a just-published file is legitimately
+    unreferenced; reclaiming it would strand the row the caller is about to commit.
+    """
+    in_flight = asset_store.assets_dir / "cd" / f"{'cd' * 32}.png"
+    in_flight.parent.mkdir(parents=True, exist_ok=True)
+    in_flight.write_bytes(b"just published, row not committed yet")
+    asset_store.tmp_dir.mkdir(parents=True, exist_ok=True)
+    fresh_tmp = asset_store.tmp_dir / "01INFLIGHT"
+    fresh_tmp.write_bytes(b"mid-write")
+
+    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3")
+
+    assert reclaimed == 0
+    assert in_flight.is_file()
+    assert fresh_tmp.is_file()
+
+
+@pytest.mark.parametrize("grace", [0, -1.0])
+def test_vacuum_rejects_non_positive_grace(tmp_path: Path, grace: float) -> None:
+    """A non-positive window would let vacuum delete an in-flight write's files."""
+    db_path = tmp_path / "data" / "thumbforge.sqlite3"
+    init_db(db_path)
+    with pytest.raises(DatabaseError, match="grace_seconds must be positive"):
+        vacuum_db(db_path, grace_seconds=grace)

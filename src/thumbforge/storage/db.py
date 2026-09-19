@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -11,16 +12,19 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import URL, Engine, create_engine, event, text
+from sqlalchemy import URL, Engine, create_engine, event, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from thumbforge.core.errors import DatabaseError
+from thumbforge.storage.models import Asset
 
 if TYPE_CHECKING:
     import sqlite3
     from collections.abc import Generator
 
     from sqlalchemy.pool import ConnectionPoolEntry
+
+
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
@@ -198,8 +202,27 @@ def upgrade_db(db_path: Path, revision: str = "head") -> str:
     return status.current_revision or ""
 
 
-def vacuum_db(db_path: Path) -> None:
-    """Reclaim free space and truncate the WAL file."""
+#: How long an unreferenced file must sit untouched before `db vacuum` reclaims it. Guards
+#: against deleting a file belonging to a `put` that has published but not yet committed.
+ORPHAN_GRACE_SECONDS = 3600.0
+
+
+def vacuum_db(db_path: Path, *, grace_seconds: float = ORPHAN_GRACE_SECONDS) -> int:
+    """Reclaim free space, truncate the WAL, and delete unreferenced asset files.
+
+    `AssetStore.put` publishes a file before inserting its row and never unlinks a
+    published path, so a crash in between can leave an orphan. Reclaiming those (and
+    stale `tmp/` entries) is this command's job per ADR 0011. Only files untouched for
+    ``grace_seconds`` are removed, so an in-flight `put` is never disturbed.
+
+    Returns:
+        The number of files reclaimed from ``assets/`` and ``tmp/``.
+    """
+    if grace_seconds <= 0:
+        raise DatabaseError(
+            f"grace_seconds must be positive, got {grace_seconds}",
+            hint="a non-positive window would let vacuum delete files of an in-flight write",
+        )
     if not db_path.exists():
         raise DatabaseError(
             f"Database file does not exist at {db_path}",
@@ -210,6 +233,9 @@ def vacuum_db(db_path: Path) -> None:
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             conn.execute(text("VACUUM;"))
             conn.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
+        reclaimed = _reclaim_orphans(engine, db_path.parent, grace_seconds)
+    except DatabaseError:
+        raise
     except Exception as exc:
         raise DatabaseError(
             f"Failed to vacuum database: {exc}",
@@ -217,3 +243,48 @@ def vacuum_db(db_path: Path) -> None:
         ) from exc
     finally:
         engine.dispose()
+    return reclaimed
+
+
+def _reclaim_orphans(engine: Engine, data_dir: Path, grace_seconds: float) -> int:
+    """Delete unreferenced ``assets/`` files and stale ``tmp/`` entries older than the grace age.
+
+    `AssetStore.put` writes a temp file, publishes it, then inserts the row, so a file that
+    is unreferenced right now may simply belong to an in-flight `put`. Rather than locking
+    writers out for the duration of a vacuum, only files untouched for `grace_seconds` are
+    reclaimed — the same expiry approach `git gc` uses for unreachable objects. A `put` takes
+    milliseconds, so the default window never races a live write, and a genuine orphan is
+    reclaimed by the next vacuum.
+    """
+    with session_scope(engine) as session:
+        referenced = {
+            (data_dir / rel_path).resolve() for rel_path in session.scalars(select(Asset.rel_path))
+        }
+
+    cutoff = time.time() - grace_seconds
+
+    def is_expired(path: Path) -> bool:
+        try:
+            return path.stat().st_mtime < cutoff
+        except OSError:  # vanished mid-scan; nothing to reclaim
+            return False
+
+    removed = 0
+    assets_dir = data_dir / "assets"
+    if assets_dir.is_dir():
+        for candidate in assets_dir.rglob("*"):
+            if (
+                candidate.is_file()
+                and candidate.resolve() not in referenced
+                and is_expired(candidate)
+            ):
+                candidate.unlink(missing_ok=True)
+                removed += 1
+
+    tmp_dir = data_dir / "tmp"
+    if tmp_dir.is_dir():
+        for leftover in tmp_dir.iterdir():
+            if leftover.is_file() and is_expired(leftover):
+                leftover.unlink(missing_ok=True)
+                removed += 1
+    return removed
