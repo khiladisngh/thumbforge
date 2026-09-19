@@ -9,8 +9,9 @@ from typing import TYPE_CHECKING
 
 from PIL import Image, UnidentifiedImageError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
-from thumbforge.core.errors import ThumbforgeError
+from thumbforge.core.errors import AssetError
 from thumbforge.core.ids import new_id, sha256_file
 from thumbforge.storage.db import session_scope
 from thumbforge.storage.models import Asset
@@ -27,10 +28,7 @@ _MIME_TO_EXT: dict[str, str] = {
 }
 
 
-class AssetStoreError(ThumbforgeError):
-    """An asset could not be written, verified, or identified."""
-
-    code = "asset_store"
+AssetStoreError = AssetError
 
 
 class AssetStore:
@@ -77,7 +75,14 @@ class AssetStore:
                 msg = f"Unsupported or corrupted image format: {exc}"
                 raise AssetStoreError(msg) from exc
 
-            ext = _MIME_TO_EXT.get(mime, format_name.lower() or "bin")
+            ext = _MIME_TO_EXT.get(mime)
+            if ext is None:
+                msg = (
+                    f"Unsupported image format {mime!r}; expected one of "
+                    f"{sorted(_MIME_TO_EXT.keys())}"
+                )
+                raise AssetError(msg, hint="only JPEG, PNG, and WebP images are supported")
+
             sha256 = sha256_file(tmp_path)
             file_bytes = tmp_path.stat().st_size
 
@@ -85,8 +90,6 @@ class AssetStore:
             with session_scope(self.session_factory) as session:
                 existing = session.scalar(select(Asset).where(Asset.sha256 == sha256))
                 if existing is not None:
-                    # Identical bytes exist; remove tmp file and return existing row
-                    tmp_path.unlink(missing_ok=True)
                     return existing
 
             # 4. Move into place at assets/<sha256[:2]>/<sha256>.<ext>
@@ -111,8 +114,18 @@ class AssetStore:
                 compliant=None,
                 compliance_report_json=None,
             )
-            with session_scope(self.session_factory) as session:
-                session.add(asset)
+            try:
+                with session_scope(self.session_factory) as session:
+                    session.add(asset)
+            except IntegrityError:
+                with session_scope(self.session_factory) as session:
+                    existing = session.scalar(select(Asset).where(Asset.sha256 == sha256))
+                    if existing is not None:
+                        return existing
+                raise
+            except Exception:
+                target_path.unlink(missing_ok=True)
+                raise
 
             return asset
         finally:

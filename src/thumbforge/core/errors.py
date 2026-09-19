@@ -91,6 +91,13 @@ class DatabaseError(ThumbforgeError):
     exit_code = ExitCode.UNEXPECTED
 
 
+class AssetError(ThumbforgeError):
+    """An asset could not be written, verified, or identified."""
+
+    code = "asset"
+    exit_code = ExitCode.UNEXPECTED
+
+
 class ProviderError(ThumbforgeError):
     """Base class for image-provider failures."""
 
