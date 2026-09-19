@@ -17,6 +17,8 @@ from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
 
+from thumbforge.core.errors import SettingsError
+
 if TYPE_CHECKING:
     from thumbforge.settings import Settings
 
@@ -40,6 +42,21 @@ class AppContext:
     config_path: Path | None = None
     data_dir: Path | None = None
     settings: Settings | None = None
+    settings_error: SettingsError | None = None
+
+    def require_settings(self) -> Settings:
+        """Return the settings, or re-raise the failure that prevented loading them.
+
+        Commands that read configuration call this; commands that repair the file
+        (``config init``, ``config set``) deliberately do not, so they keep working when
+        ``config.toml`` is broken — otherwise the documented fix would be unreachable.
+        """
+        if self.settings_error is not None:
+            raise self.settings_error
+        if self.settings is None:  # pragma: no cover - the root callback always sets one
+            msg = "settings were not loaded"
+            raise SettingsError(msg)
+        return self.settings
 
 
 def table(

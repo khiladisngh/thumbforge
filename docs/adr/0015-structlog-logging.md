@@ -19,8 +19,8 @@ Use **structlog** (`uv add structlog`), configured once in `src/thumbforge/loggi
 - Context: `structlog.contextvars.bind_contextvars(run_id=…, iteration_id=…, provider=…)` at run/iteration entry, `clear_contextvars()` on exit.
 - Rich progress bars and tables go to **stdout**; logs go to **stderr**. They never interleave.
 - Provider subprocess stdout/stderr are captured per iteration to `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
-- Verbosity: default `INFO` (`[logging] level`), `-v` → `DEBUG` for `thumbforge.*`, `-vv` → `DEBUG` for everything including third-party loggers; `--quiet` → `WARNING`.
-- A final processor drops event-dict keys matching the secret deny-list from ADR 0014.
+- Verbosity: the console level defaults to `[logging] level` (`INFO`); `-v` → `INFO`, `-vv` → `DEBUG`, `--quiet` → `ERROR`. `--quiet` outranks `-v`, because an explicit request for silence should beat a `-v` baked into someone's script. Verbosity applies to all loggers rather than only `thumbforge.*`: third-party records already flow through the same pipeline, and a second axis of filtering would surprise. The file handler is unaffected and always records `DEBUG`.
+- A final processor, `redact_secrets`, replaces event-dict values whose key matches the deny-list in `thumbforge.core.redaction` (shared with ADR 0014's config rejection) with `***redacted***`. It runs for bound context as well as call-site fields, because logs are written to disk and pasted into bug reports.
 - Modules obtain a logger with `get_logger(__name__)`; `print()` is banned outside `cli/_render.py`.
 
 ## Consequences

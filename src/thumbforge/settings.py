@@ -24,12 +24,11 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_valida
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from thumbforge.core.errors import SettingsError
+from thumbforge.core.redaction import is_secret_key
 
 APP_NAME = "thumbforge"
 
-#: Key suffixes that indicate a secret. Matched case-insensitively against the final
-#: dotted-path segment of every value loaded from TOML.
-_SECRET_SUFFIXES = ("_key", "_token", "_secret", "_password")
+# Secret detection lives in core.redaction so settings and logging share one deny-list.
 
 _SECRET_HINT = (
     "set THUMBFORGE_PROVIDERS__<KEY>__API_KEY in the environment, "
@@ -199,7 +198,7 @@ def _secret_keys(data: object, prefix: str = "") -> list[str]:
     for raw_key, value in items.items():
         key = str(raw_key)
         path = f"{prefix}.{key}" if prefix else key
-        if key.lower().endswith(_SECRET_SUFFIXES):
+        if is_secret_key(key):
             found.append(path)
         found.extend(_secret_keys(value, path))
     return found

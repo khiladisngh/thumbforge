@@ -21,7 +21,10 @@ from typing import TYPE_CHECKING, Literal
 
 import structlog
 
+from thumbforge.core.redaction import REDACTED, is_secret_key
+
 if TYPE_CHECKING:
+    from collections.abc import MutableMapping
     from pathlib import Path
 
     from structlog.stdlib import BoundLogger
@@ -32,6 +35,24 @@ LogFormat = Literal["console", "json"]
 _LOG_BYTES = 5 * 1024 * 1024
 _LOG_BACKUPS = 5
 
+
+def redact_secrets(
+    _logger: object,
+    _method: str,
+    event_dict: MutableMapping[str, object],
+) -> MutableMapping[str, object]:
+    """Replace secret-looking values in the event dict (ADR 0014, ADR 0015).
+
+    Logs are written to disk and pasted into bug reports, so a provider key reaching an event
+    dict must never survive to a renderer. The deny-list is shared with settings via
+    :mod:`thumbforge.core.redaction`.
+    """
+    for key in event_dict:
+        if is_secret_key(key):
+            event_dict[key] = REDACTED
+    return event_dict
+
+
 #: Processors applied to every event, whatever its origin, before rendering.
 _SHARED_PROCESSORS: list[structlog.typing.Processor] = [
     structlog.contextvars.merge_contextvars,
@@ -40,6 +61,7 @@ _SHARED_PROCESSORS: list[structlog.typing.Processor] = [
     structlog.processors.TimeStamper(fmt="iso", utc=True),
     structlog.processors.StackInfoRenderer(),
     structlog.processors.format_exc_info,
+    redact_secrets,
 ]
 
 

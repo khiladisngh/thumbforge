@@ -132,7 +132,9 @@ $ jq -c . < err.jsonl
 > latter pretty-prints and soft-wraps at terminal width, which would split a long message
 > across lines and break the one-line guarantee above.
 
-Level mapping from global flags: default `WARNING` on stderr (file handler always at `DEBUG`), `-v` → `INFO`, `-vv` → `DEBUG`, `--quiet` → `ERROR`. `[logging] level` sets the default when no flag is given. `--no-color` sets `ConsoleRenderer(colors=False)`.
+Level mapping from global flags: the console defaults to `[logging] level` (`INFO`), `-v` → `INFO`, `-vv` → `DEBUG`, `--quiet` → `ERROR` (it outranks `-v`). The file handler is always `DEBUG`, so a bug report carries detail without the user reproducing under `-vv`. `--no-color` sets `ConsoleRenderer(colors=False)`, and `--json` forces the JSON renderer. If the log file cannot be opened, logging degrades to console and emits one `file logging disabled` warning rather than failing the command.
+
+A broken `config.toml` does not block the commands that repair it. The root callback captures a `SettingsError` instead of raising it; `config init` and `config set` rewrite the file without reading the parsed settings, while every other command calls `AppContext.require_settings()`, which re-raises. Otherwise the hint printed on a parse failure — `run thumbforge config init --force` — would name an unreachable command.
 
 ### Database (`storage/db.py`, `storage/migrations/`)
 

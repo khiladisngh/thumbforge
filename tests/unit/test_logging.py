@@ -140,3 +140,30 @@ def test_unusable_log_file_degrades_to_console_instead_of_failing(
     # Console logging still works after the failure.
     get_logger("thumbforge.test").info("still alive")
     assert "still alive" in capsys.readouterr().err
+
+
+def test_secret_looking_fields_are_redacted(capsys: pytest.CaptureFixture[str]) -> None:
+    """Logs land on disk and in bug reports; a key must never survive to a renderer."""
+    configure_logging(level="INFO", fmt="json")
+    get_logger("thumbforge.test").info(
+        "provider call",
+        api_key="sk-live-123",
+        access_token="tok-abc",
+        client_secret="shh",
+        db_password="hunter2",
+        provider="antigravity",
+    )
+    payload = json.loads(capsys.readouterr().err.strip())
+
+    assert payload["provider"] == "antigravity"  # ordinary fields survive
+    for field in ("api_key", "access_token", "client_secret", "db_password"):
+        assert payload[field] == "***redacted***"
+    assert "sk-live-123" not in json.dumps(payload)
+
+
+def test_redaction_also_covers_bound_context(capsys: pytest.CaptureFixture[str]) -> None:
+    configure_logging(level="INFO", fmt="json")
+    bind(api_key="sk-bound")
+    get_logger("thumbforge.test").info("started")
+    payload = json.loads(capsys.readouterr().err.strip())
+    assert payload["api_key"] == "***redacted***"
