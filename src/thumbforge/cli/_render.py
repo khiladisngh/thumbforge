@@ -16,12 +16,14 @@ from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
 
-type JsonValue = str | int | float | bool | list[JsonValue] | dict[str, JsonValue] | None
+type JsonValue = str | int | float | bool | Sequence[JsonValue] | Mapping[str, JsonValue] | None
 """What a command may emit in ``--json`` mode.
 
-Deliberately `list`/`dict` rather than `Sequence`/`Mapping`: the wider protocols admit `bytes`
-and `range`, which `json.dumps` rejects at runtime, so the annotation would promise more than
-the serialiser accepts.
+`Sequence`/`Mapping` rather than `list`/`dict` because the concrete types are invariant: an
+ordinary `dict[str, str]` payload would not satisfy `dict[str, JsonValue]`, forcing a cast at
+every call site. The looser protocols technically admit `bytes` and `range`, which `json.dumps`
+rejects; `emit` lets that rejection happen loudly at runtime rather than coercing, and
+`tests/unit/test_render.py` pins that behaviour.
 """
 
 
@@ -32,6 +34,7 @@ class AppContext:
     console: Console
     json_mode: bool
     config_path: Path | None = None
+    data_dir: Path | None = None
 
 
 def table(
