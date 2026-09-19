@@ -222,9 +222,9 @@
     "semantic_hash": "7bd15530c4fd03e1c47f747835a5989b"
   },
   "tests/unit/test_assets.py": {
-    "mtime": 1789836046.7808669,
-    "seen": 1789836057.61672,
-    "ast_hash": "b3b6eb0b02bf56aa8fa2bfb9892de336",
-    "semantic_hash": "b3b6eb0b02bf56aa8fa2bfb9892de336"
+    "mtime": 1789836071.346191,
+    "seen": 1789836203.088195,
+    "ast_hash": "a5e1994ab97e190207367dd2af5cd39b",
+    "semantic_hash": "a5e1994ab97e190207367dd2af5cd39b"
   }
 }
