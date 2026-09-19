@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from typing import Annotated
+
 import typer
 
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv
 from thumbforge.storage.db import (
+    ORPHAN_GRACE_SECONDS,
     get_db_status,
     init_db,
     upgrade_db,
@@ -115,18 +118,27 @@ def path_(ctx: typer.Context) -> None:
 
 @app.command("vacuum")
 @handle_errors
-def vacuum(ctx: typer.Context) -> None:
+def vacuum(
+    ctx: typer.Context,
+    grace_seconds: Annotated[
+        float,
+        typer.Option(
+            "--grace-seconds",
+            help="Only reclaim unreferenced files untouched for this long (seconds).",
+        ),
+    ] = ORPHAN_GRACE_SECONDS,
+) -> None:
     """Reclaim unused disk space, checkpoint the WAL, and delete orphaned asset files."""
     app_ctx = _context(ctx)
     settings = app_ctx.require_settings()
     db_path = settings.db_path
 
-    reclaimed = vacuum_db(db_path)
+    reclaimed = vacuum_db(db_path, grace_seconds=grace_seconds)
     emit(
         app_ctx,
         {"status": "ok", "path": str(db_path), "reclaimed_files": reclaimed},
         render=lambda: (
             f"[green]vacuumed and checkpointed[/] {db_path} "
-            f"([cyan]{reclaimed}[/] orphaned file(s) reclaimed)"
+            f"([cyan]{reclaimed}[/] reclaimed file(s))"
         ),
     )

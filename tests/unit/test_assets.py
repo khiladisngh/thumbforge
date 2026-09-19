@@ -213,10 +213,10 @@ def test_put_leaves_published_file_for_vacuum_on_insert_failure(
     assert asset_store.verify(asset) is True
 
 
-def test_vacuum_reclaims_orphans_and_spares_referenced_files(
+def test_vacuum_reclaims_expired_orphans_and_spares_referenced_files(
     asset_store: AssetStore, tmp_path: Path
 ) -> None:
-    """`db vacuum` deletes unreferenced asset files and stale tmp entries (ADR 0011)."""
+    """`db vacuum` deletes expired unreferenced files and stale tmp entries (ADR 0011)."""
     kept = asset_store.put(_make_png_bytes(120, 120), kind=AssetKind.FINAL)
     kept_path = asset_store.path_for(kept)
 
@@ -227,10 +227,33 @@ def test_vacuum_reclaims_orphans_and_spares_referenced_files(
     stale_tmp = asset_store.tmp_dir / "01ABCDEF"
     stale_tmp.write_bytes(b"interrupted write")
 
-    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3")
+    # grace_seconds=0 expires both immediately instead of sleeping out the default window.
+    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3", grace_seconds=0)
 
     assert reclaimed == 2
     assert not orphan.exists()
     assert not stale_tmp.exists()
     assert kept_path.is_file(), "a referenced asset file must never be reclaimed"
     assert asset_store.verify(kept) is True
+
+
+def test_vacuum_spares_files_inside_the_grace_window(
+    asset_store: AssetStore, tmp_path: Path
+) -> None:
+    """A file from an in-flight `put` is newer than the grace age, so vacuum leaves it.
+
+    `put` publishes before it inserts, so a just-published file is legitimately
+    unreferenced; reclaiming it would strand the row the caller is about to commit.
+    """
+    in_flight = asset_store.assets_dir / "cd" / f"{'cd' * 32}.png"
+    in_flight.parent.mkdir(parents=True, exist_ok=True)
+    in_flight.write_bytes(b"just published, row not committed yet")
+    asset_store.tmp_dir.mkdir(parents=True, exist_ok=True)
+    fresh_tmp = asset_store.tmp_dir / "01INFLIGHT"
+    fresh_tmp.write_bytes(b"mid-write")
+
+    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3")
+
+    assert reclaimed == 0
+    assert in_flight.is_file()
+    assert fresh_tmp.is_file()
