@@ -1,6 +1,7 @@
 """Storage layer for thumbforge (SQLite + SQLAlchemy 2.0 + Alembic)."""
 
 from thumbforge.core.enums import AssetKind, ChannelSource, RunKind, RunStatus
+from thumbforge.storage.assets import AssetStore, AssetStoreError
 from thumbforge.storage.db import (
     DbStatus,
     get_db_status,
@@ -27,6 +28,8 @@ from thumbforge.storage.models import (
 __all__ = [
     "Asset",
     "AssetKind",
+    "AssetStore",
+    "AssetStoreError",
     "Base",
     "Channel",
     "ChannelSource",
