@@ -11,7 +11,7 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import Engine, create_engine, event, text
+from sqlalchemy import URL, Engine, create_engine, event, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from thumbforge.core.errors import DatabaseError
@@ -22,15 +22,11 @@ if TYPE_CHECKING:
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
-def sqlite_url(db_path: Path | str) -> str:
+def sqlite_url(db_path: Path) -> str:
     """Format a SQLite connection URL for SQLAlchemy."""
-    if isinstance(db_path, str):
-        if db_path in (":memory:", "sqlite:///:memory:"):
-            return "sqlite+pysqlite:///:memory:"
-        if db_path.startswith("sqlite"):
-            return db_path
-        db_path = Path(db_path)
-    return f"sqlite+pysqlite:///{db_path.resolve().as_posix()}"
+    return URL.create("sqlite+pysqlite", database=str(db_path.resolve())).render_as_string(
+        hide_password=False
+    )
 
 
 def _set_sqlite_pragmas(dbapi_connection: Any, _connection_record: Any) -> None:
@@ -42,13 +38,19 @@ def _set_sqlite_pragmas(dbapi_connection: Any, _connection_record: Any) -> None:
     cursor.close()
 
 
-def get_engine(db_path: Path | str, *, echo: bool = False) -> Engine:
+def get_engine(target: Path | str, *, echo: bool = False) -> Engine:
     """Create a SQLAlchemy engine configured for thumbforge SQLite usage."""
-    url = sqlite_url(db_path)
+    if isinstance(target, str):
+        url = (
+            "sqlite+pysqlite:///:memory:"
+            if target in (":memory:", "sqlite:///:memory:")
+            else target
+        )
+    else:
+        url = sqlite_url(target)
     engine = create_engine(
         url,
         echo=echo,
-        future=True,
         connect_args={"check_same_thread": False},
     )
     event.listen(engine, "connect", _set_sqlite_pragmas)
@@ -195,7 +197,7 @@ def vacuum_db(db_path: Path) -> None:
         )
     engine = get_engine(db_path)
     try:
-        with engine.connect() as conn:
+        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             conn.execute(text("VACUUM;"))
             conn.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
     except Exception as exc:

@@ -5,8 +5,7 @@ from __future__ import annotations
 import typer
 
 from thumbforge.cli._errors import handle_errors
-from thumbforge.cli._render import AppContext, emit, kv
-from thumbforge.core.errors import SettingsError
+from thumbforge.cli._render import emit, get_app_context, kv
 from thumbforge.storage.db import (
     get_db_status,
     init_db,
@@ -21,12 +20,7 @@ app = typer.Typer(
 )
 
 
-def _context(ctx: typer.Context) -> AppContext:
-    obj = ctx.obj
-    if not isinstance(obj, AppContext):  # pragma: no cover
-        msg = "CLI context was not initialised"
-        raise SettingsError(msg)
-    return obj
+_context = get_app_context
 
 
 @app.command("init")
@@ -82,6 +76,7 @@ def status(ctx: typer.Context) -> None:
     emit(
         app_ctx,
         {
+            "path": str(db_path),
             "current_revision": db_status.current_revision,
             "head_revision": db_status.head_revision,
             "pending_count": db_status.pending_count,
@@ -93,8 +88,9 @@ def status(ctx: typer.Context) -> None:
                 "Database": str(db_path),
                 "Current revision": db_status.current_revision or "none",
                 "Head revision": db_status.head_revision or "none",
-                "Pending migrations": str(db_status.pending_count),
-                "Journal mode": db_status.journal_mode or "none",
+                "Status": "current == head" if db_status.is_at_head else "pending upgrades",
+                "Pending migrations": f"pending: {db_status.pending_count}",
+                "Journal mode": f"journal_mode = {db_status.journal_mode or 'none'}",
                 "File size": f"{db_status.file_size_bytes} bytes",
             }
         ),

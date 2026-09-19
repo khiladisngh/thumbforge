@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from sqlalchemy import text
 
+from thumbforge.core.enums import ChannelSource
 from thumbforge.core.errors import DatabaseError
 from thumbforge.storage.db import (
     get_db_status,
@@ -18,16 +19,13 @@ from thumbforge.storage.db import (
     upgrade_db,
     vacuum_db,
 )
-from thumbforge.storage.models import Channel, ChannelSource
+from thumbforge.storage.models import Channel
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_sqlite_url_handles_memory_and_paths(tmp_path: Path) -> None:
-    assert sqlite_url(":memory:") == "sqlite+pysqlite:///:memory:"
-    assert sqlite_url("sqlite:///:memory:") == "sqlite+pysqlite:///:memory:"
-
+def test_sqlite_url_formats_path(tmp_path: Path) -> None:
     p = tmp_path / "test.sqlite3"
     url = sqlite_url(p)
     assert url.startswith("sqlite+pysqlite:///")

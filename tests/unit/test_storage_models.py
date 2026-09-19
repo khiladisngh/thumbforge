@@ -5,21 +5,19 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
+from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
 
+from thumbforge.core.enums import AssetKind, ChannelSource, RunKind, RunStatus
 from thumbforge.storage.db import get_engine, init_db, session_factory, session_scope
 from thumbforge.storage.models import (
     Asset,
-    AssetKind,
     Channel,
-    ChannelSource,
     Iteration,
     Playlist,
     PlaylistItem,
     ProviderProfile,
     Run,
-    RunKind,
-    RunStatus,
     Template,
     Video,
 )
@@ -324,8 +322,8 @@ def test_on_delete_restrict_on_parent_run(db_session) -> None:
     db_session.flush()
 
     # Deleting parent must fail with IntegrityError because child references it with RESTRICT
-    db_session.delete(parent)
     with pytest.raises(IntegrityError):
+        db_session.execute(delete(Run).where(Run.id == parent.id))
         db_session.flush()
     db_session.rollback()
 

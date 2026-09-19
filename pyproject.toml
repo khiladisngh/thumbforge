@@ -52,6 +52,7 @@ dev = [
   "pre-commit",
   "import-linter",
   "zensical",
+  "testcontainers>=4.15.0",
 ]
 
 [build-system]
@@ -125,4 +126,5 @@ forbidden_modules = [
   "thumbforge.storage",
   "thumbforge.cli",
   "thumbforge.settings",
+  "thumbforge.logging",
 ]

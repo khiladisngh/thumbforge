@@ -12,7 +12,7 @@ from rich.syntax import Syntax
 
 from thumbforge import settings as settings_module
 from thumbforge.cli._errors import handle_errors
-from thumbforge.cli._render import AppContext, JsonValue, emit, kv
+from thumbforge.cli._render import AppContext, JsonValue, emit, get_app_context, kv
 from thumbforge.core.errors import SettingsError
 from thumbforge.settings import (
     set_values,
@@ -26,12 +26,7 @@ app = typer.Typer(
 )
 
 
-def _context(ctx: typer.Context) -> AppContext:
-    obj = ctx.obj
-    if not isinstance(obj, AppContext):  # pragma: no cover - the root callback always sets it
-        msg = "CLI context was not initialised"
-        raise SettingsError(msg)
-    return obj
+_context = get_app_context
 
 
 def _config_path(app_ctx: AppContext) -> Path:

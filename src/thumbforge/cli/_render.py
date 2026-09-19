@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import typer
 from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.table import Table
@@ -59,6 +60,15 @@ class AppContext:
         return self.settings
 
 
+def get_app_context(ctx: typer.Context) -> AppContext:
+    """Extract and validate the AppContext from a Typer execution context."""
+    obj = ctx.obj
+    if not isinstance(obj, AppContext):  # pragma: no cover - the root callback always sets it
+        msg = "CLI context was not initialised"
+        raise SettingsError(msg)
+    return obj
+
+
 def table(
     columns: Sequence[str],
     rows: Sequence[Sequence[str]],
@@ -94,7 +104,7 @@ def emit(
     data: JsonValue,
     *,
     render: Callable[[], RenderableType] | None = None,
-    soft_wrap: bool = False,
+    soft_wrap: bool = True,
 ) -> None:
     """Print ``data`` as JSON in ``--json`` mode, otherwise print ``render()``.
 

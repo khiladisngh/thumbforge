@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from logging.config import fileConfig
-
 from alembic import context
 
 from thumbforge.settings import load_settings
@@ -12,10 +10,6 @@ from thumbforge.storage.models import Base
 
 config = context.config
 
-# Interpret the config file for Python logging only when run standalone
-# and not explicitly silenced by thumbforge CLI or test runners.
-if config.config_file_name is not None and not config.attributes.get("skip_logging_config"):
-    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = Base.metadata
 

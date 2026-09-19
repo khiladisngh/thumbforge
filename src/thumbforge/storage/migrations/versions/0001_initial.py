@@ -2,7 +2,7 @@
 
 Revision ID: 0001
 Revises:
-Create Date: 2026-09-19 12:54:50.876334
+Create Date: 2026-09-19 13:17:15.310230
 
 """
 
@@ -41,7 +41,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
         sa.CheckConstraint(
-            "kind IN ('raw', 'final', 'reference', 'preview')", name=op.f("ck_asset_ck_asset_kind")
+            "kind IN ('raw', 'final', 'reference', 'preview')", name=op.f("ck_asset_kind")
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_asset")),
         sa.UniqueConstraint("sha256", name=op.f("uq_asset_sha256")),
@@ -56,7 +56,7 @@ def upgrade() -> None:
         sa.Column("fetched_at", sa.String(), nullable=False),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.CheckConstraint("source IN ('ytdlp', 'api')", name=op.f("ck_channel_ck_channel_source")),
+        sa.CheckConstraint("source IN ('ytdlp', 'api')", name=op.f("ck_channel_source")),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_channel")),
         sa.UniqueConstraint("youtube_id", name=op.f("uq_channel_youtube_id")),
     )
@@ -84,7 +84,7 @@ def upgrade() -> None:
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_template")),
-        sa.UniqueConstraint("name", "version", name="uq_template_name_version"),
+        sa.UniqueConstraint("name", "version", name="name_version"),
     )
     op.create_table(
         "playlist",
@@ -153,8 +153,8 @@ def upgrade() -> None:
             ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_playlist_item")),
-        sa.UniqueConstraint("playlist_id", "position", name="uq_playlist_item_playlist_position"),
-        sa.UniqueConstraint("playlist_id", "video_id", name="uq_playlist_item_playlist_video"),
+        sa.UniqueConstraint("playlist_id", "position", name="playlist_position"),
+        sa.UniqueConstraint("playlist_id", "video_id", name="playlist_video"),
     )
     op.create_table(
         "run",
@@ -173,10 +173,10 @@ def upgrade() -> None:
         sa.Column("error_text", sa.Text(), nullable=True),
         sa.Column("created_at", sa.String(), nullable=False),
         sa.Column("updated_at", sa.String(), nullable=False),
-        sa.CheckConstraint("kind IN ('hero', 'iterate', 'batch')", name=op.f("ck_run_ck_run_kind")),
+        sa.CheckConstraint("kind IN ('hero', 'iterate', 'batch')", name=op.f("ck_run_kind")),
         sa.CheckConstraint(
             "status IN ('pending', 'running', 'paused', 'completed', 'failed', 'cancelled')",
-            name=op.f("ck_run_ck_run_status"),
+            name=op.f("ck_run_status"),
         ),
         sa.ForeignKeyConstraint(
             ["parent_run_id"],
@@ -237,7 +237,7 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.String(), nullable=False),
         sa.CheckConstraint(
             "status IN ('pending', 'running', 'paused', 'completed', 'failed', 'cancelled')",
-            name=op.f("ck_iteration_ck_iteration_status"),
+            name=op.f("ck_iteration_status"),
         ),
         sa.ForeignKeyConstraint(
             ["final_asset_id"],

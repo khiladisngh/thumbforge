@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import StrEnum
-from typing import Any
 
 from sqlalchemy import (
     Boolean,
@@ -15,16 +13,15 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
-    event,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
-    Mapper,
     mapped_column,
     relationship,
 )
 
+from thumbforge.core.enums import AssetKind, ChannelSource, RunKind, RunStatus
 from thumbforge.core.ids import new_id
 
 
@@ -48,62 +45,17 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-@event.listens_for(Base, "before_insert", propagate=True)
-def _set_created_and_updated_at(_mapper: Mapper[Any], _connection: Any, target: Any) -> None:
-    now = utcnow_iso()
-    if getattr(target, "id", None) is None:
-        target.id = new_id()
-    if getattr(target, "created_at", None) is None:
-        target.created_at = now
-    if getattr(target, "updated_at", None) is None:
-        target.updated_at = now
-
-
-@event.listens_for(Base, "before_update", propagate=True)
-def _set_updated_at(_mapper: Mapper[Any], _connection: Any, target: Any) -> None:
-    target.updated_at = utcnow_iso()
-
-
-class ChannelSource(StrEnum):
-    """Origin of channel metadata."""
-
-    YTDLP = "ytdlp"
-    API = "api"
-
-
-class RunKind(StrEnum):
-    """Lifecycle classification of a generation run."""
-
-    HERO = "hero"
-    ITERATE = "iterate"
-    BATCH = "batch"
-
-
-class RunStatus(StrEnum):
-    """Execution status for runs and iterations."""
-
-    PENDING = "pending"
-    RUNNING = "running"
-    PAUSED = "paused"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
-
-
-class AssetKind(StrEnum):
-    """Functional role of a stored image asset."""
-
-    RAW = "raw"
-    FINAL = "final"
-    REFERENCE = "reference"
-    PREVIEW = "preview"
+_CHANNEL_SOURCES = ", ".join(repr(s.value) for s in ChannelSource)
+_RUN_KINDS = ", ".join(repr(k.value) for k in RunKind)
+_RUN_STATUSES = ", ".join(repr(s.value) for s in RunStatus)
+_ASSET_KINDS = ", ".join(repr(k.value) for k in AssetKind)
 
 
 class Channel(Base):
     """A YouTube channel that owns playlists and videos."""
 
     __tablename__ = "channel"
-    __table_args__ = (CheckConstraint("source IN ('ytdlp', 'api')", name="ck_channel_source"),)
+    __table_args__ = (CheckConstraint(f"source IN ({_CHANNEL_SOURCES})", name="source"),)
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     youtube_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
@@ -112,7 +64,10 @@ class Channel(Base):
     source: Mapped[str] = mapped_column(String, nullable=False)
     fetched_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
+
     playlists: Mapped[list[Playlist]] = relationship(
         back_populates="channel", passive_deletes="all"
     )
@@ -135,11 +90,13 @@ class Playlist(Base):
     item_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     fetched_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
 
     channel: Mapped[Channel] = relationship(back_populates="playlists")
     items: Mapped[list[PlaylistItem]] = relationship(
-        back_populates="playlist", cascade="all, delete-orphan"
+        back_populates="playlist", cascade="all, delete-orphan", passive_deletes=True
     )
     runs: Mapped[list[Run]] = relationship(back_populates="playlist", passive_deletes="all")
 
@@ -162,7 +119,9 @@ class Video(Base):
     source_thumbnail_url: Mapped[str | None] = mapped_column(String, nullable=True)
     fetched_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
 
     channel: Mapped[Channel | None] = relationship(back_populates="videos")
     playlist_items: Mapped[list[PlaylistItem]] = relationship(
@@ -179,8 +138,8 @@ class PlaylistItem(Base):
 
     __tablename__ = "playlist_item"
     __table_args__ = (
-        UniqueConstraint("playlist_id", "video_id", name="uq_playlist_item_playlist_video"),
-        UniqueConstraint("playlist_id", "position", name="uq_playlist_item_playlist_position"),
+        UniqueConstraint("playlist_id", "video_id", name="playlist_video"),
+        UniqueConstraint("playlist_id", "position", name="playlist_position"),
     )
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -194,7 +153,9 @@ class PlaylistItem(Base):
     part_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     part_label: Mapped[str | None] = mapped_column(String, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
 
     playlist: Mapped[Playlist] = relationship(back_populates="items")
     video: Mapped[Video] = relationship(back_populates="playlist_items")
@@ -204,7 +165,7 @@ class Template(Base):
     """Versioned thumbnail layout specification and Jinja prompt template."""
 
     __tablename__ = "template"
-    __table_args__ = (UniqueConstraint("name", "version", name="uq_template_name_version"),)
+    __table_args__ = (UniqueConstraint("name", "version", name="name_version"),)
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     name: Mapped[str] = mapped_column(String, nullable=False)
@@ -214,7 +175,10 @@ class Template(Base):
     spec_hash: Mapped[str] = mapped_column(String, nullable=False)
     is_builtin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
+
     runs: Mapped[list[Run]] = relationship(back_populates="template", passive_deletes="all")
 
 
@@ -229,7 +193,10 @@ class ProviderProfile(Base):
     provider_version: Mapped[str] = mapped_column(String, nullable=False)
     params_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
+
     runs: Mapped[list[Run]] = relationship(back_populates="provider_profile", passive_deletes="all")
 
 
@@ -238,11 +205,8 @@ class Run(Base):
 
     __tablename__ = "run"
     __table_args__ = (
-        CheckConstraint("kind IN ('hero', 'iterate', 'batch')", name="ck_run_kind"),
-        CheckConstraint(
-            "status IN ('pending', 'running', 'paused', 'completed', 'failed', 'cancelled')",
-            name="ck_run_status",
-        ),
+        CheckConstraint(f"kind IN ({_RUN_KINDS})", name="kind"),
+        CheckConstraint(f"status IN ({_RUN_STATUSES})", name="status"),
     )
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
@@ -271,7 +235,9 @@ class Run(Base):
     finished_at: Mapped[str | None] = mapped_column(String, nullable=True)
     error_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
 
     template: Mapped[Template] = relationship(back_populates="runs")
     provider_profile: Mapped[ProviderProfile] = relationship(back_populates="runs")
@@ -289,7 +255,7 @@ class Run(Base):
         passive_deletes="all",
     )
     iterations: Mapped[list[Iteration]] = relationship(
-        back_populates="run", cascade="all, delete-orphan"
+        back_populates="run", cascade="all, delete-orphan", passive_deletes=True
     )
 
 
@@ -297,12 +263,7 @@ class Iteration(Base):
     """One generated thumbnail attempt slot."""
 
     __tablename__ = "iteration"
-    __table_args__ = (
-        CheckConstraint(
-            "status IN ('pending', 'running', 'paused', 'completed', 'failed', 'cancelled')",
-            name="ck_iteration_status",
-        ),
-    )
+    __table_args__ = (CheckConstraint(f"status IN ({_RUN_STATUSES})", name="status"),)
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     run_id: Mapped[str] = mapped_column(
@@ -331,7 +292,9 @@ class Iteration(Base):
     cost_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )
 
     run: Mapped[Run] = relationship(back_populates="iterations")
     video: Mapped[Video | None] = relationship(back_populates="iterations")
@@ -343,12 +306,7 @@ class Asset(Base):
     """Content-addressed image file stored in the local asset directory."""
 
     __tablename__ = "asset"
-    __table_args__ = (
-        CheckConstraint(
-            "kind IN ('raw', 'final', 'reference', 'preview')",
-            name="ck_asset_kind",
-        ),
-    )
+    __table_args__ = (CheckConstraint(f"kind IN ({_ASSET_KINDS})", name="kind"),)
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     sha256: Mapped[str] = mapped_column(String, unique=True, nullable=False)
@@ -361,4 +319,6 @@ class Asset(Base):
     compliant: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     compliance_report_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
-    updated_at: Mapped[str] = mapped_column(String, nullable=False, default=utcnow_iso)
+    updated_at: Mapped[str] = mapped_column(
+        String, nullable=False, default=utcnow_iso, onupdate=utcnow_iso
+    )

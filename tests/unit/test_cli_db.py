@@ -20,7 +20,7 @@ def test_db_path_command(tmp_path: Path) -> None:
     result = runner.invoke(app, ["--data-dir", str(data_dir), "db", "path"])
     assert result.exit_code == 0
     expected_path = data_dir / "thumbforge.sqlite3"
-    assert str(expected_path) in result.stdout.replace("\n", "").replace("\r", "")
+    assert result.stdout.strip() == str(expected_path)
 
 
 def test_db_path_json_mode(tmp_path: Path) -> None:
@@ -132,3 +132,55 @@ def test_db_vacuum_fails_when_db_missing(tmp_path: Path) -> None:
     data_dir = tmp_path / "nonexistent_dir"
     result = runner.invoke(app, ["--data-dir", str(data_dir), "db", "vacuum"])
     assert result.exit_code == 1
+
+
+def test_db_status_pending_and_upgrade(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    db_file = data_dir / "thumbforge.sqlite3"
+    runner.invoke(app, ["--data-dir", str(data_dir), "db", "init"])
+
+    from alembic import command
+
+    from thumbforge.storage.db import _alembic_config
+
+    cfg = _alembic_config(db_file)
+    command.downgrade(cfg, "base")
+
+    # Status reports pending: 1
+    res = runner.invoke(app, ["--data-dir", str(data_dir), "db", "status"])
+    assert res.exit_code == 0
+    assert "pending: 1" in res.stdout
+
+    # Upgrade applies it
+    res_up = runner.invoke(app, ["--data-dir", str(data_dir), "db", "upgrade"])
+    assert res_up.exit_code == 0
+    assert "0001" in res_up.stdout
+
+    # Status reports current == head
+    res_final = runner.invoke(app, ["--data-dir", str(data_dir), "db", "status"])
+    assert "current == head" in res_final.stdout
+
+
+def test_db_verbose_logging_stream(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    runner.invoke(app, ["--data-dir", str(data_dir), "db", "init"])
+
+    result = runner.invoke(app, ["-vv", "--data-dir", str(data_dir), "db", "status"])
+    assert result.exit_code == 0
+    # stderr carries structlog debug/info lines
+    assert "[debug" in result.stderr or "[info" in result.stderr
+    assert "cli configured" in result.stderr
+
+
+def test_db_json_error_stream_contract(tmp_path: Path) -> None:
+    data_dir = tmp_path / "missing_dir"
+    result = runner.invoke(app, ["--json", "--data-dir", str(data_dir), "db", "vacuum"])
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    err_lines = [line for line in result.stderr.splitlines() if line.strip()]
+    assert len(err_lines) == 1
+    payload = json.loads(err_lines[0])
+    assert payload["exit_code"] == 1
+    assert payload["error"] == "database"
+    assert "does not exist" in payload["message"]
+    assert "run_id" not in payload
