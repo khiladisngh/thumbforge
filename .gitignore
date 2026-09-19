@@ -39,6 +39,6 @@ graphify-out/cache/
 .pytest_tmp/
 
 # Local scratch: CI log dumps and the graph-drift comparison copy
-# (see docs/CONVENTIONS.md - "Checking the knowledge graph for drift")
+# (see the "Knowledge graph" section of docs/CONVENTIONS.md)
 *.log
 .drift-*

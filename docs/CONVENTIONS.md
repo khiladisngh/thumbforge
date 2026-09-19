@@ -37,9 +37,9 @@ graphify extract . --code-only && graphify cluster-only . --no-label
 ```
 
 CI runs an advisory drift check (`graphify drift (advisory)`, `continue-on-error`) that re-extracts
-from scratch and compares node/edge **sets** — never a byte diff, since `graph.json` embeds
-`built_at_commit`. To reproduce it locally, diff a copy of the committed graph against a fresh
-extract; use the ignored `.drift-` prefix for the scratch copy:
+and compares node/edge **sets** — never a byte diff, since `graph.json` embeds `built_at_commit`.
+Reproduce it locally by diffing a copy of the committed graph against a fresh extract; use the
+ignored `.drift-` prefix for the scratch copy:
 
 ```
 cp graphify-out/graph.json .drift-committed.json
@@ -47,14 +47,24 @@ graphify extract . --code-only
 uv run python scripts/check_graph_drift.py .drift-committed.json graphify-out/graph.json
 ```
 
-Two known limits. Local extraction is incremental and its state lives inside `graphify-out/`, so
-deleting `graphify-out/cache/` does **not** force a full re-extract — a local comparison cannot
-faithfully reproduce CI's from-scratch run. Consequently the two can disagree on how one symbol is
-qualified (`references parametrize` vs `references <module>_parametrize`) while node and edge counts
-match exactly. That is graphify id-resolution noise, not a structural change; the check is advisory
-and is not one of branch protection's required contexts, and a later commit's extract normally
-clears it. Regenerate as the **last** step before `git add`, after formatters have run, or their
-edits will shift line spans and reintroduce drift.
+Both CI and the recipe above extract **incrementally on top of the committed `graphify-out/`**,
+which is the intended semantics: the question is whether the author regenerated after their change,
+not what a clean-room build would produce. Deleting `graphify-out/cache/` does not affect this —
+the incremental state lives in `graphify-out/.graphify_analysis.json` and `manifest.json`.
+
+Do **not** `rm -rf graphify-out` to force a clean-room extract and compare that: a from-scratch
+build diverges materially from the incrementally maintained one (measured on `1c279a3`:
+612 nodes/1179 edges committed versus 577/1282 from scratch), so such a check could never pass
+while the graph is maintained incrementally.
+
+Incremental extraction is also mildly non-deterministic across machines: local and CI can qualify
+the same symbol differently (`references parametrize` versus `references <module>_parametrize`)
+with node and edge counts identical. That is id-resolution noise, not a structural change; the
+check is advisory and is not one of branch protection's required contexts, and a later commit's
+extract normally clears it.
+
+Regenerate as the **last** step before `git add`, after formatters have run — otherwise their edits
+shift line spans and reintroduce drift.
 
 ## Documentation
 
