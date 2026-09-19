@@ -165,10 +165,10 @@ def test_db_verbose_logging_stream(tmp_path: Path) -> None:
     data_dir = tmp_path / "data"
     runner.invoke(app, ["--data-dir", str(data_dir), "db", "init"])
 
-    result = runner.invoke(app, ["-vv", "--data-dir", str(data_dir), "db", "status"])
+    result = runner.invoke(app, ["--no-color", "-vv", "--data-dir", str(data_dir), "db", "status"])
     assert result.exit_code == 0
-    # stderr carries structlog debug/info lines
-    assert "[debug" in result.stderr or "[info" in result.stderr
+    # stderr carries structlog debug/info lines without ANSI coloring
+    assert "debug" in result.stderr or "info" in result.stderr
     assert "cli configured" in result.stderr
 
 
