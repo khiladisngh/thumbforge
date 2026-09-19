@@ -38,7 +38,6 @@ node_modules/
 graphify-out/cache/
 .pytest_tmp/
 
-# Local scratch: CI log dumps and the graph-drift comparison copy
-# (see the "Knowledge graph" section of docs/CONVENTIONS.md)
+# Local scratch: CI log dumps. Other scratch belongs in .pytest_tmp/ (ignored above);
+# see the "Knowledge graph" section of docs/CONVENTIONS.md.
 *.log
-.drift-*
