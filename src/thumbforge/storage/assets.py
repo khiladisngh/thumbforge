@@ -31,6 +31,25 @@ _MIME_TO_EXT: dict[str, str] = {
 AssetStoreError = AssetError
 
 
+def _fsync_dir(path: Path) -> None:
+    """Flush a directory entry to disk so a publication survives power loss.
+
+    Fsyncing the file itself does not make its *directory entry* durable on POSIX, so
+    without this a crash could drop a freshly linked asset while its row survives.
+    Windows cannot open a directory for fsync, so this is a best-effort no-op there.
+    """
+    try:
+        fd = os.open(path, os.O_RDONLY)
+    except OSError:
+        return
+    try:
+        os.fsync(fd)
+    except OSError:
+        pass  # platform does not support directory fsync
+    finally:
+        os.close(fd)
+
+
 class AssetStore:
     """Content-addressed storage for thumbnail iterations, raw art, and style references."""
 
@@ -110,6 +129,8 @@ class AssetStore:
                 # Hard links unsupported on this filesystem: atomic rename of the
                 # already-fsynced temp file, so the target is never partially written.
                 tmp_path.replace(target_path)
+
+            _fsync_dir(bucket_dir)
 
             rel_path = target_path.relative_to(self.data_dir).as_posix()
 

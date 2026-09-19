@@ -124,6 +124,7 @@ def vacuum(
         float,
         typer.Option(
             "--grace-seconds",
+            min=1,
             help="Only reclaim unreferenced files untouched for this long (seconds).",
         ),
     ] = ORPHAN_GRACE_SECONDS,

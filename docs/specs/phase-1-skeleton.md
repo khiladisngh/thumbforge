@@ -162,7 +162,7 @@ alembic.ini          # repo root; script_location = src/thumbforge/storage/migra
 | `thumbforge db upgrade` | `alembic upgrade head`                                                                                   | 0, 1 |
 | `thumbforge db status`  | Prints current revision, head revision, pending count, file size, `journal_mode`                         | 0, 1 |
 | `thumbforge db path`    | Prints the DB file path                                                                                  | 0    |
-| `thumbforge db vacuum`  | `VACUUM` + `PRAGMA wal_checkpoint(TRUNCATE)`, then deletes unreferenced `assets/` files and stale `tmp/` entries older than `--grace-seconds` (default 3600); reports the reclaimed count | 0, 1 |
+| `thumbforge db vacuum`  | `VACUUM` + `PRAGMA wal_checkpoint(TRUNCATE)`, then deletes unreferenced `assets/` files and stale `tmp/` entries untouched for `--grace-seconds` (default 3600, must be ≥ 1); reports the reclaimed count | 0, 1, 2 |
 
 Exit `1` here means `SourceError`-class unexpected failure (locked file, disk full) per `PLAN.md` §5.1.
 
@@ -177,7 +177,7 @@ class AssetStore:
 ```
 
 - Layout: `<data_dir>/assets/<sha256[:2]>/<sha256>.<ext>`; `asset.rel_path` is relative to `data_dir` so the data directory is relocatable.
-- Write path: write to `<data_dir>/tmp/<ulid>`, `fsync`, compute sha256, then publish with `os.link` (create-only), falling back to an atomic rename where hard links are unsupported. Identical bytes dedupe to the same row.
+- Write path: write to `<data_dir>/tmp/<ulid>`, `fsync`, compute sha256, then publish with `os.link` (create-only), falling back to an atomic rename where hard links are unsupported, and `fsync` the bucket directory so the new directory entry is durable before the row is committed (fsyncing the file alone does not persist its directory entry on POSIX). Identical bytes dedupe to the same row.
 - Publication is idempotent: the path is content-addressed, so an existing target already holds byte-identical content and a concurrent publication is never a conflict. A published file is never unlinked by `put` — another caller may already reference it — so an orphan left by a crash between publication and insert is reclaimed by `db vacuum` (ADR 0011). Because `put` publishes before it inserts, a just-published file is legitimately unreferenced; `db vacuum` therefore only reclaims files untouched for `--grace-seconds`, the same expiry approach `git gc` uses, rather than locking writers out for the duration of a vacuum.
 - A concurrent caller that wins the `asset.sha256` unique constraint is adopted: `put` re-queries and returns that row instead of failing.
 - `AssetStore.verify(asset)` re-hashes the file and reports drift.

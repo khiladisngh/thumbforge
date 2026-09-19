@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import io
+import os
+import time
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
@@ -10,6 +12,7 @@ import pytest
 from PIL import Image
 
 from thumbforge.core.enums import AssetKind
+from thumbforge.core.errors import DatabaseError
 from thumbforge.storage.assets import AssetStore, AssetStoreError
 from thumbforge.storage.db import (
     get_engine,
@@ -24,6 +27,13 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from sqlalchemy.orm import Session, sessionmaker
+
+
+def _backdate(*paths: Path, age_seconds: float = 7200) -> None:
+    """Age files past the vacuum grace window without sleeping."""
+    stamp = time.time() - age_seconds
+    for path in paths:
+        os.utime(path, (stamp, stamp))
 
 
 def _make_png_bytes(
@@ -227,8 +237,9 @@ def test_vacuum_reclaims_expired_orphans_and_spares_referenced_files(
     stale_tmp = asset_store.tmp_dir / "01ABCDEF"
     stale_tmp.write_bytes(b"interrupted write")
 
-    # grace_seconds=0 expires both immediately instead of sleeping out the default window.
-    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3", grace_seconds=0)
+    # Backdate past the default window; a zero/negative grace is rejected outright.
+    _backdate(orphan, stale_tmp)
+    reclaimed = vacuum_db(tmp_path / "data" / "thumbforge.sqlite3")
 
     assert reclaimed == 2
     assert not orphan.exists()
@@ -257,3 +268,12 @@ def test_vacuum_spares_files_inside_the_grace_window(
     assert reclaimed == 0
     assert in_flight.is_file()
     assert fresh_tmp.is_file()
+
+
+@pytest.mark.parametrize("grace", [0, -1.0])
+def test_vacuum_rejects_non_positive_grace(tmp_path: Path, grace: float) -> None:
+    """A non-positive window would let vacuum delete an in-flight write's files."""
+    db_path = tmp_path / "data" / "thumbforge.sqlite3"
+    init_db(db_path)
+    with pytest.raises(DatabaseError, match="grace_seconds must be positive"):
+        vacuum_db(db_path, grace_seconds=grace)

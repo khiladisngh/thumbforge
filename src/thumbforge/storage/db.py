@@ -218,6 +218,11 @@ def vacuum_db(db_path: Path, *, grace_seconds: float = ORPHAN_GRACE_SECONDS) -> 
     Returns:
         The number of files reclaimed from ``assets/`` and ``tmp/``.
     """
+    if grace_seconds <= 0:
+        raise DatabaseError(
+            f"grace_seconds must be positive, got {grace_seconds}",
+            hint="a non-positive window would let vacuum delete files of an in-flight write",
+        )
     if not db_path.exists():
         raise DatabaseError(
             f"Database file does not exist at {db_path}",
