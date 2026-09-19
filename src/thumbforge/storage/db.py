@@ -11,16 +11,19 @@ from alembic import command
 from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
-from sqlalchemy import URL, Engine, create_engine, event, text
+from sqlalchemy import URL, Engine, create_engine, event, select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from thumbforge.core.errors import DatabaseError
+from thumbforge.storage.models import Asset
 
 if TYPE_CHECKING:
     import sqlite3
     from collections.abc import Generator
 
     from sqlalchemy.pool import ConnectionPoolEntry
+
+
 MIGRATIONS_DIR = Path(__file__).resolve().parent / "migrations"
 
 
@@ -198,8 +201,16 @@ def upgrade_db(db_path: Path, revision: str = "head") -> str:
     return status.current_revision or ""
 
 
-def vacuum_db(db_path: Path) -> None:
-    """Reclaim free space and truncate the WAL file."""
+def vacuum_db(db_path: Path) -> int:
+    """Reclaim free space, truncate the WAL, and delete unreferenced asset files.
+
+    `AssetStore.put` publishes a file before inserting its row and never unlinks a
+    published path, so a crash in between can leave an orphan. Reclaiming those (and
+    stale `tmp/` entries) is this command's job per ADR 0011.
+
+    Returns:
+        The number of orphaned files removed from ``assets/`` and ``tmp/``.
+    """
     if not db_path.exists():
         raise DatabaseError(
             f"Database file does not exist at {db_path}",
@@ -210,6 +221,9 @@ def vacuum_db(db_path: Path) -> None:
         with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             conn.execute(text("VACUUM;"))
             conn.execute(text("PRAGMA wal_checkpoint(TRUNCATE);"))
+        reclaimed = _reclaim_orphans(engine, db_path.parent)
+    except DatabaseError:
+        raise
     except Exception as exc:
         raise DatabaseError(
             f"Failed to vacuum database: {exc}",
@@ -217,3 +231,28 @@ def vacuum_db(db_path: Path) -> None:
         ) from exc
     finally:
         engine.dispose()
+    return reclaimed
+
+
+def _reclaim_orphans(engine: Engine, data_dir: Path) -> int:
+    """Delete files under ``assets/`` with no ``asset`` row, plus every ``tmp/`` entry."""
+    with session_scope(engine) as session:
+        referenced = {
+            (data_dir / rel_path).resolve() for rel_path in session.scalars(select(Asset.rel_path))
+        }
+
+    removed = 0
+    assets_dir = data_dir / "assets"
+    if assets_dir.is_dir():
+        for candidate in assets_dir.rglob("*"):
+            if candidate.is_file() and candidate.resolve() not in referenced:
+                candidate.unlink(missing_ok=True)
+                removed += 1
+
+    tmp_dir = data_dir / "tmp"
+    if tmp_dir.is_dir():
+        for leftover in tmp_dir.iterdir():
+            if leftover.is_file():
+                leftover.unlink(missing_ok=True)
+                removed += 1
+    return removed

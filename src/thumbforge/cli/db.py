@@ -116,14 +116,17 @@ def path_(ctx: typer.Context) -> None:
 @app.command("vacuum")
 @handle_errors
 def vacuum(ctx: typer.Context) -> None:
-    """Reclaim unused disk space and checkpoint the Write-Ahead Log (WAL)."""
+    """Reclaim unused disk space, checkpoint the WAL, and delete orphaned asset files."""
     app_ctx = _context(ctx)
     settings = app_ctx.require_settings()
     db_path = settings.db_path
 
-    vacuum_db(db_path)
+    reclaimed = vacuum_db(db_path)
     emit(
         app_ctx,
-        {"status": "ok", "path": str(db_path)},
-        render=lambda: f"[green]vacuumed and checkpointed[/] {db_path}",
+        {"status": "ok", "path": str(db_path), "reclaimed_files": reclaimed},
+        render=lambda: (
+            f"[green]vacuumed and checkpointed[/] {db_path} "
+            f"([cyan]{reclaimed}[/] orphaned file(s) reclaimed)"
+        ),
     )

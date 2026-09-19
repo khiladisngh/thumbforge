@@ -92,33 +92,25 @@ class AssetStore:
                 if existing is not None:
                     return existing
 
-            # 4. Move into place at assets/<sha256[:2]>/<sha256>.<ext>
+            # 4. Publish at assets/<sha256[:2]>/<sha256>.<ext>.
+            # The path is content-addressed, so any pre-existing target holds byte-identical
+            # content: `link` (create-only) and the `replace` fallback are both safe, and a
+            # concurrent publication is never a conflict. A published file is NEVER unlinked
+            # here — another invocation may already reference it — so orphans left by a crash
+            # between publication and insert are reclaimed by `db vacuum` (ADR 0011).
             bucket_dir = self.assets_dir / sha256[:2]
             bucket_dir.mkdir(parents=True, exist_ok=True)
             target_path = bucket_dir / f"{sha256}.{ext}"
 
-            created_target = False
             try:
                 os.link(tmp_path, target_path)
-                created_target = True
-                tmp_path.unlink(missing_ok=True)
             except FileExistsError:
-                # Target already published concurrently by another process
-                created_target = False
-                tmp_path.unlink(missing_ok=True)
+                pass  # already published by a concurrent call; identical bytes
             except OSError:
-                # Fallback for filesystems where hard links are unsupported:
-                # atomic exclusive creation (O_CREAT | O_EXCL) never overwrites existing target
-                try:
-                    with tmp_path.open("rb") as src_f, target_path.open("xb") as dst_f:
-                        shutil.copyfileobj(src_f, dst_f)
-                        dst_f.flush()
-                        os.fsync(dst_f.fileno())
-                    created_target = True
-                except FileExistsError:
-                    created_target = False
-                finally:
-                    tmp_path.unlink(missing_ok=True)
+                # Hard links unsupported on this filesystem: atomic rename of the
+                # already-fsynced temp file, so the target is never partially written.
+                tmp_path.replace(target_path)
+
             rel_path = target_path.relative_to(self.data_dir).as_posix()
 
             # 5. Persist Asset row
@@ -137,16 +129,11 @@ class AssetStore:
                 with session_scope(self.session_factory) as session:
                     session.add(asset)
             except IntegrityError:
+                # A concurrent call won the `sha256` unique constraint; adopt its row.
                 with session_scope(self.session_factory) as session:
                     existing = session.scalar(select(Asset).where(Asset.sha256 == sha256))
                     if existing is not None:
                         return existing
-                if created_target:
-                    target_path.unlink(missing_ok=True)
-                raise
-            except Exception:
-                if created_target:
-                    target_path.unlink(missing_ok=True)
                 raise
 
             return asset
