@@ -18,7 +18,11 @@ classifiers = [
   "Topic :: Multimedia :: Graphics",
 ]
 dependencies = [
+  "platformdirs>=4.11.10",
+  "pydantic>=2.13.5",
+  "pydantic-settings>=2.15.0",
   "rich>=15.0.0",
+  "tomli-w>=1.2.0",
   "typer",
 ]
 

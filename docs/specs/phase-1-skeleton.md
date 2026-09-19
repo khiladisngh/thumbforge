@@ -87,12 +87,16 @@ def set_value(settings_path: Path, dotted_key: str, raw: str) -> None   # `confi
 
 ### `config` commands
 
-| Command                           | Behaviour                                                                                                                | Exit |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---- |
-| `thumbforge config init`          | Writes `default_config_toml()` to the config path; refuses to overwrite unless `--force`                                 | 0, 2 |
-| `thumbforge config show`          | Prints effective settings as TOML (Rich syntax panel) or JSON with `--json`                                              | 0    |
-| `thumbforge config path`          | Prints config path, data dir, state dir, DB path (one per line; JSON object with `--json`)                               | 0    |
-| `thumbforge config set KEY VALUE` | Dotted key (`output.width 1280`); value parsed as TOML scalar; validated through `Settings` before the file is rewritten | 0, 2 |
+| Command                              | Behaviour                                                                                                                                                                                                                   | Exit |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| `thumbforge config init`             | Writes `default_config_toml()` to the config path; refuses to overwrite unless `--force`                                                                                                                                    | 0, 2 |
+| `thumbforge config show`             | Prints effective settings as TOML (Rich syntax panel) or JSON with `--json`                                                                                                                                                 | 0    |
+| `thumbforge config path`             | Prints config path, data dir, state dir, DB path (one per line; JSON object with `--json`)                                                                                                                                  | 0    |
+| `thumbforge config set KEY=VALUE...` | One or more assignments (`output.width=1280 output.height=720`); values parsed as TOML scalars; the whole result is validated through `Settings` before the file is rewritten, so a rejected edit leaves the file untouched | 0, 2 |
+
+`config set` takes assignments rather than a `KEY VALUE` pair because linked keys must change together: `output.width` and `output.height` are bound by the 16:9 invariant, and setting either alone leaves a configuration that cannot validate, making the value unreachable.
+
+Precedence note: file values are merged _underneath_ environment values rather than passed to `Settings(**file_values)`. Constructor arguments are the highest-priority source in pydantic-settings, so the naive form would let `config.toml` silently beat `THUMBFORGE_*`.
 
 ### Logging (`logging.py`)
 

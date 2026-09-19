@@ -16,6 +16,7 @@ import typer
 from rich.console import Console
 
 from thumbforge import __version__
+from thumbforge.cli import config as config_cli
 from thumbforge.cli._render import AppContext
 
 app = typer.Typer(
@@ -40,6 +41,10 @@ def root(
         Path | None,
         typer.Option("--config", envvar="THUMBFORGE_CONFIG", help="Path to config.toml."),
     ] = None,
+    data_dir: Annotated[
+        Path | None,
+        typer.Option("--data-dir", help="Override the data directory (database and assets)."),
+    ] = None,
     json_mode: Annotated[
         bool,
         typer.Option("--json", help="Emit a single JSON document instead of Rich output."),
@@ -61,7 +66,15 @@ def root(
         no_color=no_color or json_mode,
         highlight=not json_mode,
     )
-    ctx.obj = AppContext(console=console, json_mode=json_mode, config_path=config)
+    ctx.obj = AppContext(
+        console=console,
+        json_mode=json_mode,
+        config_path=config,
+        data_dir=data_dir,
+    )
+
+
+app.add_typer(config_cli.app)
 
 
 def main() -> None:
