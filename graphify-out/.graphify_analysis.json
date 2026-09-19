@@ -6,7 +6,6 @@
       "intenum",
       "src_thumbforge_core_errors",
       "src_thumbforge_core_errors_exitcode",
-      "src_thumbforge_core_errors_notfounderror",
       "src_thumbforge_core_errors_partialbatcherror",
       "src_thumbforge_core_errors_partialbatcherror_init",
       "src_thumbforge_core_errors_providerautherror",
@@ -27,7 +26,6 @@
       "src_thumbforge_core_errors_rationale_42",
       "src_thumbforge_core_errors_rationale_60",
       "src_thumbforge_core_errors_rationale_67",
-      "src_thumbforge_core_errors_rationale_74",
       "src_thumbforge_core_errors_rationale_81",
       "src_thumbforge_core_errors_rationale_88",
       "src_thumbforge_core_errors_rationale_98",
@@ -37,16 +35,19 @@
       "src_thumbforge_core_errors_thumbforgeerror",
       "src_thumbforge_core_errors_thumbforgeerror_init",
       "src_thumbforge_core_errors_thumbforgeerror_str",
-      "tests_unit_test_errors_test_hint_and_code_reach_stderr",
-      "tests_unit_test_errors_test_hint_and_code_reach_stderr_boom",
       "tests_unit_test_errors_test_only_transient_and_timeout_are_retryable"
     ],
     "1": [
       "hashlib",
       "monkeypatch",
       "os",
+      "path",
       "pathlib",
       "pytest",
+      "scripts_check_graph_drift",
+      "scripts_check_graph_drift_main",
+      "scripts_check_graph_drift_rationale_1",
+      "scripts_check_graph_drift_structure",
       "src_thumbforge_core_ids",
       "src_thumbforge_core_ids_new_id",
       "src_thumbforge_core_ids_py_path",
@@ -56,40 +57,76 @@
       "src_thumbforge_core_ids_rationale_33",
       "src_thumbforge_core_ids_sha256_bytes",
       "src_thumbforge_core_ids_sha256_file",
+      "sys",
       "tests_unit_test_ids",
       "tests_unit_test_ids_test_ids_are_26_char_crockford_base32",
       "tests_unit_test_ids_test_ids_are_unique",
       "tests_unit_test_ids_test_ids_sort_by_creation_time",
+      "tests_unit_test_ids_test_sha256_file_matches_sha256_bytes",
       "thumbforge_core",
       "time",
       "typing"
     ],
     "2": [
+      "collections_abc",
       "functools",
-      "json",
-      "parametrize",
-      "rich_console",
+      "p",
+      "r",
       "src_thumbforge_cli_errors",
+      "src_thumbforge_cli_errors_app_context",
+      "src_thumbforge_cli_errors_handle_errors",
+      "src_thumbforge_cli_errors_handle_errors_wrapper",
+      "src_thumbforge_cli_errors_is_json_mode",
+      "src_thumbforge_cli_errors_py_appcontext",
+      "src_thumbforge_cli_errors_py_thumbforgeerror",
       "src_thumbforge_cli_errors_rationale_1",
+      "src_thumbforge_cli_errors_rationale_23",
+      "src_thumbforge_cli_errors_rationale_62",
+      "src_thumbforge_cli_errors_report",
       "tests_unit_test_errors",
-      "tests_unit_test_errors_py_thumbforgeerror",
-      "tests_unit_test_errors_test_error_maps_to_documented_exit_code",
-      "tests_unit_test_errors_test_error_maps_to_documented_exit_code_boom",
+      "tests_unit_test_errors_rationale_1",
       "tests_unit_test_errors_test_keyboard_interrupt_exits_130",
       "tests_unit_test_errors_test_keyboard_interrupt_exits_130_boom",
       "tests_unit_test_errors_test_unexpected_exception_is_not_swallowed",
       "tests_unit_test_errors_test_unexpected_exception_is_not_swallowed_boom",
+      "thumbforge_cli_errors",
       "thumbforge_cli_render",
-      "thumbforge_core_errors",
-      "typer"
+      "thumbforge_core_errors"
     ],
     "3": [
+      "console",
+      "dataclasses",
+      "json",
+      "jsonvalue",
+      "renderabletype",
+      "rich_panel",
+      "rich_table",
+      "src_thumbforge_cli_render",
+      "src_thumbforge_cli_render_emit",
+      "src_thumbforge_cli_render_kv",
+      "src_thumbforge_cli_render_panel",
+      "src_thumbforge_cli_render_rationale_1",
+      "src_thumbforge_cli_render_rationale_43",
+      "src_thumbforge_cli_render_rationale_53",
+      "src_thumbforge_cli_render_rationale_58",
+      "src_thumbforge_cli_render_rationale_73",
+      "src_thumbforge_cli_render_table",
+      "tests_unit_test_render",
+      "tests_unit_test_render_json_context",
+      "tests_unit_test_render_py_appcontext",
+      "tests_unit_test_render_test_json_mode_output_round_trips",
+      "tests_unit_test_render_test_non_finite_floats_are_rejected",
+      "tests_unit_test_render_test_non_json_payload_raises_instead_of_being_stringified",
+      "tests_unit_test_render_test_rich_mode_uses_the_renderer_and_prints_no_json"
+    ],
+    "4": [
       "callback",
       "context",
       "envvar",
       "help",
       "is_eager",
       "option",
+      "rich_console",
       "src_thumbforge_cli_app",
       "src_thumbforge_cli_app_main",
       "src_thumbforge_cli_app_py_path",
@@ -99,67 +136,22 @@
       "src_thumbforge_cli_app_version_callback",
       "src_thumbforge_cli_render_appcontext",
       "src_thumbforge_cli_render_rationale_30",
-      "src_thumbforge_main"
-    ],
-    "4": [
-      "collections_abc",
-      "dataclasses",
-      "rich_panel",
-      "rich_table",
-      "src_thumbforge_cli_render",
-      "src_thumbforge_cli_render_kv",
-      "src_thumbforge_cli_render_panel",
-      "src_thumbforge_cli_render_rationale_1",
-      "src_thumbforge_cli_render_rationale_43",
-      "src_thumbforge_cli_render_rationale_53",
-      "src_thumbforge_cli_render_rationale_58",
-      "src_thumbforge_cli_render_table",
-      "tests_unit_test_render_test_rich_mode_uses_the_renderer_and_prints_no_json"
+      "src_thumbforge_main",
+      "tests_unit_test_errors_rationale_84",
+      "tests_unit_test_errors_test_keyboard_interrupt_in_json_mode_emits_one_line_on_stderr",
+      "tests_unit_test_errors_test_keyboard_interrupt_in_json_mode_emits_one_line_on_stderr_boom",
+      "tests_unit_test_errors_test_keyboard_interrupt_in_json_mode_emits_one_line_on_stderr_root",
+      "typer"
     ],
     "5": [
-      "console",
-      "jsonvalue",
-      "renderabletype",
-      "src_thumbforge_cli_render_emit",
-      "src_thumbforge_cli_render_rationale_73",
-      "tests_unit_test_render",
-      "tests_unit_test_render_json_context",
-      "tests_unit_test_render_py_appcontext",
-      "tests_unit_test_render_test_json_mode_output_round_trips",
-      "tests_unit_test_render_test_non_finite_floats_are_rejected",
-      "tests_unit_test_render_test_non_json_payload_raises_instead_of_being_stringified"
-    ],
-    "6": [
-      "p",
-      "r",
-      "src_thumbforge_cli_errors_app_context",
-      "src_thumbforge_cli_errors_handle_errors",
-      "src_thumbforge_cli_errors_handle_errors_wrapper",
-      "src_thumbforge_cli_errors_is_json_mode",
-      "src_thumbforge_cli_errors_py_appcontext",
-      "src_thumbforge_cli_errors_py_thumbforgeerror",
-      "src_thumbforge_cli_errors_rationale_23",
-      "src_thumbforge_cli_errors_rationale_62",
-      "src_thumbforge_cli_errors_report"
-    ],
-    "7": [
-      "path",
-      "scripts_check_graph_drift",
-      "scripts_check_graph_drift_main",
-      "scripts_check_graph_drift_rationale_1",
-      "scripts_check_graph_drift_structure",
-      "sys",
-      "tests_unit_test_ids_test_sha256_file_matches_sha256_bytes"
-    ],
-    "8": [
       "src_thumbforge_core_errors_complianceerror",
       "src_thumbforge_core_errors_rationale_136",
-      "tests_unit_test_errors_rationale_97",
+      "tests_unit_test_errors_rationale_118",
       "tests_unit_test_errors_test_json_mode_emits_one_parseable_line_on_stderr_and_nothing_on_stdout",
       "tests_unit_test_errors_test_json_mode_emits_one_parseable_line_on_stderr_and_nothing_on_stdout_boom",
       "tests_unit_test_errors_test_json_mode_emits_one_parseable_line_on_stderr_and_nothing_on_stdout_root"
     ],
-    "9": [
+    "6": [
       "tests_unit_test_version",
       "tests_unit_test_version_test_help_exits_zero",
       "tests_unit_test_version_test_version_flag_prints_version",
@@ -167,48 +159,63 @@
       "thumbforge_cli_app",
       "typer_testing"
     ],
-    "10": [
+    "7": [
+      "parametrize",
+      "tests_unit_test_errors_test_error_maps_to_documented_exit_code",
+      "tests_unit_test_errors_test_error_maps_to_documented_exit_code_boom",
+      "thumbforgeerror"
+    ],
+    "8": [
+      "src_thumbforge_core_errors_notfounderror",
+      "src_thumbforge_core_errors_rationale_74",
+      "tests_unit_test_errors_test_hint_and_code_reach_stderr",
+      "tests_unit_test_errors_test_hint_and_code_reach_stderr_boom"
+    ],
+    "9": [
       "importlib_metadata",
       "src_thumbforge_init",
       "src_thumbforge_init_rationale_1"
     ],
-    "11": [
+    "10": [
       "src_thumbforge_cli_init",
       "src_thumbforge_cli_init_rationale_1"
     ],
-    "12": [
+    "11": [
       "src_thumbforge_core_init",
       "src_thumbforge_core_init_rationale_1"
     ],
-    "13": [
+    "12": [
       "tests_conftest",
       "tests_conftest_rationale_1"
     ],
-    "14": [
+    "13": [
       "pkg_thumbforge"
     ],
-    "15": [
+    "14": [
       "src_thumbforge_cli_errors_py_any"
     ],
-    "16": [
+    "15": [
       "src_thumbforge_cli_render_py_any"
     ],
-    "17": [
+    "16": [
       "tests_test_ids_py_path"
+    ],
+    "17": [
+      "tests_unit_test_errors_py_thumbforgeerror"
     ]
   },
   "cohesion": {
-    "0": 0.07152496626180836,
-    "1": 0.10476190476190476,
-    "2": 0.15441176470588236,
-    "3": 0.15,
-    "4": 0.16666666666666666,
-    "5": 0.2727272727272727,
-    "6": 0.23636363636363636,
-    "7": 0.3333333333333333,
-    "8": 0.3333333333333333,
-    "9": 0.3333333333333333,
-    "10": 0.6666666666666666,
+    "0": 0.08067226890756303,
+    "1": 0.082010582010582,
+    "2": 0.10869565217391304,
+    "3": 0.11594202898550725,
+    "4": 0.1038961038961039,
+    "5": 0.3333333333333333,
+    "6": 0.3333333333333333,
+    "7": 0.5,
+    "8": 0.5,
+    "9": 0.6666666666666666,
+    "10": 1.0,
     "11": 1.0,
     "12": 1.0,
     "13": 1.0,
@@ -239,14 +246,14 @@
       "degree": 9
     },
     {
+      "id": "src_thumbforge_cli_render_appcontext",
+      "label": "AppContext",
+      "degree": 7
+    },
+    {
       "id": "tests_unit_test_render_json_context",
       "label": "_json_context()",
       "degree": 6
-    },
-    {
-      "id": "src_thumbforge_cli_render_appcontext",
-      "label": "AppContext",
-      "degree": 5
     },
     {
       "id": "src_thumbforge_cli_errors_handle_errors",
@@ -271,15 +278,26 @@
   ],
   "surprises": [
     {
-      "source": "test_rich_mode_uses_the_renderer_and_prints_no_json()",
-      "target": "emit()",
+      "source": "root()",
+      "target": "AppContext",
       "source_files": [
-        "tests/unit/test_render.py",
+        "tests/unit/test_errors.py",
         "src/thumbforge/cli/_render.py"
       ],
       "confidence": "INFERRED",
       "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities"
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; bridges separate communities; peripheral node `root()` unexpectedly reaches hub `AppContext`"
+    },
+    {
+      "source": "root()",
+      "target": "AppContext",
+      "source_files": [
+        "tests/unit/test_errors.py",
+        "src/thumbforge/cli/_render.py"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories; peripheral node `root()` unexpectedly reaches hub `AppContext`"
     },
     {
       "source": "test_only_transient_and_timeout_are_retryable()",
@@ -313,29 +331,23 @@
       "confidence": "INFERRED",
       "relation": "calls",
       "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
-    },
-    {
-      "source": "boom()",
-      "target": "NotFoundError",
-      "source_files": [
-        "tests/unit/test_errors.py",
-        "src/thumbforge/core/errors.py"
-      ],
-      "confidence": "INFERRED",
-      "relation": "calls",
-      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
     }
   ],
   "questions": [
     {
       "type": "bridge_node",
       "question": "Why does `test_only_transient_and_timeout_are_retryable()` connect `Community 0` to `Community 2`?",
-      "why": "High betweenness centrality (0.269) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.250) - this node is a cross-community bridge."
     },
     {
       "type": "verify_inferred",
       "question": "Are the 4 inferred relationships involving `emit()` (e.g. with `test_json_mode_output_round_trips()` and `test_non_finite_floats_are_rejected()`) actually correct?",
       "why": "`emit()` has 4 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 3 inferred relationships involving `AppContext` (e.g. with `root()` and `root()`) actually correct?",
+      "why": "`AppContext` has 3 INFERRED edges - model-reasoned connections that need verification."
     },
     {
       "type": "isolated_nodes",
@@ -345,12 +357,17 @@
     {
       "type": "low_cohesion",
       "question": "Should `Community 0` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.07152496626180836 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.08067226890756303 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
       "question": "Should `Community 1` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.10476190476190476 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.082010582010582 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.10869565217391304 - nodes in this community are weakly interconnected."
     }
   ]
 }

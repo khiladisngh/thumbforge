@@ -72,10 +72,10 @@
     "semantic_hash": "61c605cf2f7d85831402dbb489f00e68"
   },
   "tests/unit/test_errors.py": {
-    "mtime": 1789792085.065893,
-    "seen": 1789792123.280465,
-    "ast_hash": "a6f47a57a2eb82fa4f878b172899ee9c",
-    "semantic_hash": "a6f47a57a2eb82fa4f878b172899ee9c"
+    "mtime": 1789792354.5515904,
+    "seen": 1789792382.1915815,
+    "ast_hash": "20a912be54fa4fdf985c8ba1d30e102c",
+    "semantic_hash": "20a912be54fa4fdf985c8ba1d30e102c"
   },
   "tests/unit/test_ids.py": {
     "mtime": 1789762498.6841779,

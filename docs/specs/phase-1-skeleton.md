@@ -106,6 +106,12 @@ Copied from `PLAN.md` §7.3:
 - Rich progress bars and tables go to **stdout**; logs go to **stderr**. They never interleave.
 - Provider subprocess stdout/stderr are captured per iteration to `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
 
+Stream contract in `--json` mode, enforced by `cli/_errors.py`:
+
+- **stdout** carries command output only: exactly one JSON document per successful invocation, or nothing when the command fails.
+- **stderr** carries the diagnostic: exactly **one physical line** of JSON, `{"error", "message", "exit_code"}` plus `"hint"` when present, and `{"error": "interrupted", "exit_code": 130}` on `KeyboardInterrupt`.
+- Diagnostics are written with `sys.stderr.write(json.dumps(...) + "\n")`, never through `Console.print_json`, which pretty-prints and soft-wraps at terminal width and would split a long message across lines.
+
 Level mapping from global flags: default `WARNING` on stderr (file handler always at `DEBUG`), `-v` → `INFO`, `-vv` → `DEBUG`, `--quiet` → `ERROR`. `[logging] level` sets the default when no flag is given. `--no-color` sets `ConsoleRenderer(colors=False)`.
 
 ### Database (`storage/db.py`, `storage/migrations/`)

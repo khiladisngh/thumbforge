@@ -80,6 +80,27 @@ def test_keyboard_interrupt_exits_130() -> None:
     assert runner.invoke(app, []).exit_code == int(ExitCode.INTERRUPTED)
 
 
+def test_keyboard_interrupt_in_json_mode_emits_one_line_on_stderr() -> None:
+    """Ctrl-C during a batch must still leave machine mode with parseable output."""
+    app = typer.Typer()
+
+    @app.callback()
+    def root(ctx: typer.Context) -> None:
+        ctx.obj = AppContext(console=Console(), json_mode=True)
+
+    @app.command()
+    @handle_errors
+    def boom(ctx: typer.Context) -> None:
+        raise KeyboardInterrupt
+
+    result = CliRunner().invoke(app, ["boom"])
+    assert result.exit_code == int(ExitCode.INTERRUPTED)
+    assert result.stdout == ""
+    lines = [line for line in result.stderr.splitlines() if line.strip()]
+    assert len(lines) == 1, f"diagnostic was split across lines: {lines!r}"
+    assert json.loads(lines[0]) == {"error": "interrupted", "exit_code": 130}
+
+
 def test_unexpected_exception_is_not_swallowed() -> None:
     app = typer.Typer()
 
