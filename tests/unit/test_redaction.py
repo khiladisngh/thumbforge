@@ -54,7 +54,10 @@ def test_ordinary_names_are_not_secret(key: str) -> None:
     assert not is_secret_key(key)
 
 
-@pytest.mark.parametrize("key", ["api_key", "apiKey", "private_key", "access_key", "secret_key"])
+@pytest.mark.parametrize(
+    "key",
+    ["api_key", "apiKey", "private_key", "access_key", "secret_key", "APIKEY", "apikey"],
+)
 def test_key_is_secret_when_qualified_as_a_credential(key: str) -> None:
     assert is_secret_key(key)
 

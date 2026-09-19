@@ -54,9 +54,14 @@ def is_secret_key(key: str) -> bool:
     words = _words(key)
     if not words:
         return False
-    if "".join(words) in SECRET_NAMES or words[-1] in SECRET_WORDS:
+    joined = "".join(words)
+    if joined in SECRET_NAMES or words[-1] in SECRET_WORDS:
         return True
-    return len(words) >= 2 and "".join(words[-2:]) in SECRET_KEY_PAIRS
+    # `APIKEY` and `apikey` collapse to a single word, so the whole identifier is checked
+    # against the qualified-key set as well as the last two words.
+    return joined in SECRET_KEY_PAIRS or (
+        len(words) >= 2 and "".join(words[-2:]) in SECRET_KEY_PAIRS
+    )
 
 
 def find_secret_keys(data: object, prefix: str = "") -> list[str]:

@@ -1237,7 +1237,7 @@
       "file_type": "code",
       "norm_label": "find_secret_keys()",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L62"
+      "source_location": "L67"
     },
     {
       "id": "src_thumbforge_core_redaction_is_secret_key",
@@ -1261,7 +1261,7 @@
       "file_type": "code",
       "norm_label": "redact()",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L79"
+      "source_location": "L84"
     },
     {
       "id": "src_thumbforge_core_redaction_words",
@@ -1321,7 +1321,7 @@
       "file_type": "code",
       "norm_label": "test_find_secret_keys_reports_dotted_paths()",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L77"
+      "source_location": "L80"
     },
     {
       "id": "tests_unit_test_redaction_test_idempotency_key_survives_a_log_record",
@@ -1333,7 +1333,7 @@
       "file_type": "code",
       "norm_label": "test_idempotency_key_survives_a_log_record()",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L62"
+      "source_location": "L65"
     },
     {
       "id": "tests_unit_test_redaction_test_key_is_secret_when_qualified_as_a_credential",
@@ -1345,7 +1345,7 @@
       "file_type": "code",
       "norm_label": "test_key_is_secret_when_qualified_as_a_credential()",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L58"
+      "source_location": "L61"
     },
     {
       "id": "tests_unit_test_redaction_test_ordinary_names_are_not_secret",
@@ -1369,7 +1369,7 @@
       "file_type": "code",
       "norm_label": "test_redaction_does_not_mutate_the_caller_structure()",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L68"
+      "source_location": "L71"
     },
     {
       "id": "src_thumbforge_core_ids_new_id",
@@ -3052,7 +3052,7 @@
       "source_location": "L46"
     },
     {
-      "id": "src_thumbforge_core_redaction_rationale_63",
+      "id": "src_thumbforge_core_redaction_rationale_68",
       "label": "Return the dotted paths of every secret-looking key in a nested structure.",
       "_origin": "ast",
       "community": 4,
@@ -3060,10 +3060,10 @@
       "file_type": "rationale",
       "norm_label": "return the dotted paths of every secret-looking key in a nested structure.",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L63"
+      "source_location": "L68"
     },
     {
-      "id": "src_thumbforge_core_redaction_rationale_80",
+      "id": "src_thumbforge_core_redaction_rationale_85",
       "label": "Return a copy of ``value`` with every secret-keyed entry replaced. A copy,\u2026",
       "_origin": "ast",
       "community": 4,
@@ -3071,7 +3071,7 @@
       "file_type": "rationale",
       "norm_label": "return a copy of ``value`` with every secret-keyed entry replaced. a copy,...",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L80"
+      "source_location": "L85"
     },
     {
       "id": "src_thumbforge_logging_rationale_1",
@@ -3129,7 +3129,7 @@
       "source_location": "L53"
     },
     {
-      "id": "tests_unit_test_redaction_rationale_63",
+      "id": "tests_unit_test_redaction_rationale_66",
       "label": "The batch resume identifier must stay readable in logs, or debugging a run is\u2026",
       "_origin": "ast",
       "community": 4,
@@ -3137,10 +3137,10 @@
       "file_type": "rationale",
       "norm_label": "the batch resume identifier must stay readable in logs, or debugging a run is...",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L63"
+      "source_location": "L66"
     },
     {
-      "id": "tests_unit_test_redaction_rationale_69",
+      "id": "tests_unit_test_redaction_rationale_72",
       "label": "Logging observes data; it must never alter a caller's dict.",
       "_origin": "ast",
       "community": 4,
@@ -3148,7 +3148,7 @@
       "file_type": "rationale",
       "norm_label": "logging observes data; it must never alter a caller's dict.",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L69"
+      "source_location": "L72"
     },
     {
       "id": "fixture",
@@ -4186,6 +4186,18 @@
       "type": "external"
     },
     {
+      "id": "thumbforge_cli_app",
+      "label": "thumbforge_cli_app",
+      "_origin": "semantic",
+      "community": 9,
+      "community_name": "Community 9",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "thumbforge_cli_app",
+      "source_file": "",
+      "type": "external"
+    },
+    {
       "id": "typer_testing",
       "label": "typer_testing",
       "_origin": "semantic",
@@ -4194,17 +4206,6 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "typer_testing",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "thumbforge_cli_app",
-      "label": "thumbforge_cli_app",
-      "community": 9,
-      "community_name": "Community 9",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "thumbforge_cli_app",
       "source_file": "",
       "type": "external"
     }
@@ -4483,7 +4484,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L69",
+      "source_location": "L74",
       "weight": 1.0
     },
     {
@@ -4495,7 +4496,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L71",
+      "source_location": "L76",
       "weight": 1.0
     },
     {
@@ -4519,7 +4520,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L87",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -4531,7 +4532,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L87",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -5119,7 +5120,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L78",
+      "source_location": "L81",
       "weight": 1.0
     },
     {
@@ -5131,7 +5132,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L65",
+      "source_location": "L68",
       "weight": 1.0
     },
     {
@@ -5143,7 +5144,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L59",
+      "source_location": "L62",
       "weight": 1.0
     },
     {
@@ -5167,7 +5168,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L71",
+      "source_location": "L74",
       "weight": 1.0
     },
     {
@@ -8977,7 +8978,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L62",
+      "source_location": "L67",
       "weight": 1.0
     },
     {
@@ -8988,7 +8989,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L79",
+      "source_location": "L84",
       "weight": 1.0
     },
     {
@@ -9736,7 +9737,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L58",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -9747,7 +9748,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L62",
+      "source_location": "L65",
       "weight": 1.0
     },
     {
@@ -9758,7 +9759,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L68",
+      "source_location": "L71",
       "weight": 1.0
     },
     {
@@ -9769,7 +9770,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L77",
+      "source_location": "L80",
       "weight": 1.0
     },
     {
@@ -10884,25 +10885,25 @@
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_core_redaction_rationale_63",
+      "source": "src_thumbforge_core_redaction_rationale_68",
       "target": "src_thumbforge_core_redaction_find_secret_keys",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L63",
+      "source_location": "L68",
       "weight": 1.0
     },
     {
-      "source": "src_thumbforge_core_redaction_rationale_80",
+      "source": "src_thumbforge_core_redaction_rationale_85",
       "target": "src_thumbforge_core_redaction_redact",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/thumbforge/core/redaction.py",
-      "source_location": "L80",
+      "source_location": "L85",
       "weight": 1.0
     },
     {
@@ -11313,25 +11314,25 @@
       "weight": 1.0
     },
     {
-      "source": "tests_unit_test_redaction_rationale_63",
+      "source": "tests_unit_test_redaction_rationale_66",
       "target": "tests_unit_test_redaction_test_idempotency_key_survives_a_log_record",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L63",
+      "source_location": "L66",
       "weight": 1.0
     },
     {
-      "source": "tests_unit_test_redaction_rationale_69",
+      "source": "tests_unit_test_redaction_rationale_72",
       "target": "tests_unit_test_redaction_test_redaction_does_not_mutate_the_caller_structure",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_redaction.py",
-      "source_location": "L69",
+      "source_location": "L72",
       "weight": 1.0
     },
     {
@@ -11748,5 +11749,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "aeb8f63f3a9674a13e68cef38b3137f1f1e9327b"
+  "built_at_commit": "191d124337b2010326c557a408ac35ef644bef6c"
 }
