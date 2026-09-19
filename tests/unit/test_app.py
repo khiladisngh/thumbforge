@@ -80,5 +80,5 @@ def test_config_set_also_works_against_a_broken_config(tmp_path: Path) -> None:
     result = runner.invoke(app, ["--config", str(config), "config", "set", "output.quality=85"])
 
     assert result.exit_code == 2  # the file is still unparseable, reported cleanly
-    payload = result.stderr
-    assert "not valid TOML" in payload
+    # Rich wraps at terminal width, so collapse whitespace before matching.
+    assert "not valid TOML" in " ".join(result.stderr.split())

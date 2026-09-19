@@ -229,7 +229,13 @@ def load_settings(
     try:
         settings = Settings.from_sources(file_values)
     except ValidationError as error:
-        msg = f"invalid configuration in {resolved_config}: {_format_validation_error(error)}"
+        # The failing value may have come from the file or from THUMBFORGE_*; naming only the
+        # file sends users to edit something that may not even exist.
+        source = str(resolved_config) if resolved_config.is_file() else "built-in defaults"
+        msg = (
+            f"invalid configuration ({source}, overlaid with THUMBFORGE_* environment "
+            f"variables): {_format_validation_error(error)}"
+        )
         raise SettingsError(msg) from error
 
     if data_dir is not None:

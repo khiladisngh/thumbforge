@@ -11,9 +11,18 @@ import re
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Final, cast
 
-#: Final word of a key that marks it secret: ``api_key``, ``apiKey``, ``X-API-KEY``.
+#: Final word of a key that marks it secret on its own.
+#:
+#: Deliberately excludes bare ``key``: ``idempotency_key`` is logged on every batch iteration
+#: (PLAN.md 6) and ``primary_key`` is ordinary schema vocabulary. A trailing ``key`` only counts
+#: when the preceding word makes it a credential - see :data:`SECRET_KEY_PAIRS`.
 SECRET_WORDS: Final[frozenset[str]] = frozenset(
-    {"key", "token", "secret", "password", "passwd", "credentials", "credential"}
+    {"token", "secret", "password", "passwd", "credentials", "credential"}
+)
+
+#: Last two words, joined, that make a trailing ``key`` a credential.
+SECRET_KEY_PAIRS: Final[frozenset[str]] = frozenset(
+    {"apikey", "privatekey", "secretkey", "accesskey", "signingkey", "encryptionkey", "authkey"}
 )
 
 #: Whole keys that are secret but do not end in one of the words above.
@@ -38,12 +47,16 @@ def is_secret_key(key: str) -> bool:
 
     Matching is on word boundaries, not raw suffixes, so naming style does not decide whether a
     credential is protected — ``Authorization``, ``apiKey``, ``api_key`` and ``X-API-KEY`` are
-    all secret — while ordinary words that merely end in one are not: ``monkey`` is not a key.
+    all secret. A trailing ``key`` alone is not enough: ``idempotency_key`` is a debugging
+    identifier this project logs on every iteration, and the same deny-list gates what
+    ``config.toml`` may contain, so over-matching would reject legitimate settings.
     """
     words = _words(key)
     if not words:
         return False
-    return "".join(words) in SECRET_NAMES or words[-1] in SECRET_WORDS
+    if "".join(words) in SECRET_NAMES or words[-1] in SECRET_WORDS:
+        return True
+    return len(words) >= 2 and "".join(words[-2:]) in SECRET_KEY_PAIRS
 
 
 def find_secret_keys(data: object, prefix: str = "") -> list[str]:
