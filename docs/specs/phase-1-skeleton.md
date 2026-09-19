@@ -210,7 +210,7 @@ Exit codes (`PLAN.md` §5.1):
 | `6`   | partial batch — some items failed; run is resumable             |
 | `130` | interrupted (SIGINT)                                            |
 
-`cli/_errors.py` wraps every command: catches `ThumbforgeError`, prints `code: message` and `hint` to stderr (JSON object when `--json`), exits with `exit_code`. Anything else is logged with traceback and exits `1`. Implementation: a single decorator `@handle_errors` applied by `cli/app.py` to every registered command callback, plus a `KeyboardInterrupt` branch that exits `130`. JSON error shape: `{"error": {"code": "...", "message": "...", "hint": "..." | null, "exit_code": N}}`.
+`cli/_errors.py` wraps every command: catches `ThumbforgeError`, prints `code: message` and `hint` to stderr (one line of JSON when `--json`), exits with `exit_code`. Anything else is logged with traceback and exits `1`. Implementation: a single decorator `@handle_errors` applied by `cli/app.py` to every registered command callback, plus a `KeyboardInterrupt` branch that exits `130`. The JSON error shape is flat, as specified in the stream contract above: `{"error": "<code>", "message": "...", "exit_code": N}` plus `"hint"` when the error carries one. It is deliberately not nested under an `error` object — one shape, defined in one place.
 
 ### Root app (`cli/app.py`)
 
