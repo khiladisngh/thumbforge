@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 def _make_png_bytes(
     width: int = 1920, height: int = 1080, color: tuple[int, int, int] = (255, 0, 0)
 ) -> bytes:
+    """Generate synthetic PNG image bytes for testing."""
     img = Image.new("RGB", (width, height), color=color)
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -29,6 +30,7 @@ def _make_png_bytes(
 def _make_jpeg_bytes(
     width: int = 1280, height: int = 720, color: tuple[int, int, int] = (0, 255, 0)
 ) -> bytes:
+    """Generate synthetic JPEG image bytes for testing."""
     img = Image.new("RGB", (width, height), color=color)
     buf = io.BytesIO()
     img.save(buf, format="JPEG")
@@ -37,6 +39,7 @@ def _make_jpeg_bytes(
 
 @pytest.fixture
 def asset_store(tmp_path: Path) -> Generator[AssetStore]:
+    """Provide an initialized AssetStore backed by a temporary SQLite database."""
     data_dir = tmp_path / "data"
     db_path = data_dir / "thumbforge.sqlite3"
     init_db(db_path)

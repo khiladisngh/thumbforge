@@ -97,8 +97,18 @@ class AssetStore:
             bucket_dir.mkdir(parents=True, exist_ok=True)
             target_path = bucket_dir / f"{sha256}.{ext}"
 
-            # Atomically replace into permanent location
-            tmp_path.replace(target_path)
+            created_target = False
+            if target_path.exists():
+                tmp_path.unlink(missing_ok=True)
+            else:
+                try:
+                    tmp_path.replace(target_path)
+                    created_target = True
+                except OSError:
+                    if target_path.exists():
+                        created_target = False
+                    else:
+                        raise
 
             rel_path = target_path.relative_to(self.data_dir).as_posix()
 
@@ -122,9 +132,12 @@ class AssetStore:
                     existing = session.scalar(select(Asset).where(Asset.sha256 == sha256))
                     if existing is not None:
                         return existing
+                if created_target:
+                    target_path.unlink(missing_ok=True)
                 raise
             except Exception:
-                target_path.unlink(missing_ok=True)
+                if created_target:
+                    target_path.unlink(missing_ok=True)
                 raise
 
             return asset
