@@ -51,6 +51,7 @@ class AssetStore:
     """Content-addressed storage for thumbnail iterations, raw art, and style references."""
 
     def __init__(self, data_dir: Path, session_factory: sessionmaker[Session]) -> None:
+        """Bind the store to a data directory and the session factory used for asset rows."""
         self.data_dir = data_dir
         self.assets_dir = data_dir / "assets"
         self.tmp_dir = data_dir / "tmp"

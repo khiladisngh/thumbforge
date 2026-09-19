@@ -48,6 +48,7 @@ CASES = [
 def test_error_maps_to_documented_exit_code(
     error_class: type[ThumbforgeError], expected: int
 ) -> None:
+    """Every error in CASES exits with the code documented in PLAN.md 5.1."""
     app = typer.Typer()
 
     @app.command()

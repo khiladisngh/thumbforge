@@ -142,6 +142,7 @@ def test_verify_detects_drift_and_missing_file(asset_store: AssetStore) -> None:
 
 
 def test_put_corrupted_or_non_image_raises(asset_store: AssetStore) -> None:
+    """Bytes Pillow cannot identify are rejected, and the temp file is cleaned up."""
     with pytest.raises(AssetError, match="Unsupported or corrupted image"):
         asset_store.put(b"not an image file at all", kind=AssetKind.RAW)
 
@@ -150,6 +151,7 @@ def test_put_corrupted_or_non_image_raises(asset_store: AssetStore) -> None:
 
 
 def test_put_missing_source_path_raises(asset_store: AssetStore, tmp_path: Path) -> None:
+    """A `Path` source that does not exist fails before anything is written."""
     non_existent = tmp_path / "does_not_exist.png"
     with pytest.raises(AssetError, match="Source file does not exist"):
         asset_store.put(non_existent, kind=AssetKind.RAW)
@@ -172,6 +174,7 @@ def test_put_extension_derived_from_sniffed_mime_not_filename(
 
 
 def test_put_unsupported_mime_raises(asset_store: AssetStore) -> None:
+    """A valid image outside the JPEG/PNG/WebP allowlist is rejected with a hint."""
     # Create a valid GIF image (not in JPEG/PNG/WebP allowlist)
     img = Image.new("P", (100, 100))
     buf = io.BytesIO()
