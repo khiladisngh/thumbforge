@@ -106,11 +106,27 @@ Copied from `PLAN.md` §7.3:
 - Rich progress bars and tables go to **stdout**; logs go to **stderr**. They never interleave.
 - Provider subprocess stdout/stderr are captured per iteration to `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
 
-Stream contract in `--json` mode, enforced by `cli/_errors.py`:
+Stream contract in `--json` mode, enforced by `cli/_errors.py`. Verify with a command that
+fails, for example a missing config path:
 
-- **stdout** carries command output only: exactly one JSON document per successful invocation, or nothing when the command fails.
-- **stderr** carries the diagnostic: exactly **one physical line** of JSON, `{"error", "message", "exit_code"}` plus `"hint"` when present, and `{"error": "interrupted", "exit_code": 130}` on `KeyboardInterrupt`.
-- Diagnostics are written with `sys.stderr.write(json.dumps(...) + "\n")`, never through `Console.print_json`, which pretty-prints and soft-wraps at terminal width and would split a long message across lines.
+```
+$ thumbforge --json --config /nonexistent/config.toml config show > out.json 2> err.jsonl; echo $?
+2
+$ wc -l < out.json          # stdout carries command output only; nothing on failure
+0
+$ wc -l < err.jsonl         # exactly one physical line, however long the message
+1
+$ jq -c . < err.jsonl
+{"error":"settings","message":"...","exit_code":2,"hint":"..."}
+```
+
+- **stdout** carries command output only: exactly one JSON document per successful invocation, nothing when the command fails.
+- **stderr** carries the diagnostic: one line of JSON with `error`, `message`, `exit_code`, plus `hint` when present. `KeyboardInterrupt` yields `{"error": "interrupted", "exit_code": 130}` and exit `130`.
+
+> Implementation note, not an acceptance criterion: diagnostics are written with
+> `sys.stderr.write(json.dumps(...) + "\n")` rather than `Console.print_json`, because the
+> latter pretty-prints and soft-wraps at terminal width, which would split a long message
+> across lines and break the one-line guarantee above.
 
 Level mapping from global flags: default `WARNING` on stderr (file handler always at `DEBUG`), `-v` → `INFO`, `-vv` → `DEBUG`, `--quiet` → `ERROR`. `[logging] level` sets the default when no flag is given. `--no-color` sets `ConsoleRenderer(colors=False)`.
 
