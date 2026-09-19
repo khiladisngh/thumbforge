@@ -201,7 +201,7 @@ ThumbforgeError(code: str, exit_code: int, hint: str | None)
 └── TemplateError            exit 2
 ```
 
-Plus `SettingsError` (exit 2), `DatabaseError` (exit 1), and `ProviderRegistryError` (exit 1), all defined in Phase 1 so later phases only raise them.
+Plus `SettingsError` (exit 2), `DatabaseError` (exit 1), `AssetError` (exit 1), and `ProviderRegistryError` (exit 1), all defined in Phase 1 so later phases only raise them.
 
 Exit codes (`PLAN.md` §5.1):
 
@@ -288,7 +288,7 @@ CI step added to `ci.yml` after `pyright`: `uv run lint-imports`. Pre-commit hoo
 - Unit (`tests/logging/`): `configure_logging` with `fmt="json"` and a `tmp_path` log file; assert the JSON lines and that a stdlib `logging.getLogger("sqlalchemy").warning(...)` record appears through the bridge; assert `bind_contextvars(run_id=...)` shows in subsequent records and disappears after `clear_contextvars()`.
 - Unit (`tests/storage/`): engine pragmas (`journal_mode`, `foreign_keys`), migration up/down on an in-memory and file DB, `alembic check`, `ON DELETE RESTRICT` on `run.parent_run_id`, `AssetStore` put/dedupe/verify/tmp-cleanup.
 - Unit (`tests/cli/`): `CliRunner` for every `config`/`db` command in Rich and `--json` mode; exit-code mapping for each `ThumbforgeError` subclass via a hidden `_raise` test command registered only under `pytest`.
-- Contract / integration / golden: none in Phase 1.
+- Contract / integration / golden: opt-in testcontainers integration test (`tests/integration/test_db_container.py`); golden image overlay in Phase 5.
 - No network in any Phase 1 test.
 
 ## Open spikes

@@ -133,3 +133,67 @@ def test_put_missing_source_path_raises(asset_store: AssetStore, tmp_path: Path)
         asset_store.put(non_existent, kind=AssetKind.RAW)
 
     assert len(list(asset_store.tmp_dir.iterdir())) == 0
+
+
+def test_put_extension_derived_from_sniffed_mime_not_filename(
+    asset_store: AssetStore, tmp_path: Path
+) -> None:
+    # File has .jpg extension but contains PNG bytes
+    misleading_path = tmp_path / "sneaky.jpg"
+    png_data = _make_png_bytes(800, 600)
+    misleading_path.write_bytes(png_data)
+
+    asset = asset_store.put(misleading_path, kind=AssetKind.RAW)
+    assert asset.mime == "image/png"
+    assert asset.rel_path.endswith(".png")
+    assert asset_store.path_for(asset).suffix == ".png"
+
+
+def test_put_unsupported_mime_raises(asset_store: AssetStore) -> None:
+    # Create a valid GIF image (not in JPEG/PNG/WebP allowlist)
+    img = Image.new("P", (100, 100))
+    buf = io.BytesIO()
+    img.save(buf, format="GIF")
+    gif_bytes = buf.getvalue()
+
+    with pytest.raises(AssetStoreError, match="Unsupported image format") as exc_info:
+        asset_store.put(gif_bytes, kind=AssetKind.RAW)
+    assert exc_info.value.hint is not None
+    assert "JPEG, PNG, and WebP" in exc_info.value.hint
+    assert len(list(asset_store.tmp_dir.iterdir())) == 0
+
+
+def test_put_cleans_up_orphaned_file_on_insert_failure(
+    asset_store: AssetStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    png_data = _make_png_bytes(300, 300)
+
+    # Cause an unexpected failure during DB insertion
+    from contextlib import contextmanager
+
+    original_scope = asset_store.session_factory
+
+    call_count = 0
+
+    @contextmanager
+    def failing_session_scope(_factory):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 1:
+            # First call is deduplication check: allow it
+            from thumbforge.storage.db import session_scope as real_scope
+
+            with real_scope(original_scope) as s:
+                yield s
+        else:
+            # Second call is row insert: simulate database write failure
+            raise RuntimeError("simulated DB crash after replace")
+
+    monkeypatch.setattr("thumbforge.storage.assets.session_scope", failing_session_scope)
+
+    with pytest.raises(RuntimeError, match="simulated DB crash after replace"):
+        asset_store.put(png_data, kind=AssetKind.FINAL)
+
+    # No orphaned file should remain in assets_dir
+    assert len(list(asset_store.assets_dir.glob("**/*.png"))) == 0
+    assert len(list(asset_store.tmp_dir.iterdir())) == 0
