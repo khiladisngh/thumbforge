@@ -36,3 +36,4 @@ Thumbs.db
 # prettier hook cache
 node_modules/
 graphify-out/cache/
+.pytest_tmp/

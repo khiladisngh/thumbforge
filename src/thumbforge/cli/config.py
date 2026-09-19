@@ -10,11 +10,11 @@ import tomli_w
 import typer
 from rich.syntax import Syntax
 
+from thumbforge import settings as settings_module
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext, JsonValue, emit, kv
 from thumbforge.core.errors import SettingsError
 from thumbforge.settings import (
-    default_config_path,
     set_values,
     write_default_config,
 )
@@ -35,7 +35,8 @@ def _context(ctx: typer.Context) -> AppContext:
 
 
 def _config_path(app_ctx: AppContext) -> Path:
-    return app_ctx.config_path or default_config_path()
+    # Resolved through the module so tests can redirect platformdirs in one place.
+    return app_ctx.config_path or settings_module.default_config_path()
 
 
 @app.command("init")

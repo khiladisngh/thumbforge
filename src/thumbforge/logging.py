@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Literal
 
 import structlog
 
-from thumbforge.core.redaction import REDACTED, is_secret_key
+from thumbforge.core.redaction import REDACTED, is_secret_key, redact
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -41,15 +41,15 @@ def redact_secrets(
     _method: str,
     event_dict: MutableMapping[str, object],
 ) -> MutableMapping[str, object]:
-    """Replace secret-looking values in the event dict (ADR 0014, ADR 0015).
+    """Replace secret-looking values anywhere in the event dict (ADR 0017).
 
-    Logs are written to disk and pasted into bug reports, so a provider key reaching an event
-    dict must never survive to a renderer. The deny-list is shared with settings via
+    Logs reach disk and bug reports, so a provider key must never survive to a renderer. A
+    secret is as likely to arrive nested — ``settings={"api_key": ...}`` — as at the top level,
+    so the walk is recursive. The deny-list is shared with the settings loader via
     :mod:`thumbforge.core.redaction`.
     """
     for key in event_dict:
-        if is_secret_key(key):
-            event_dict[key] = REDACTED
+        event_dict[key] = REDACTED if is_secret_key(key) else redact(event_dict[key])
     return event_dict
 
 

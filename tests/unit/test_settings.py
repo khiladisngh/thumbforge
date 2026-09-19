@@ -9,6 +9,7 @@ import pytest
 from thumbforge.core.errors import SettingsError
 from thumbforge.settings import (
     ConfigSchema,
+    default_config_path,
     default_config_toml,
     load_settings,
     set_values,
@@ -22,6 +23,21 @@ if TYPE_CHECKING:
 def write_config(path: Path, body: str) -> Path:
     path.write_text(body, encoding="utf-8")
     return path
+
+
+def test_user_directories_are_isolated_from_the_real_machine(
+    isolate_user_environment: Path,
+) -> None:
+    """Guards the conftest fixture itself: a regression there silently pollutes real dirs.
+
+    ``GeneralSettings.data_dir`` binds its default factory at class-definition time, so
+    patching ``settings.default_data_dir`` would not take effect; the fixture patches
+    platformdirs instead, and this asserts that it actually works.
+    """
+    settings = load_settings(config_path=None)
+    assert isolate_user_environment in settings.general.data_dir.parents
+    assert isolate_user_environment in settings.state_dir.parents
+    assert isolate_user_environment in default_config_path().parents
 
 
 def test_defaults_apply_when_no_file_exists(tmp_path: Path) -> None:

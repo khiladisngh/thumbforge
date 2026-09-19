@@ -87,9 +87,11 @@ def root(
         data_dir=data_dir,
     )
 
-    # A broken config.toml must not block the commands that repair it. `config init --force`
-    # and `config set` rewrite the file and never read the parsed settings, so the failure is
-    # captured and re-raised only when a command actually asks for settings.
+    # A broken config.toml must not block `config init --force`, which is what the parse
+    # error tells the user to run. The failure is captured here and re-raised by
+    # AppContext.require_settings(), which only the commands that read configuration call.
+    # (`config set` still needs a parseable file to merge into, but it fails through the
+    # command's own handler rather than a traceback from the callback.)
     settings: Settings | None = None
     settings_error: SettingsError | None = None
     try:
@@ -97,7 +99,10 @@ def root(
     except SettingsError as error:
         settings_error = error
 
-    defaults = settings if settings is not None else Settings()
+    # model_construct, not Settings(): if the *environment* is what is invalid, constructing
+    # normally would raise a raw ValidationError here and produce a traceback instead of the
+    # SettingsError we just captured. This needs pure defaults, no sources, no validation.
+    defaults = settings if settings is not None else Settings.model_construct()
     configure_logging(
         level=level_from_flags(
             verbose=verbose,

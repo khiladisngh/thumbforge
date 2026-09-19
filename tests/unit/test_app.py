@@ -73,7 +73,7 @@ def test_repair_commands_work_against_a_broken_config(tmp_path: Path) -> None:
 
 
 def test_config_set_also_works_against_a_broken_config(tmp_path: Path) -> None:
-    """`config set` rewrites the file, so it must not require parsing the old one first."""
+    """`config set` still needs a parseable file, but must fail cleanly rather than crash."""
     config = tmp_path / "config.toml"
     config.write_text("[output\nbroken\n", encoding="utf-8")
 

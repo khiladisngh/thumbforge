@@ -20,17 +20,6 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.fixture(autouse=True)
-def _reset_logging() -> object:
-    """Leave the root logger clean so tests cannot leak handlers into each other."""
-    yield
-    clear_context()
-    root = logging.getLogger()
-    for handler in list(root.handlers):
-        root.removeHandler(handler)
-        handler.close()
-
-
 @pytest.mark.parametrize(
     ("verbose", "quiet", "configured", "expected"),
     [
@@ -167,3 +156,21 @@ def test_redaction_also_covers_bound_context(capsys: pytest.CaptureFixture[str])
     get_logger("thumbforge.test").info("started")
     payload = json.loads(capsys.readouterr().err.strip())
     assert payload["api_key"] == "***redacted***"
+
+
+def test_redaction_reaches_nested_structures(capsys: pytest.CaptureFixture[str]) -> None:
+    """A secret is as likely to arrive inside a settings dump as at the top level."""
+    configure_logging(level="INFO", fmt="json")
+    get_logger("thumbforge.test").info(
+        "provider configured",
+        settings={"providers": {"openai": {"api_key": "sk-nested"}}, "width": 1920},
+        candidates=[{"access_token": "tok-in-list"}],
+    )
+    rendered = capsys.readouterr().err
+    payload = json.loads(rendered)
+
+    assert "sk-nested" not in rendered
+    assert "tok-in-list" not in rendered
+    assert payload["settings"]["providers"]["openai"]["api_key"] == "***redacted***"
+    assert payload["candidates"][0]["access_token"] == "***redacted***"
+    assert payload["settings"]["width"] == 1920
