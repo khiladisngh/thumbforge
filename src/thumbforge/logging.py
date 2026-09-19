@@ -97,25 +97,40 @@ def configure_logging(
     stream_handler.setLevel(level.upper())
     root.addHandler(stream_handler)
 
+    file_error: OSError | None = None
     if log_file is not None:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_file,
-            maxBytes=_LOG_BYTES,
-            backupCount=_LOG_BACKUPS,
-            encoding="utf-8",
-        )
-        file_handler.setFormatter(
-            structlog.stdlib.ProcessorFormatter(
-                processor=structlog.processors.JSONRenderer(),
-                foreign_pre_chain=_SHARED_PROCESSORS,
+        try:
+            log_file.parent.mkdir(parents=True, exist_ok=True)
+            file_handler = logging.handlers.RotatingFileHandler(
+                log_file,
+                maxBytes=_LOG_BYTES,
+                backupCount=_LOG_BACKUPS,
+                encoding="utf-8",
             )
-        )
-        file_handler.setLevel(logging.DEBUG)
-        root.addHandler(file_handler)
+        except OSError as error:
+            # A read-only or full state directory must not take the command down: logging is
+            # support infrastructure, not the user's goal. Degrade to console and say so once.
+            file_error = error
+        else:
+            file_handler.setFormatter(
+                structlog.stdlib.ProcessorFormatter(
+                    processor=structlog.processors.JSONRenderer(),
+                    foreign_pre_chain=_SHARED_PROCESSORS,
+                )
+            )
+            file_handler.setLevel(logging.DEBUG)
+            root.addHandler(file_handler)
 
     # The root stays at DEBUG so the file handler can record everything; each handler filters.
     root.setLevel(logging.DEBUG)
+
+    if file_error is not None:
+        get_logger(__name__).warning(
+            "file logging disabled",
+            log_file=str(log_file),
+            error=str(file_error),
+            hint="console logging continues; check permissions on the state directory",
+        )
 
 
 def get_logger(name: str) -> BoundLogger:

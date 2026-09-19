@@ -123,3 +123,20 @@ def test_reconfiguring_does_not_duplicate_records(capsys: pytest.CaptureFixture[
     get_logger("thumbforge.test").info("once")
     lines = [line for line in capsys.readouterr().err.splitlines() if line.strip()]
     assert len(lines) == 1
+
+
+def test_unusable_log_file_degrades_to_console_instead_of_failing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A read-only state directory must not take the command down."""
+    blocker = tmp_path / "logs"
+    blocker.write_text("not a directory", encoding="utf-8")  # mkdir here will fail
+
+    configure_logging(level="INFO", fmt="json", log_file=blocker / "thumbforge.log")
+
+    records = [json.loads(line) for line in capsys.readouterr().err.splitlines() if line.strip()]
+    assert any(r["event"] == "file logging disabled" for r in records)
+
+    # Console logging still works after the failure.
+    get_logger("thumbforge.test").info("still alive")
+    assert "still alive" in capsys.readouterr().err
