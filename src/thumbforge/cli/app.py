@@ -18,6 +18,7 @@ from rich.console import Console
 
 from thumbforge import __version__
 from thumbforge.cli import config as config_cli
+from thumbforge.cli import db as db_cli
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import SettingsError
@@ -128,6 +129,7 @@ def root(
 
 
 app.add_typer(config_cli.app)
+app.add_typer(db_cli.app)
 
 
 def main() -> None:

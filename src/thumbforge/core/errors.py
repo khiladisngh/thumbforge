@@ -84,6 +84,13 @@ class SourceError(ThumbforgeError):
     exit_code = ExitCode.UNEXPECTED
 
 
+class DatabaseError(ThumbforgeError):
+    """A database operation failed (e.g. migration, lock, disk failure)."""
+
+    code = "database"
+    exit_code = ExitCode.UNEXPECTED
+
+
 class ProviderError(ThumbforgeError):
     """Base class for image-provider failures."""
 

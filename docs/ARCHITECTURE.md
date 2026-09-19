@@ -39,8 +39,7 @@ flowchart LR
 
 ## Data model
 
-Nine tables: `channel`, `playlist`, `video`, `playlist_item`, `template`, `provider_profile`, `run`, `iteration`, `asset`. A batch run references its hero through `run.parent_run_id` and `run.reference_asset_id` (the picked iteration's final or raw asset). Full column list and ERD: `PLAN.md` §3.
-
+Nine tables: `channel`, `playlist`, `video`, `playlist_item`, `template`, `provider_profile`, `run`, `iteration`, `asset`. Primary keys are 26-character Crockford base32 ULIDs (`core.ids.new_id()`), timestamps are ISO-8601 UTC strings. The SQLite engine enforces `PRAGMA journal_mode=WAL;`, `PRAGMA foreign_keys=ON;`, `PRAGMA busy_timeout=5000;` on every connection. Deterministic constraint naming conventions ensure safe Alembic batch migrations (`render_as_batch=True`). A batch run references its hero through `run.parent_run_id` and `run.reference_asset_id` (`ON DELETE RESTRICT`). Full column list and ERD: `PLAN.md` §3.
 ## Key decisions
 
 | Topic                              | ADR                                                |
