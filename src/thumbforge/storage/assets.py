@@ -98,18 +98,21 @@ class AssetStore:
             target_path = bucket_dir / f"{sha256}.{ext}"
 
             created_target = False
-            if target_path.exists():
+            try:
+                os.link(tmp_path, target_path)
+                created_target = True
                 tmp_path.unlink(missing_ok=True)
-            else:
-                try:
+            except FileExistsError:
+                # Target already published concurrently by another process
+                created_target = False
+                tmp_path.unlink(missing_ok=True)
+            except OSError:
+                # Fallback for filesystems where hard links are unsupported
+                if not target_path.exists():
                     tmp_path.replace(target_path)
                     created_target = True
-                except OSError:
-                    if target_path.exists():
-                        created_target = False
-                    else:
-                        raise
-
+                else:
+                    tmp_path.unlink(missing_ok=True)
             rel_path = target_path.relative_to(self.data_dir).as_posix()
 
             # 5. Persist Asset row
