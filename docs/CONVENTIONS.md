@@ -42,6 +42,7 @@ byte diff, since `graph.json` embeds `built_at_commit`. Reproduce it locally by 
 the committed graph against a fresh extract; keep scratch files under the ignored `.pytest_tmp/`:
 
 ```
+mkdir -p .pytest_tmp
 cp graphify-out/graph.json .pytest_tmp/committed-graph.json
 graphify extract . --code-only
 uv run python scripts/check_graph_drift.py .pytest_tmp/committed-graph.json graphify-out/graph.json
@@ -63,7 +64,7 @@ graphify extract . --code-only && graphify cluster-only . --no-label
 ```
 
 Measured at `3ff0f30`, the incremental graph had drifted to 612 nodes/1179 edges against 577/1282
-from scratch. The clean build has *fewer* nodes but *more* edges, and is strictly more accurate: it
+from scratch. The clean build has _fewer_ nodes but _more_ edges, and is strictly more accurate: it
 had dropped a phantom node for the `AssetStoreError` alias deleted two PRs earlier, added the
 `test_ids.py`/`test_render.py` module nodes the stale graph was missing, and resolved 11 unresolved
 import placeholders (`imports_from thumbforge_cli_errors`) into real cross-module edges
