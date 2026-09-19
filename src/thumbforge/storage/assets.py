@@ -28,9 +28,6 @@ _MIME_TO_EXT: dict[str, str] = {
 }
 
 
-AssetStoreError = AssetError
-
-
 def _fsync_dir(path: Path) -> None:
     """Flush a directory entry to disk so a publication survives power loss.
 
@@ -54,6 +51,7 @@ class AssetStore:
     """Content-addressed storage for thumbnail iterations, raw art, and style references."""
 
     def __init__(self, data_dir: Path, session_factory: sessionmaker[Session]) -> None:
+        """Bind the store to a data directory and the session factory used for asset rows."""
         self.data_dir = data_dir
         self.assets_dir = data_dir / "assets"
         self.tmp_dir = data_dir / "tmp"
@@ -73,7 +71,7 @@ class AssetStore:
             if isinstance(src, Path):
                 if not src.exists():
                     msg = f"Source file does not exist: {src}"
-                    raise AssetStoreError(msg)
+                    raise AssetError(msg)
                 with src.open("rb") as src_f, tmp_path.open("wb") as dst_f:
                     shutil.copyfileobj(src_f, dst_f)
                     dst_f.flush()
@@ -92,7 +90,7 @@ class AssetStore:
                     width, height = img.size
             except UnidentifiedImageError as exc:
                 msg = f"Unsupported or corrupted image format: {exc}"
-                raise AssetStoreError(msg) from exc
+                raise AssetError(msg) from exc
 
             ext = _MIME_TO_EXT.get(mime)
             if ext is None:

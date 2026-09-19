@@ -12,7 +12,9 @@ from typer.testing import CliRunner
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import (
+    AssetError,
     ComplianceError,
+    DatabaseError,
     ExitCode,
     NotFoundError,
     PartialBatchError,
@@ -37,6 +39,8 @@ CASES = [
     (ComplianceError, 5),
     (PartialBatchError, 6),
     (SourceError, 1),
+    (DatabaseError, 1),
+    (AssetError, 1),
 ]
 
 
@@ -44,6 +48,7 @@ CASES = [
 def test_error_maps_to_documented_exit_code(
     error_class: type[ThumbforgeError], expected: int
 ) -> None:
+    """Every error in CASES exits with the code documented in PLAN.md 5.1."""
     app = typer.Typer()
 
     @app.command()

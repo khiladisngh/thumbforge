@@ -12,8 +12,8 @@ import pytest
 from PIL import Image
 
 from thumbforge.core.enums import AssetKind
-from thumbforge.core.errors import DatabaseError
-from thumbforge.storage.assets import AssetStore, AssetStoreError
+from thumbforge.core.errors import AssetError, DatabaseError
+from thumbforge.storage.assets import AssetStore
 from thumbforge.storage.db import (
     get_engine,
     init_db,
@@ -142,7 +142,8 @@ def test_verify_detects_drift_and_missing_file(asset_store: AssetStore) -> None:
 
 
 def test_put_corrupted_or_non_image_raises(asset_store: AssetStore) -> None:
-    with pytest.raises(AssetStoreError, match="Unsupported or corrupted image"):
+    """Bytes Pillow cannot identify are rejected, and the temp file is cleaned up."""
+    with pytest.raises(AssetError, match="Unsupported or corrupted image"):
         asset_store.put(b"not an image file at all", kind=AssetKind.RAW)
 
     # Tmp dir must be clean even after an error
@@ -150,8 +151,9 @@ def test_put_corrupted_or_non_image_raises(asset_store: AssetStore) -> None:
 
 
 def test_put_missing_source_path_raises(asset_store: AssetStore, tmp_path: Path) -> None:
+    """A `Path` source that does not exist fails before anything is written."""
     non_existent = tmp_path / "does_not_exist.png"
-    with pytest.raises(AssetStoreError, match="Source file does not exist"):
+    with pytest.raises(AssetError, match="Source file does not exist"):
         asset_store.put(non_existent, kind=AssetKind.RAW)
 
     assert len(list(asset_store.tmp_dir.iterdir())) == 0
@@ -172,13 +174,14 @@ def test_put_extension_derived_from_sniffed_mime_not_filename(
 
 
 def test_put_unsupported_mime_raises(asset_store: AssetStore) -> None:
+    """A valid image outside the JPEG/PNG/WebP allowlist is rejected with a hint."""
     # Create a valid GIF image (not in JPEG/PNG/WebP allowlist)
     img = Image.new("P", (100, 100))
     buf = io.BytesIO()
     img.save(buf, format="GIF")
     gif_bytes = buf.getvalue()
 
-    with pytest.raises(AssetStoreError, match="Unsupported image format") as exc_info:
+    with pytest.raises(AssetError, match="Unsupported image format") as exc_info:
         asset_store.put(gif_bytes, kind=AssetKind.RAW)
     assert exc_info.value.hint is not None
     assert "JPEG, PNG, and WebP" in exc_info.value.hint
