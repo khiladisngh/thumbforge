@@ -58,6 +58,29 @@ def classify_id(value: str) -> ResolvedUrl:
     raise UrlError(msg, hint="pass a video, playlist or channel id, or a full YouTube URL")
 
 
+def _expect_kind(value: str, kind: UrlKind, form: str) -> ResolvedUrl:
+    """Classify `value` and require it to be the kind its URL form promises.
+
+    An explicit URL form carries the authoritative kind: `youtu.be/<id>` only ever serves a
+    video, `/channel/<id>` only ever a channel. Trusting the identifier's *shape* instead
+    would let `youtu.be/PLxxxxxxxxxx` resolve to a playlist and send `fetch` to
+    `fetch_playlist` for a host that has no playlists.
+    """
+    resolved = classify_id(value)
+    if resolved.kind is not kind:
+        msg = f"{form} carries a {resolved.kind.value} id, not a {kind.value} id: {value!r}"
+        raise UrlError(msg, hint=f"expected a {kind.value} id in this URL form")
+    return resolved
+
+
+def _channel_handle(handle: str, original: str) -> ResolvedUrl:
+    """Accept an `@handle` only when it actually names something after the `@`."""
+    if len(handle) < 2:
+        msg = f"channel handle is empty: {original!r}"
+        raise UrlError(msg, hint="expected @<handle>, for example @youtube")
+    return ResolvedUrl(kind=UrlKind.CHANNEL, youtube_id=handle)
+
+
 def classify_url(value: str) -> ResolvedUrl:
     """Resolve a YouTube URL, handle or bare id to its kind and identifier.
 
@@ -70,15 +93,23 @@ def classify_url(value: str) -> ResolvedUrl:
         msg = "empty URL"
         raise UrlError(msg, hint="pass a YouTube video, playlist or channel URL")
 
-    # A bare handle is unambiguous even without a host.
+    # A bare handle is unambiguous even without a host, but `@` alone names nothing.
     if candidate.startswith("@") and "/" not in candidate:
-        return ResolvedUrl(kind=UrlKind.CHANNEL, youtube_id=candidate)
+        return _channel_handle(candidate, value)
 
     if "://" not in candidate and "/" not in candidate and "." not in candidate:
         return classify_id(candidate)
 
-    parsed = urlparse(candidate if "://" in candidate else f"https://{candidate}")
-    host = (parsed.hostname or "").lower()
+    try:
+        parsed = urlparse(candidate if "://" in candidate else f"https://{candidate}")
+        host = (parsed.hostname or "").lower()
+    except ValueError as exc:
+        # urlparse raises on a malformed authority — an unmatched or non-address IPv6
+        # bracket. That is bad input, so it must surface as the documented usage error
+        # rather than escape `handle_errors`, which only catches ThumbforgeError.
+        msg = f"malformed URL: {value!r}"
+        raise UrlError(msg, hint="pass a YouTube video, playlist or channel URL") from exc
+
     if host not in _YOUTUBE_HOSTS and host not in _SHORT_HOSTS:
         msg = f"not a YouTube URL: {value!r}"
         raise UrlError(msg, hint="only youtube.com and youtu.be URLs are supported")
@@ -89,32 +120,33 @@ def classify_url(value: str) -> ResolvedUrl:
     if host in _SHORT_HOSTS:
         # youtu.be/<video id>; a bare youtu.be/ carries nothing to fetch.
         if segments:
-            return classify_id(segments[0])
+            return _expect_kind(segments[0], UrlKind.VIDEO, "short URL")
         msg = f"short URL names no video: {value!r}"
         raise UrlError(msg, hint="expected youtu.be/<video id>")
 
     if video_ids := query.get("v"):
-        return classify_id(video_ids[0])
+        return _expect_kind(video_ids[0], UrlKind.VIDEO, "v= parameter")
 
     if segments:
         head = segments[0].lower()
         if head == "playlist":
             if list_ids := query.get("list"):
-                return classify_id(list_ids[0])
+                return _expect_kind(list_ids[0], UrlKind.PLAYLIST, "list= parameter")
             msg = f"playlist URL names no list: {value!r}"
             raise UrlError(msg, hint="expected /playlist?list=<playlist id>")
         if head in _VIDEO_PATH_PREFIXES and len(segments) > 1:
-            return classify_id(segments[1])
+            return _expect_kind(segments[1], UrlKind.VIDEO, f"/{head}/ URL")
         if head == "channel" and len(segments) > 1:
-            return classify_id(segments[1])
+            return _expect_kind(segments[1], UrlKind.CHANNEL, "/channel/ URL")
         if head in _CHANNEL_PATH_PREFIXES and len(segments) > 1:
+            # /c/<name> and /user/<name> carry a channel name, not a shape-classifiable id.
             return ResolvedUrl(kind=UrlKind.CHANNEL, youtube_id=segments[1])
         if head.startswith("@"):
-            return ResolvedUrl(kind=UrlKind.CHANNEL, youtube_id=head)
+            return _channel_handle(head, value)
 
     # A `list=` with no `v=` and no /playlist path (e.g. /watch?list=…) is still a playlist.
     if list_ids := query.get("list"):
-        return classify_id(list_ids[0])
+        return _expect_kind(list_ids[0], UrlKind.PLAYLIST, "list= parameter")
 
     msg = f"cannot tell what this YouTube URL refers to: {value!r}"
     raise UrlError(msg, hint="expected a video, playlist or channel URL")

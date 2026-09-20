@@ -19,7 +19,9 @@ src/thumbforge/
 
 ## Dependency rule
 
-`cli → core, storage, providers, sources, templates, imaging`. `core` imports nothing internal except `core.errors` and `core.ids`. Every other package may import `core` only. Nothing imports `cli`. Enforced by import-linter contracts (Phase 1).
+`cli → core, storage, providers, sources, templates, imaging`. `core` imports no other internal **package**. Every other package may import `core` only. Nothing imports `cli`.
+
+`core` is a single layer, so its own modules may import each other: `core.models` imports `core.enums`, and the Phase 6 services import `core.models`. The constraint that matters is acyclicity, so `core.enums`, `core.errors` and `core.ids` are leaves that import nothing from `core`. Enforced by import-linter contracts (Phase 1), including `core leaf modules import nothing from core`.
 
 ## Request flow (batch)
 
@@ -40,6 +42,7 @@ flowchart LR
 ## Data model
 
 Nine tables: `channel`, `playlist`, `video`, `playlist_item`, `template`, `provider_profile`, `run`, `iteration`, `asset`. Primary keys are 26-character Crockford base32 ULIDs (`core.ids.new_id()`), timestamps are ISO-8601 UTC strings. The SQLite engine enforces `PRAGMA journal_mode=WAL;`, `PRAGMA foreign_keys=ON;`, `PRAGMA busy_timeout=5000;` on every connection. Deterministic constraint naming conventions ensure safe Alembic batch migrations (`render_as_batch=True`). A batch run references its hero through `run.parent_run_id` and `run.reference_asset_id` (`ON DELETE RESTRICT`). Full column list and ERD: `PLAN.md` §3.
+
 ## Key decisions
 
 | Topic                              | ADR                                                |

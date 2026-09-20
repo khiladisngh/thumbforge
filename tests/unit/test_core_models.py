@@ -18,6 +18,7 @@ from thumbforge.core.models import (
 
 
 def _video(youtube_id: str = "dQw4w9WgXcQ") -> VideoMeta:
+    """A minimal valid video, so each test states only the field it is about."""
     return VideoMeta(youtube_id=youtube_id, title="A video", url=f"https://youtu.be/{youtube_id}")
 
 
@@ -72,6 +73,7 @@ def test_defaults_match_the_schema() -> None:
 
 
 def test_negative_duration_is_rejected() -> None:
+    """`duration_s` is a length; a negative value would corrupt part numbering downstream."""
     with pytest.raises(ValidationError):
         VideoMeta(youtube_id="x" * 11, title="t", url="u", duration_s=-1)
 
@@ -98,6 +100,7 @@ def test_item_count_tracks_items() -> None:
 
 
 def test_resolved_url_carries_kind_and_id() -> None:
+    """`resolve()` returns both halves (ADR 0005); an empty id is never a valid result."""
     resolved = ResolvedUrl(kind=UrlKind.PLAYLIST, youtube_id="PL" + "x" * 16)
     assert resolved.kind is UrlKind.PLAYLIST
     with pytest.raises(ValidationError):

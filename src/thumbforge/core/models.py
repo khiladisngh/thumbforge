@@ -16,6 +16,7 @@ from thumbforge.core.enums import ChannelSource, UrlKind
 
 
 def _utcnow() -> datetime:
+    """Default for `fetched_at`: an aware UTC instant, never a naive local one."""
     return datetime.now(UTC)
 
 

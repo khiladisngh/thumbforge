@@ -44,8 +44,19 @@ the rules are testable without network. Recognised: `watch?v=`, `youtu.be/<id>`,
 `/user/<name>`, and bare ids discriminated by shape (11-char video, `UC…` channel, `PL|UU|LL|FL|OL|RD…` playlist).
 A `watch` URL carrying **both** `v=` and `list=` resolves to the **video**: it names one video
 being watched in a playlist's context, and fetching the whole playlist would pull in videos the
-user did not ask for. Unrecognised input raises `UrlError` (code `url`, exit `2`) — a validation
-failure, not a `SourceError`.
+user did not ask for.
+
+Where a URL form fixes the kind, the extracted identifier is validated **against that form**
+rather than classified by shape: `youtu.be/<id>`, `v=<id>`, `/shorts|embed|live|v/<id>` must
+carry a video id, `/playlist?list=` and a bare `list=` a playlist id, `/channel/<id>` a channel
+id. Otherwise `youtu.be/PL…` would resolve to `PLAYLIST` and send `fetch` to `fetch_playlist`
+for a host that serves no playlists. `/c/<name>`, `/user/<name>` and `@handle` return `CHANNEL`
+directly because their values are names, not shape-classifiable ids, and `@` alone is rejected.
+
+Unrecognised input raises `UrlError` (code `url`, exit `2`) — a validation failure, not a
+`SourceError`. This includes a malformed authority, which `urllib.parse.urlparse` reports as
+`ValueError`: it is caught and re-raised as `UrlError` so it cannot escape `handle_errors`,
+which only handles `ThumbforgeError`.
 
 `YtDlpSource` wraps `yt_dlp.YoutubeDL` with `quiet=True, skip_download=True, extract_flat="in_playlist"` for playlists and a full extract for single videos; called through `asyncio.to_thread`. Network errors (`yt_dlp.utils.DownloadError` with a network cause) are retried per `PLAN.md` §7.2; anything else becomes `SourceError` (exit `1`). An id that YouTube reports as unavailable becomes `NotFoundError` (exit `3`).
 

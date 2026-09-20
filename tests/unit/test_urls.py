@@ -39,6 +39,7 @@ CHANNEL_ID = "UCuAXFkgsw1L7xaCfnd5JJOw"
     ],
 )
 def test_classify_url(url: str, kind: UrlKind, youtube_id: str) -> None:
+    """Every URL form thumbforge accepts, and the exact identifier it must extract."""
     resolved = classify_url(url)
     assert resolved.kind is kind
     assert resolved.youtube_id == youtube_id
@@ -80,3 +81,48 @@ def test_unrecognised_input_is_a_usage_error(value: str) -> None:
         classify_url(value)
     assert caught.value.exit_code is ExitCode.USAGE
     assert caught.value.hint is not None
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        f"https://youtu.be/{PLAYLIST_ID}",
+        f"https://youtu.be/{CHANNEL_ID}",
+        f"https://www.youtube.com/watch?v={PLAYLIST_ID}",
+        f"https://www.youtube.com/shorts/{PLAYLIST_ID}",
+        f"https://www.youtube.com/channel/{VIDEO_ID}",
+        f"https://www.youtube.com/playlist?list={VIDEO_ID}",
+        f"https://www.youtube.com/watch?list={VIDEO_ID}",
+    ],
+)
+def test_identifier_must_match_the_kind_its_url_form_promises(value: str) -> None:
+    """An explicit form fixes the kind; the id's shape must not override it.
+
+    `youtu.be` only serves videos and `/channel/` only channels, so a playlist-shaped id in
+    a short link is malformed input. Classifying by shape here would resolve it to
+    `PLAYLIST` and send `fetch` to `fetch_playlist` for a host that has no playlists.
+    """
+    with pytest.raises(UrlError) as caught:
+        classify_url(value)
+    assert caught.value.exit_code is ExitCode.USAGE
+
+
+@pytest.mark.parametrize("value", ["@", "https://www.youtube.com/@"])
+def test_empty_channel_handle_is_rejected(value: str) -> None:
+    """`@` alone names no channel, so it must not resolve successfully."""
+    with pytest.raises(UrlError):
+        classify_url(value)
+
+
+@pytest.mark.parametrize("value", ["https://[::1", "https://[not-an-ipv6]"])
+def test_malformed_authority_is_a_usage_error(value: str) -> None:
+    """`urlparse` raises `ValueError` on these; the CLI only handles `ThumbforgeError`.
+
+    Letting the `ValueError` escape would turn bad input into an unexpected-error exit
+    instead of the documented usage exit. Asserting the `__cause__` keeps this test honest:
+    without it, a case that merely fails the host check would pass for the wrong reason.
+    """
+    with pytest.raises(UrlError) as caught:
+        classify_url(value)
+    assert caught.value.exit_code is ExitCode.USAGE
+    assert isinstance(caught.value.__cause__, ValueError)

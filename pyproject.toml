@@ -135,3 +135,20 @@ forbidden_modules = [
 name = "adapters are independent"
 type = "independence"
 modules = ["thumbforge.storage", "thumbforge.sources"]
+
+# `core` is one layer, so its modules may import each other — `core.models` needs
+# `core.enums`, and the Phase 6 services need `core.models`. What must not happen is a
+# cycle, so the shared leaves stay leaves. This is the machine-checked form of the
+# "core imports nothing internal" rule in PLAN.md §2.2.
+[[tool.importlinter.contracts]]
+name = "core leaf modules import nothing from core"
+type = "forbidden"
+source_modules = [
+  "thumbforge.core.enums",
+  "thumbforge.core.errors",
+  "thumbforge.core.ids",
+]
+forbidden_modules = [
+  "thumbforge.core.models",
+  "thumbforge.core.urls",
+]

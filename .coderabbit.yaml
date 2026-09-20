@@ -47,9 +47,11 @@ reviews:
         Enforce the conventions in AGENTS.md and docs/CONVENTIONS.md.
 
         Layering (also enforced by import-linter): `cli` may import core, storage, providers,
-        sources, templates, imaging. `core` must import nothing internal except core.errors and
-        core.ids. Every other package may import core only. Nothing may import `cli`. Flag any
-        import that breaks this.
+        sources, templates, imaging. `core` must import no other internal package. Every other
+        package may import core only. Nothing may import `cli`. Within core, modules may import
+        each other (core.models imports core.enums; services import core.models); only
+        core.enums, core.errors and core.ids are leaves that must import nothing from core.
+        Flag any import that breaks this.
 
         Required:
         - Full type hints; the package is pyright-strict. Flag missing or `Any` annotations.
