@@ -1,0 +1,183 @@
+"""Every provider must honour these, whatever it wraps (ADR 0010, ROADMAP P3.2).
+
+Parametrised over `registry.keys()` rather than a hand-written list, so a provider added by
+P3.4 — or by a third party in a test environment — is held to the same contract without
+anyone remembering to add it here. That is the point of the suite: `AntigravityProvider`
+cannot quietly disagree with `FakeProvider` about what `generate` returns.
+
+Providers that need a real binary, credentials or network are marked `integration` so the
+default run (`-m 'not integration'`) excludes them. Their contract is identical; only the
+cost of checking it differs.
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
+
+import pytest
+from PIL import Image
+
+from thumbforge.core.errors import ProviderError
+from thumbforge.core.providers import (
+    GenerationRequest,
+    GenerationResult,
+    HealthReport,
+    ProviderCapabilities,
+    ProviderInfo,
+)
+from thumbforge.providers import registry
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from thumbforge.core.providers import ImageProvider
+
+#: Providers that cannot run in the default suite. Keyed rather than detected, because
+#: "needs a real binary" is a property of the provider, not something to probe for.
+NEEDS_REAL_WORLD = frozenset({"antigravity"})
+
+
+def _provider_params() -> list[Any]:
+    """One param per registered provider, marking the ones that need the real world.
+
+    `list[Any]` because pytest does not export a public type for `pytest.param`'s result.
+    """
+    registered = registry.keys()  # a function, not a mapping — hence no `.keys()` idiom
+    return [
+        pytest.param(
+            key, id=key, marks=[pytest.mark.integration] if key in NEEDS_REAL_WORLD else []
+        )
+        for key in registered
+    ]
+
+
+@pytest.fixture(params=_provider_params())
+def provider(request: pytest.FixtureRequest) -> ImageProvider:
+    """A registered provider, constructed the way the CLI constructs one."""
+    return registry.get(str(request.param))
+
+
+def _request(**overrides: object) -> GenerationRequest:
+    """A request every provider should be able to satisfy."""
+    fields: dict[str, object] = {
+        "prompt": "a plain grey square, minimal",
+        "width": 1376,
+        "height": 768,
+        "idempotency_key": "contract",
+    }
+    fields.update(overrides)
+    return GenerationRequest.model_validate(fields)
+
+
+def test_registry_is_not_empty() -> None:
+    """A green contract suite over zero providers would be meaningless."""
+    assert registry.keys()
+
+
+def test_capabilities_are_declared_and_self_consistent(provider: ImageProvider) -> None:
+    """Callers branch on these, so a nonsensical combination is a bug in the provider."""
+    capabilities = provider.capabilities
+
+    assert isinstance(capabilities, ProviderCapabilities)
+    assert capabilities.max_batch >= 1
+    assert capabilities.max_concurrency >= 1
+    assert capabilities.output_formats, "a provider that emits no format cannot be used"
+    assert all(fmt == fmt.lower() for fmt in capabilities.output_formats), (
+        "formats are compared against Pillow's lowercased names"
+    )
+
+
+async def test_info_reports_the_key_it_is_registered_under(provider: ImageProvider) -> None:
+    """Provenance is recorded from this, so it must not disagree with the registry."""
+    info = await provider.info()
+
+    assert isinstance(info, ProviderInfo)
+    assert info.key == provider.key
+    assert info.name
+    assert info.auth in {"ok", "missing", "unknown"}
+
+
+async def test_healthcheck_reports_at_least_one_check(provider: ImageProvider) -> None:
+    """`provider check` must never print an empty report: that reads as "no opinion"."""
+    report = await provider.healthcheck()
+
+    assert isinstance(report, HealthReport)
+    assert report.checks
+    assert report.ok == all(check.ok for check in report.checks)
+
+
+async def test_generate_returns_a_real_image(provider: ImageProvider, tmp_path: Path) -> None:
+    """The whole point of the interface: a file that exists and that Pillow can open."""
+    result = await provider.generate(_request(), workdir=tmp_path)
+
+    assert isinstance(result, GenerationResult)
+    assert result.image_path.exists(), "image_path must name a file that was actually written"
+    assert result.provider_key == provider.key
+    assert result.duration_ms >= 0
+
+    with Image.open(result.image_path) as image:
+        assert image.format is not None
+        assert image.format.lower() in provider.capabilities.output_formats
+        assert image.width > 0
+        assert image.height > 0
+
+
+async def test_requested_size_is_honoured_when_aspect_is_supported(
+    provider: ImageProvider, tmp_path: Path
+) -> None:
+    """`supports_aspect_ratio` is the flag callers trust before skipping their own fit step.
+
+    A provider that advertises it and then ignores the request would make Phase 5 crop an
+    image it believed was already the right shape.
+    """
+    if not provider.capabilities.supports_aspect_ratio:
+        pytest.skip("provider does not claim aspect-ratio support")
+
+    request = _request(width=1280, height=720)
+    result = await provider.generate(request, workdir=tmp_path)
+
+    with Image.open(result.image_path) as image:
+        assert (image.width, image.height) == (request.width, request.height)
+
+
+async def test_seed_is_reported_when_supported(provider: ImageProvider, tmp_path: Path) -> None:
+    """`seed_used` is what makes a run reproducible, so it must come back when honoured."""
+    if not provider.capabilities.supports_seed:
+        pytest.skip("provider does not claim seed support")
+
+    result = await provider.generate(_request(seed=1234), workdir=tmp_path)
+
+    assert result.seed_used == 1234
+
+
+async def test_failures_are_provider_errors(provider: ImageProvider, tmp_path: Path) -> None:
+    """Callers catch `ProviderError`; anything else escapes the CLI as a traceback.
+
+    An unreadable reference image is the one failure that can be provoked in any provider
+    claiming reference support, without provider-specific markers.
+    """
+    if not provider.capabilities.supports_reference_image:
+        pytest.skip("provider does not claim reference-image support")
+
+    missing = tmp_path / "does-not-exist.png"
+    request = _request(reference_images=(missing,))
+
+    with pytest.raises(ProviderError):
+        await provider.generate(request, workdir=tmp_path)
+
+
+async def test_generate_is_deterministic_when_seeded(
+    provider: ImageProvider, tmp_path: Path
+) -> None:
+    """A seeded provider must repeat itself, or callers cannot assert on its output.
+
+    Compared as bytes rather than dimensions: equal sizes would pass for two entirely
+    different images, which is exactly the coincidence this is meant to exclude.
+    """
+    if not provider.capabilities.supports_seed:
+        pytest.skip("provider does not claim seed support")
+
+    first = await provider.generate(_request(seed=99, idempotency_key="det-a"), workdir=tmp_path)
+    second = await provider.generate(_request(seed=99, idempotency_key="det-b"), workdir=tmp_path)
+
+    assert first.image_path.read_bytes() == second.image_path.read_bytes()

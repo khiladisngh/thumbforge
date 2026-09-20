@@ -84,9 +84,16 @@ class GenerationResult(BaseModel, frozen=True):
 
 A provider is constructed from **its own config mapping**, not from `Settings` as an earlier draft said. `storage` and `sources` likewise take plain values, so no adapter depends on the application's whole configuration tree — `cli` extracts `settings.providers.<key>` and passes it down. A mapping rather than a typed model because the registry cannot know which model a third-party provider wants, and `provider_profile.params_json` already stores provider config this way.
 
+A provider shipped in this package is registered in `providers.registry.BUILTIN` and **not**
+in the `thumbforge.providers` entry points. The map is _merged with_ that group, so declaring
+one in both places makes it collide with itself under the duplicate-key rule — the guard
+caught exactly that during P3.2. The entry-point group is purely the third-party mechanism.
+
 ### FakeProvider (`PLAN.md` §4.2)
 
-- Renders a 1376×768 PNG. Background colour = first 3 bytes of `sha256(prompt + str(seed))`; draws the sha prefix as text; when reference images are given, pastes 96-px thumbnails of them into the corners.
+- Renders a PNG **at the requested `width`x`height`**. It advertises `supports_aspect_ratio=True`, and a provider that claims that flag and then ignores the request would make Phase 5 skip a fit step the image still needed — so honouring it is what makes the flag testable rather than decorative. An earlier draft said a fixed 1376x768; request that size explicitly to exercise Phase 5's upscale path offline.
+- Background colour = first 3 bytes of `sha256(prompt + negative_prompt + seed + size)`; draws the digest prefix as text; when reference images are given, pastes 96-px thumbnails of them into the corners. `negative_prompt` and the size are in the digest because both are advertised as supported, and a flag that changes nothing is worse than a missing one.
+- Deterministic to the **byte** for an identical request, so a caller can assert on the image rather than merely on its existence. Nothing varies between runs is embedded in the PNG.
 - Sleeps `params.get("delay_ms", 0)` ms (lets progress-bar and concurrency tests be observable).
 - Raises `ProviderTransientError` when the prompt contains `[[FAIL_TRANSIENT]]` and `ProviderPermanentError` on `[[FAIL_PERMANENT]]` — used by contract, retry and resume tests.
 - Capabilities: reference=True, seed=True, negative=True, aspect=True, max_batch=8, max_concurrency=8, formats={"png"}.
