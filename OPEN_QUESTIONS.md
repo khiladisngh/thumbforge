@@ -72,10 +72,10 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
     layout rather than assume it.
 - Changes: the `_render.preview()` helper and P5.4. If unusable, `preview` prints the asset paths plus the `thumb export` hint and `thumb show` falls back to a table (ADR 0002).
 
-### S11 — yt-dlp flat playlist fields under `extract_flat`
+### S11 — yt-dlp flat playlist fields under `extract_flat` — **closed**, see `docs/spikes/ytdlp.md`
 
-- Verify: `uv run --with yt-dlp python -c "import yt_dlp,json; print(json.dumps(yt_dlp.YoutubeDL({'extract_flat':'in_playlist','quiet':True}).extract_info('<playlist url>', download=False)['entries'][0], indent=1))"`; confirm `playlist_index`, `channel_id`, `title`, `id`, `duration` are present.
-- Changes: `VideoMeta` fields and the P2.2 fixture recorder.
+- Verify: `uv run --with yt-dlp python -c "import yt_dlp,json; print(sorted(yt_dlp.YoutubeDL({'extract_flat':'in_playlist','quiet':True}).extract_info('<playlist url>', download=False)['entries'][0]))"`
+- Result: `id`, `title`, `duration`, `channel_id`, `channel`, `url`, `thumbnails`, `view_count` are always present (183/183 entries). **`playlist_index` is absent** — this spike assumed it would be there — so `PlaylistItemMeta.position` comes from enumeration order. `description`, `timestamp` and `availability` are always `None`, so a flat extract cannot fill `description` or `published_at`; those need a per-video full extract.
 
 ### S12 — Python 3.15 GA timing
 
