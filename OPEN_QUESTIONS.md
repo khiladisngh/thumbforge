@@ -75,7 +75,7 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 ### S11 — yt-dlp flat playlist fields under `extract_flat` — **closed**, see `docs/spikes/ytdlp.md`
 
 - Verify: `uv run --with yt-dlp python -c "import yt_dlp,json; print(sorted(yt_dlp.YoutubeDL({'extract_flat':'in_playlist','quiet':True}).extract_info('<playlist url>', download=False)['entries'][0]))"`
-- Result: `id`, `title`, `duration`, `channel_id`, `channel`, `url`, `thumbnails`, `view_count` are always present (183/183 entries). **`playlist_index` is absent** — this spike assumed it would be there — so `PlaylistItemMeta.position` comes from enumeration order. `description`, `timestamp` and `availability` are always `None`, so a flat extract cannot fill `description` or `published_at`; those need a per-video full extract.
+- Result: `id`, `title`, `duration`, `channel_id`, `channel`, `url`, `thumbnails`, `view_count` are always present (183/183 entries). **`playlist_index` is absent** — this spike assumed it would be there — so `PlaylistItemMeta.position` comes from enumeration order. `description` is likewise **absent** from every entry, while `timestamp`, `availability` and `live_status` are present but always `None` — so a flat extract cannot fill `description` or `published_at`; those need a per-video full extract.
 
 ### S12 — Python 3.15 GA timing
 

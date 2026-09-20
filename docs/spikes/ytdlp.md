@@ -56,21 +56,38 @@ channel_id None count              : 0 / 183
 keys missing from some entries     : ['uploader_id']
 ```
 
-| Field            | Under `extract_flat` | Note                                            |
-| ---------------- | -------------------- | ----------------------------------------------- |
-| `id`             | ✅ always            | 11-char video id                                |
-| `title`          | ✅ always            |                                                 |
-| `duration`       | ✅ always (183/183)  | seconds; differs by ±1s from a full extract     |
-| `channel_id`     | ✅ always (183/183)  | the **video's** channel, not the playlist owner |
-| `channel`        | ✅ always            |                                                 |
-| `url`            | ✅ always            | canonical `watch?v=` form                       |
-| `thumbnails`     | ✅ always            | list, max 336×188 — no `maxresdefault`          |
-| `view_count`     | ✅ always            |                                                 |
-| `playlist_index` | ❌ **absent**        | the key does not exist on any entry             |
-| `description`    | ❌ always `None`     | key present, never populated                    |
-| `timestamp`      | ❌ always `None`     | so no `published_at`                            |
-| `availability`   | ❌ always `None`     |                                                 |
-| `uploader_id`    | ⚠️ missing on some   | do not rely on it                               |
+`dict.get()` returns `None` for a missing key and for a key whose value is `None`, so the
+two were measured apart explicitly — the distinction decides whether P2.2 can rely on a
+`.get()` default or must branch:
+
+```
+$ uv run --with yt-dlp python -c "... for k in (...): present = sum(1 for e in es if k in e) ..."
+description      ABSENT from all entries
+timestamp        present on all, value always None
+availability     present on all, value always None
+playlist_index   ABSENT from all entries
+duration         present on all, 183 non-null
+uploader_id      present on 27/183, 27 non-null
+view_count       present on all, 183 non-null
+live_status      present on all, value always None
+```
+
+| Field            | Under `extract_flat`          | Note                                            |
+| ---------------- | ----------------------------- | ----------------------------------------------- |
+| `id`             | ✅ always                     | 11-char video id                                |
+| `title`          | ✅ always                     |                                                 |
+| `duration`       | ✅ always (183/183)           | seconds; differs by ±1s from a full extract     |
+| `channel_id`     | ✅ always (183/183)           | the **video's** channel, not the playlist owner |
+| `channel`        | ✅ always                     |                                                 |
+| `url`            | ✅ always                     | canonical `watch?v=` form                       |
+| `thumbnails`     | ✅ always                     | list, max 336×188 — no `maxresdefault`          |
+| `view_count`     | ✅ always                     |                                                 |
+| `playlist_index` | ❌ **key absent**             | does not exist on any entry                     |
+| `description`    | ❌ **key absent**             | does not exist on any entry                     |
+| `timestamp`      | ⚠️ key present, always `None` | so no `published_at`                            |
+| `availability`   | ⚠️ key present, always `None` |                                                 |
+| `live_status`    | ⚠️ key present, always `None` | cannot filter live streams from a flat pass     |
+| `uploader_id`    | ⚠️ present on 27/183          | do not rely on it                               |
 
 ### Result — full extract of one video, for comparison
 
@@ -110,7 +127,9 @@ suppressed or allow-listed so it does not pollute `fetch` output.
    docstring claiming it "mirrors yt-dlp's 1-based `playlist_index`" is corrected in this PR.
    Enumeration order is the playlist order, so the derived value is the intended one; it is
    the _provenance_ that was wrong, not the semantics.
-2. **A flat playlist extract cannot fill `description` or `published_at`.** `VideoMeta` keeps
+2. **A flat playlist extract cannot fill `description` or `published_at`.** `description` is
+   not merely `None` — the key is **absent** from every entry, while `timestamp` is present and
+   always `None`. Either way `VideoMeta` keeps
    its `""` / `None` defaults for playlist-sourced rows; a full per-video extract is required
    to populate them. P2.2 must not fan out 183 full extracts during `fetch` — the flat pass
    stays the default and `--refresh` on a single video does the deep one. `PLAN.md` §5.2's
