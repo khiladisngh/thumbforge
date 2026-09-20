@@ -85,16 +85,24 @@ class BatchSettings(BaseModel):
 
 
 class AntigravitySettings(BaseModel):
+    """How to invoke the Antigravity CLI (ADR 0013, measured in `docs/spikes/antigravity.md`)."""
+
     model_config = ConfigDict(extra="forbid")
 
     binary: str = "agy"
     model: str | None = None
     effort: Literal["low", "medium", "high"] = "low"
     timeout_s: Annotated[int, Field(ge=1)] = 600
-    skip_permissions: bool = True
+    #: Spike S5 measured `generate_image` succeeding with neither this flag nor a
+    #: `permissions.allow` rule, and again with `trustedWorkspaces` removed, so the default
+    #: does not opt into `--dangerously-skip-permissions`. It stays configurable for users
+    #: whose `settings.json` is more restrictive. Supersedes decision D4.
+    skip_permissions: bool = False
 
 
 class ProviderSettings(BaseModel):
+    """Per-provider configuration, keyed by provider registry name."""
+
     model_config = ConfigDict(extra="forbid")
 
     antigravity: AntigravitySettings = Field(default_factory=AntigravitySettings)
