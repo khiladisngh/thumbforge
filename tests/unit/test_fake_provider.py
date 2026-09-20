@@ -122,18 +122,20 @@ async def test_workdir_is_created_if_absent(tmp_path: Path) -> None:
     assert result.image_path.exists()
 
 
-async def test_config_is_echoed_for_diagnosis(tmp_path: Path) -> None:
-    """`raw_response` is persisted to `iteration.provider_response_json`.
+async def test_requested_size_is_honoured_exactly(tmp_path: Path) -> None:
+    """The fake honours dimensions exactly, which the generic contract cannot require.
 
-    Echoing the config is what lets someone reading a stored row see which profile produced
-    the image.
+    Antigravity cannot (spike S3 measured a fixed 1376x768), so the contract suite only
+    asserts the ratio is influenced. Asserting it here is what makes the fake a useful
+    stand-in for Phase 5 and 6 tests that need a known-size source image.
     """
-    provider = FakeProvider({"flavour": "vanilla"})
-
-    result = await provider.generate(_request(), workdir=tmp_path)
-
-    assert result.raw_response["config"] == {"flavour": "vanilla"}
-    assert result.raw_response["digest"]
+    for width, height in ((1376, 768), (1920, 1080), (640, 640)):
+        result = await FakeProvider().generate(
+            _request(width=width, height=height, idempotency_key=f"k{width}x{height}"),
+            workdir=tmp_path,
+        )
+        with Image.open(result.image_path) as image:
+            assert (image.width, image.height) == (width, height)
 
 
 def test_fake_is_discoverable_through_the_real_registry() -> None:

@@ -366,10 +366,10 @@
     "semantic_hash": "04311cf307e3076629e29c0aae079641"
   },
   "src/thumbforge/core/providers.py": {
-    "mtime": 1789902215.5176337,
-    "seen": 1789902686.5464146,
-    "ast_hash": "9b4f8f452609341f3056344c16526097",
-    "semantic_hash": "9b4f8f452609341f3056344c16526097"
+    "mtime": 1789903535.8451746,
+    "seen": 1789903562.7323115,
+    "ast_hash": "2ae2b6c6f0be08035aa7f3002aa92fa9",
+    "semantic_hash": "2ae2b6c6f0be08035aa7f3002aa92fa9"
   },
   "src/thumbforge/providers/__init__.py": {
     "mtime": 1789902215.5176337,
@@ -390,21 +390,27 @@
     "semantic_hash": "778aa0a99433cde99cd3eb756c26dba0"
   },
   "src/thumbforge/providers/fake.py": {
-    "mtime": 1789902562.3419733,
-    "seen": 1789902686.5470667,
-    "ast_hash": "12deb29f527b4203385f60b02c24bbda",
-    "semantic_hash": "12deb29f527b4203385f60b02c24bbda"
+    "mtime": 1789903501.0841758,
+    "seen": 1789903562.7330635,
+    "ast_hash": "29d40dfb45073193b45a15cceacf5773",
+    "semantic_hash": "29d40dfb45073193b45a15cceacf5773"
   },
   "tests/contract/test_provider_contract.py": {
-    "mtime": 1789902498.5575476,
-    "seen": 1789902686.548225,
-    "ast_hash": "d0b17be79e423730abc45157244f8efd",
-    "semantic_hash": "d0b17be79e423730abc45157244f8efd"
+    "mtime": 1789903428.21462,
+    "seen": 1789903562.7346153,
+    "ast_hash": "f7e36dd0b1d4a7081967b7010fda7971",
+    "semantic_hash": "f7e36dd0b1d4a7081967b7010fda7971"
   },
   "tests/unit/test_fake_provider.py": {
-    "mtime": 1789902666.120095,
-    "seen": 1789902686.5496898,
-    "ast_hash": "91493b3068c6051361a5b2a4c6be3356",
-    "semantic_hash": "91493b3068c6051361a5b2a4c6be3356"
+    "mtime": 1789903449.365892,
+    "seen": 1789903562.735988,
+    "ast_hash": "a577478d4ce3e0d2d145576ad0a46736",
+    "semantic_hash": "a577478d4ce3e0d2d145576ad0a46736"
+  },
+  "tests/unit/test_core_providers.py": {
+    "mtime": 1789903520.4746275,
+    "seen": 1789903562.7358775,
+    "ast_hash": "4892909acdd7ba15d30276f4b58b6622",
+    "semantic_hash": "4892909acdd7ba15d30276f4b58b6622"
   }
 }

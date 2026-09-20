@@ -19,7 +19,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import ClassVar, Literal, Protocol, runtime_checkable
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from thumbforge.core.json import JsonPayload
 
@@ -121,7 +121,22 @@ class GenerationRequest(BaseModel):
     params: JsonPayload = Field(default_factory=dict)
     #: Identifies this request for deduplication (`PLAN.md` §6); providers may use it to
     #: name their output but must not depend on the caller having stored it.
-    idempotency_key: str = Field(min_length=1)
+    #:
+    #: Constrained to filename-safe characters because providers join it onto a path.
+    #: `PLAN.md` §6 already makes it a `sha256(...)[:32]`, so nothing legitimate is excluded
+    #: — but `min_length=1` alone let `"../../escaped"` through, and a provider that then
+    #: created the parent directory would write outside the caller's workdir. Validating
+    #: here fixes it for every provider rather than each one guarding its own join.
+    idempotency_key: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9._-]+$")
+
+    @field_validator("idempotency_key")
+    @classmethod
+    def _reject_traversal(cls, value: str) -> str:
+        """Refuse a key that is only dots, which the character class alone would allow."""
+        if set(value) <= {"."}:
+            msg = "idempotency_key must contain more than dots"
+            raise ValueError(msg)
+        return value
 
 
 class GenerationResult(BaseModel):

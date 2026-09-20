@@ -122,13 +122,24 @@ async def test_generate_returns_a_real_image(provider: ImageProvider, tmp_path: 
         assert image.height > 0
 
 
-async def test_requested_size_is_honoured_when_aspect_is_supported(
+#: How far a provider's output ratio may sit from the requested one. Antigravity returns
+#: 1376x768 (1.792) for a 16:9 request (1.778) — 0.8% off — so the bound must admit that
+#: while still rejecting a provider that ignores the request entirely: spike S3 measured
+#: 1024x1024 (1.0, 44% off) when the ratio was omitted from the prompt.
+ASPECT_TOLERANCE = 0.05
+
+
+async def test_requested_aspect_ratio_influences_the_output(
     provider: ImageProvider, tmp_path: Path
 ) -> None:
-    """`supports_aspect_ratio` is the flag callers trust before skipping their own fit step.
+    """`supports_aspect_ratio` promises *influence*, not exact dimensions.
 
-    A provider that advertises it and then ignores the request would make Phase 5 crop an
-    image it believed was already the right shape.
+    Deliberately not an exact size assertion. `core.providers` defines the flag as "the
+    requested aspect ratio influences the result … it does not promise the exact width and
+    height", and Antigravity cannot honour exact dimensions at all (S3) while still
+    correctly advertising the flag — so an exact assertion would fail a conforming provider.
+    Phase 5 fits every result regardless of this flag; what the flag buys is that the source
+    is not wildly the wrong shape.
     """
     if not provider.capabilities.supports_aspect_ratio:
         pytest.skip("provider does not claim aspect-ratio support")
@@ -136,8 +147,14 @@ async def test_requested_size_is_honoured_when_aspect_is_supported(
     request = _request(width=1280, height=720)
     result = await provider.generate(request, workdir=tmp_path)
 
+    wanted = request.width / request.height
     with Image.open(result.image_path) as image:
-        assert (image.width, image.height) == (request.width, request.height)
+        actual = image.width / image.height
+
+    assert abs(actual - wanted) / wanted <= ASPECT_TOLERANCE, (
+        f"claims aspect support but returned {image.width}x{image.height} "
+        f"({actual:.3f}) for a {wanted:.3f} request"
+    )
 
 
 async def test_seed_is_reported_when_supported(provider: ImageProvider, tmp_path: Path) -> None:
