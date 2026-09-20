@@ -60,7 +60,16 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 
 ### S10 — terminal image preview with `rich-pixels` in Windows Terminal
 
-- Verify: render a generated 1920×1080 thumbnail with `rich_pixels.Pixels.from_image_path`, scaled to the terminal width, in Windows Terminal; confirm the block-character output is legible at `--columns 2` grid scale.
+- Verify (run in Windows Terminal, the primary development terminal):
+    ```
+    uv run --with rich --with rich-pixels --with pillow python -c "from PIL import Image; from rich.console import Console; from rich_pixels import Pixels; c=Console(); Image.new('RGB',(1920,1080),(200,40,40)).save('preview.png'); w=max(c.width//2-2,20); c.print(Pixels.from_image_path('preview.png',resize=(w,w*9//16)))"
+    ```
+    Replace the synthetic fill with a real thumbnail once one exists. The tile is sized to
+    half the terminal width, which is what one cell of the `--columns 2` grid gets. Confirm
+    the block-character output is legible — that the title and overall composition are
+    recognisable, not that it is pixel-accurate. Note that `rich.columns.Columns` did **not**
+    lay two `Pixels` tiles side by side in a smoke test, so P5.4 must verify the real grid
+    layout rather than assume it.
 - Changes: the `_render.preview()` helper and P5.4. If unusable, `preview` prints the asset paths plus the `thumb export` hint and `thumb show` falls back to a table (ADR 0002).
 
 ### S11 — yt-dlp flat playlist fields under `extract_flat`
