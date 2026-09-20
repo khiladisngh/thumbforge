@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import TYPE_CHECKING
 
 import pytest
@@ -196,3 +197,42 @@ def test_skip_permissions_defaults_to_false(tmp_path: Path) -> None:
         is False
     )
     assert "skip_permissions = false" in default_config_toml()
+
+
+@pytest.mark.parametrize(
+    "variable",
+    [
+        "THUMBFORGE_PROVIDERS__ANTIGRAVITY__API_KEY",
+        # A provider with no settings section at all: dropping only the leaf would leave
+        # `providers.fake = {}` behind, which `extra="forbid"` rejects just the same.
+        "THUMBFORGE_PROVIDERS__FAKE__API_KEY",
+    ],
+)
+def test_a_provider_api_key_in_the_environment_does_not_break_loading(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variable: str
+) -> None:
+    """The documented way to supply a provider key must not brick every command.
+
+    ADR 0014 fixes the name as `THUMBFORGE_PROVIDERS__<KEY>__API_KEY`, but
+    `env_nested_delimiter` reads it as `providers.<key>.api_key` and `extra="forbid"` rejected
+    it — so following the documentation made every command exit 2 with "Extra inputs are not
+    permitted". Secrets are dropped from the environment source instead, and deliberately not
+    declared as fields: those sections are dumped into provider config and snapshotted into
+    `provider_profile.params_json`.
+    """
+    monkeypatch.setenv(variable, "s3cret")
+
+    settings = load_settings(config_path=tmp_path / "missing.toml")
+
+    assert "s3cret" not in json.dumps(settings.model_dump(mode="json"))
+
+
+def test_a_non_secret_provider_setting_from_the_environment_still_applies(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The secret filter must not swallow ordinary nested provider settings."""
+    monkeypatch.setenv("THUMBFORGE_PROVIDERS__ANTIGRAVITY__EFFORT", "high")
+
+    settings = load_settings(config_path=tmp_path / "missing.toml")
+
+    assert settings.providers.antigravity.effort == "high"

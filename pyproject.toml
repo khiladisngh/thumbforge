@@ -19,6 +19,7 @@ classifiers = [
 ]
 dependencies = [
   "alembic>=1.14",
+  "keyring>=25.0",
   "pillow>=10.0",
   "platformdirs>=4.11.10",
   "pydantic>=2.13.5",
@@ -122,6 +123,7 @@ source_modules = [
   "thumbforge.providers",
   "thumbforge.settings",
   "thumbforge.logging",
+  "thumbforge.credentials",
 ]
 forbidden_modules = ["thumbforge.cli"]
 
@@ -136,6 +138,7 @@ forbidden_modules = [
   "thumbforge.cli",
   "thumbforge.settings",
   "thumbforge.logging",
+  "thumbforge.credentials",
 ]
 
 [[tool.importlinter.contracts]]

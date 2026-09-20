@@ -441,3 +441,95 @@ async def test_a_hung_child_is_killed_and_reported_as_a_timeout(
 
     assert "did not exit within" in str(caught.value)
     assert caught.value.retryable is True
+
+
+async def test_a_models_timeout_is_not_reported_as_an_auth_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An unanswered call is no evidence about credentials.
+
+    Reported as `auth` it would tell a signed-in user to sign in. The check is named `models`
+    instead and says the credentials could not be checked.
+    """
+
+    async def never_answers(_self: object, *_args: str, timeout: float) -> object:
+        return antigravity.TIMED_OUT
+
+    monkeypatch.setattr(antigravity.AntigravityProvider, "_capture", never_answers)
+    monkeypatch.setattr(antigravity.shutil, "which", lambda _binary: "/usr/bin/agy")
+    brain = tmp_path / "brain"
+    brain.mkdir()
+
+    report = await AntigravityProvider({"brain_dir": str(brain)}).healthcheck()
+
+    named = {check.name: check for check in report.checks}
+    assert "auth" not in named, "a timeout must not masquerade as an auth verdict"
+    assert named["models"].ok is False
+    assert "could not be checked" in named["models"].detail
+    assert report.models == ()
+    # The other checks survive: one failure must not hide the rest.
+    assert {"binary", "version", "plugins"} <= set(named)
+
+
+async def test_a_clean_models_failure_is_an_auth_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A non-zero exit from `agy models` is the one signal that the CLI is not signed in."""
+
+    async def fails(_self: object, *_args: str, timeout: float) -> object:
+        return None
+
+    monkeypatch.setattr(antigravity.AntigravityProvider, "_capture", fails)
+    monkeypatch.setattr(antigravity.shutil, "which", lambda _binary: "/usr/bin/agy")
+    brain = tmp_path / "brain"
+    brain.mkdir()
+
+    report = await AntigravityProvider({"brain_dir": str(brain)}).healthcheck()
+
+    named = {check.name: check for check in report.checks}
+    assert named["auth"].ok is False
+    assert "may not be signed in" in named["auth"].detail
+
+
+def test_models_output_is_parsed_by_its_tab_not_its_banner() -> None:
+    """`agy models` prefixes a progress line; keying off the tab ignores it by construction."""
+    measured = (
+        "Fetching available models...\n"
+        "gemini-3.1-pro-high\tGemini 3.1 Pro (High)\n"
+        "claude-sonnet-4-6\tClaude Sonnet 4.6 (Thinking)\n"
+        # Not the measured banner: any future untabbed line must be ignored too. Filtering on
+        # the banner text instead would turn this one into a model named after it.
+        "Catalogue refreshed 2 seconds ago\n"
+        "\n"
+    )
+
+    assert antigravity._parse_models(measured) == (
+        "gemini-3.1-pro-high",
+        "claude-sonnet-4-6",
+    )
+
+
+async def test_capture_classifies_a_real_timeout_rather_than_a_failure(tmp_path: Path) -> None:
+    """Drives the actual `wait_for` expiry, which the healthcheck tests stub past.
+
+    Without this, collapsing `TIMED_OUT` back into `None` goes unnoticed — and keeping a
+    timeout out of the auth verdict is the entire reason the distinction exists.
+    """
+    brain = tmp_path / "brain"
+    brain.mkdir()
+    provider = AntigravityProvider({"brain_dir": str(brain), "binary": sys.executable})
+
+    result = await provider._capture("-c", "import time; time.sleep(30)", timeout=0.25)
+
+    assert result is antigravity.TIMED_OUT
+
+
+async def test_capture_returns_none_for_a_clean_failure(tmp_path: Path) -> None:
+    """A non-zero exit is the signal `_models` reads as "not signed in"."""
+    brain = tmp_path / "brain"
+    brain.mkdir()
+    provider = AntigravityProvider({"brain_dir": str(brain), "binary": sys.executable})
+
+    result = await provider._capture("-c", "raise SystemExit(3)", timeout=30)
+
+    assert result is None

@@ -22,9 +22,10 @@ import tomli_w
 from platformdirs import user_config_dir, user_data_dir, user_state_dir
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings.sources import EnvSettingsSource, PydanticBaseSettingsSource
 
 from thumbforge.core.errors import SettingsError
-from thumbforge.core.redaction import find_secret_keys
+from thumbforge.core.redaction import find_secret_keys, is_secret_key
 
 APP_NAME = "thumbforge"
 
@@ -133,6 +134,39 @@ class ConfigSchema(BaseModel):
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
 
 
+class _SecretFreeEnvSource(EnvSettingsSource):
+    """Environment source that drops secret-looking variables before validation.
+
+    The same deny-list that makes settings *refuse* a config file containing a secret makes
+    the environment source *ignore* one, because the environment is exactly where a secret is
+    supposed to live. `thumbforge.credentials` is the only reader.
+    """
+
+    def __call__(self) -> dict[str, Any]:
+        return _drop_secrets(super().__call__())
+
+
+def _drop_secrets(values: dict[str, Any]) -> dict[str, Any]:
+    """Recursively remove secret-looking keys, and any section left empty by their removal.
+
+    Emptied sections must go too: `providers.fake` surviving as `{}` is still an extra input
+    under `extra="forbid"`, so dropping only the leaf would fix nothing for a provider that
+    has no settings section of its own.
+    """
+    cleaned: dict[str, Any] = {}
+    for key, value in values.items():
+        if is_secret_key(key):
+            continue
+        if isinstance(value, dict):
+            nested = _drop_secrets(cast("dict[str, Any]", value))
+            if not nested:
+                continue
+            cleaned[key] = nested
+            continue
+        cleaned[key] = value
+    return cleaned
+
+
 class Settings(BaseSettings):
     """Effective configuration for one invocation: defaults, then file, then environment.
 
@@ -152,6 +186,32 @@ class Settings(BaseSettings):
     batch: BatchSettings = Field(default_factory=BatchSettings)
     providers: ProviderSettings = Field(default_factory=ProviderSettings)
     logging: LoggingSettings = Field(default_factory=LoggingSettings)
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Default source order, with the environment source filtered of secrets.
+
+        ``THUMBFORGE_PROVIDERS__<KEY>__API_KEY`` is the documented place to put a provider's
+        key (ADR 0014), but ``env_nested_delimiter`` reads it as ``providers.<key>.api_key``,
+        which ``extra="forbid"`` then rejects — so simply following the documentation made
+        *every* command exit 2 with "Extra inputs are not permitted". Filtering here rather
+        than declaring the field keeps the secret out of the settings model entirely, which
+        matters because those sections are dumped into provider config and snapshotted into
+        ``provider_profile.params_json``.
+        """
+        return (
+            init_settings,
+            _SecretFreeEnvSource(settings_cls),
+            dotenv_settings,
+            file_secret_settings,
+        )
 
     @classmethod
     def from_sources(cls, file_values: Mapping[str, Any]) -> Settings:

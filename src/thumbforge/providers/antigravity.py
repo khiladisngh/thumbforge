@@ -78,6 +78,24 @@ _KILL_GRACE_S: Final = 30
 #: `agy --version` is a local read, so a long wait means something is wrong, not slow.
 _VERSION_TIMEOUT_S: Final = 30
 
+#: `agy models` fetches the catalogue over the network, so it gets a longer budget than the
+#: purely local version read. Measured at ~5 s.
+_MODELS_TIMEOUT_S: Final = 60
+
+
+class _TimedOut:
+    """A subcommand that never answered, which is not the same as one that failed.
+
+    Distinct from `None` because "no reply" is no evidence about credentials, whereas a clean
+    non-zero exit from `agy models` is exactly the evidence that the CLI is not signed in.
+    """
+
+    __slots__ = ()
+
+
+#: The single `_TimedOut` instance; compared with `isinstance`, so identity is incidental.
+TIMED_OUT: Final = _TimedOut()
+
 #: Markers the agent uses when it *relays* an upstream image-model failure in prose instead
 #: of failing the run. Measured live: a 429 arrived as `status: "SUCCESS"` with no image and
 #: "429 Too Many Requests: RESOURCE_EXHAUSTED - You have exhausted your capacity on the image
@@ -251,7 +269,37 @@ class AntigravityProvider:
             )
         )
 
-        return HealthReport(checks=tuple(checks))
+        # `agy models` is the cheapest call that needs real credentials, so it doubles as
+        # the auth probe `info()` deliberately will not make (see its docstring). A clean
+        # failure is the only evidence this adapter can get that the CLI is not signed in.
+        listed = await self._models() if binary_path else None
+        if isinstance(listed, _TimedOut):
+            # Reported under its own name, not `auth`: the call never finished, so it is no
+            # evidence either way about credentials.
+            checks.append(
+                Check(
+                    name="models",
+                    ok=False,
+                    detail=(
+                        f"`{self._binary} models` did not answer within {_MODELS_TIMEOUT_S}s, "
+                        "so the credentials could not be checked"
+                    ),
+                )
+            )
+            models: tuple[str, ...] = ()
+        else:
+            models = listed or ()
+            checks.append(
+                Check(
+                    name="auth",
+                    ok=listed is not None,
+                    detail=f"{len(models)} models available"
+                    if listed is not None
+                    else "could not list models; the CLI may not be signed in",
+                )
+            )
+
+        return HealthReport(checks=tuple(checks), models=models)
 
     async def generate(self, request: GenerationRequest, *, workdir: Path) -> GenerationResult:
         """Run one generation and copy its output into `workdir`."""
@@ -386,30 +434,79 @@ class AntigravityProvider:
             )
         return candidates[-1]
 
-    async def _version(self) -> str | None:
-        """Read `agy --version`, or `None` when the binary is absent or unusable."""
-        if self._version_cache is not None:
-            return self._version_cache
-        if self._run is not None:
-            return "injected"
+    async def _capture(self, *args: str, timeout: float) -> str | _TimedOut | None:
+        """Run a short `agy` subcommand and return its stdout, or why it produced none.
+
+        Shared by `--version` and `models` so the create/wait/reap dance exists once. Three
+        outcomes, because they mean different things to a caller: the text, `TIMED_OUT`, and
+        `None` for "ran and failed". A non-zero exit is `None` rather than its output —
+        `agy models` signals "not signed in" that way, and treating a failed call's stdout as
+        data would report zero models as though the account genuinely had none.
+        """
         if shutil.which(self._binary) is None:
             return None
         process = None
         try:
             process = await asyncio.create_subprocess_exec(
                 self._binary,
-                "--version",
+                *args,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            # TimeoutError is an OSError subclass, so this catches the wait_for expiry too.
-            out, _ = await asyncio.wait_for(process.communicate(), timeout=_VERSION_TIMEOUT_S)
+            out, _ = await asyncio.wait_for(process.communicate(), timeout=timeout)
+        except TimeoutError:
+            # Separated from the other OSErrors below: an unfinished call proves nothing
+            # about credentials, and reporting it as an auth failure sends the user to sign
+            # in to an account that is already signed in.
+            if process is not None:
+                await _reap(process)
+            return TIMED_OUT
         except OSError:
             if process is not None:
                 await _reap(process)
             return None
-        self._version_cache = out.decode(errors="replace").strip() or None
+        if process.returncode:
+            return None
+        return out.decode(errors="replace")
+
+    async def _version(self) -> str | None:
+        """Read `agy --version`, or `None` when the binary is absent or unusable."""
+        if self._version_cache is not None:
+            return self._version_cache
+        if self._run is not None:
+            return "injected"
+        out = await self._capture("--version", timeout=_VERSION_TIMEOUT_S)
+        # A version read that timed out is as unusable as one that failed; `info()` must not
+        # raise for a provider that is merely unreachable.
+        text = out if isinstance(out, str) else ""
+        self._version_cache = text.strip() or None
         return self._version_cache
+
+    async def _models(self) -> tuple[str, ...] | _TimedOut | None:
+        """Model slugs from `agy models`, `TIMED_OUT`, or `None` when the call failed.
+
+        All three are distinct and reachable: a clean failure is the adapter's only evidence
+        that the CLI is not signed in, `()` would mean it answered and offered nothing, and a
+        timeout means the question went unanswered.
+        """
+        if self._run is not None:
+            return ("injected",)
+        out = await self._capture("models", timeout=_MODELS_TIMEOUT_S)
+        return out if out is None or isinstance(out, _TimedOut) else _parse_models(out)
+
+
+def _parse_models(text: str) -> tuple[str, ...]:
+    """Slugs from `agy models` output, which is `slug<TAB>display name` per line.
+
+    The tab is the discriminator rather than the banner text: the command prefixes its output
+    with "Fetching available models...", and keying off a tab means a reworded banner cannot
+    turn into a phantom model named after it.
+    """
+    return tuple(
+        line.split("\t", 1)[0].strip()
+        for line in text.splitlines()
+        if "\t" in line and line.split("\t", 1)[0].strip()
+    )
 
 
 async def _reap(process: asyncio.subprocess.Process) -> None:
