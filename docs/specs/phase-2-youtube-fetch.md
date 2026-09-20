@@ -92,7 +92,7 @@ Commands (from `PLAN.md` §5.2):
 ## Test plan
 
 - Unit: `YtDlpSource` against `tests/fixtures/ytdlp/{video,playlist,channel}.json` loaded by a `FakeYoutubeDL` fixture; repositories on an in-memory SQLite with the Phase 1 migrations; CLI via `CliRunner`.
-- Fixture recorder: `uv run pytest -m integration tests/sources/test_ytdlp_record.py --record` rewrites the fixtures from live YouTube; the recorded JSON is committed; recorder runs only with the `integration` marker.
+- Fixture recorder: `uv run pytest -m integration tests/integration/test_ytdlp_record.py` rewrites the fixtures from live YouTube; the recorded JSON is committed and the recorder runs only under the `integration` marker. It also asserts the S11 field set, so a yt-dlp upgrade that changes the info-dict shape fails loudly instead of silently producing empty metadata. Media-delivery keys (`formats`, `subtitles`, `heatmap`, …) are stripped before writing — thumbforge sets `skip_download` and never reads them, and they are ~80 KB of the ~87 KB a full extract returns.
 - Integration (`-m integration`): one live `fetch` of a public playlist, asserting the field set from spike S11.
 - No golden/contract tests.
 

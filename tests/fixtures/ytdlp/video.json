@@ -1,0 +1,326 @@
+{
+  "_has_drm": null,
+  "abr": 106.064,
+  "acodec": "opus",
+  "age_limit": 0,
+  "aspect_ratio": 1.33,
+  "asr": 48000,
+  "audio_channels": 2,
+  "availability": "public",
+  "average_rating": null,
+  "categories": ["Film & Animation"],
+  "channel": "jawed",
+  "channel_follower_count": 6580000,
+  "channel_id": "UC4QobU6STFB0P71PMvOGN5A",
+  "channel_is_verified": true,
+  "channel_url": "https://www.youtube.com/channel/UC4QobU6STFB0P71PMvOGN5A",
+  "chapters": [
+    {
+      "end_time": 5,
+      "start_time": 0,
+      "title": "Intro"
+    },
+    {
+      "end_time": 17,
+      "start_time": 5,
+      "title": "The cool thing"
+    },
+    {
+      "end_time": 19,
+      "start_time": 17,
+      "title": "End"
+    }
+  ],
+  "comment_count": 10000000,
+  "creators": null,
+  "description": "Microplastics are accumulating in human brains at an alarming rate\nhttps://www.youtube.com/watch?v=0PT5c1z3LL8\n\n\u201cNanoplastics and Human Health\u201d with Matthew J Campen, PhD, MSPH\nhttps://www.youtube.com/watch?v=RRBN_4L09Mg\n\n00:00 Intro\n00:05 The cool thing\n00:17 End",
+  "display_id": "jNQXAC9IVRw",
+  "duration": 19,
+  "duration_string": "19",
+  "dynamic_range": "SDR",
+  "epoch": 1789885010,
+  "ext": "webm",
+  "extractor": "youtube",
+  "extractor_key": "Youtube",
+  "filesize_approx": 475961,
+  "format": "395 - 320x240 (240p)+251 - audio only (medium)",
+  "format_id": "395+251",
+  "format_note": "240p+medium",
+  "fps": 15,
+  "fulltitle": "Me at the zoo",
+  "height": 240,
+  "id": "jNQXAC9IVRw",
+  "is_live": false,
+  "language": null,
+  "like_count": 19844806,
+  "live_status": "not_live",
+  "location": "SAN DIEGO ZOO",
+  "media_type": "video",
+  "original_url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+  "playable_in_embed": true,
+  "playlist": null,
+  "playlist_index": null,
+  "protocol": "https+https",
+  "release_timestamp": null,
+  "release_year": null,
+  "requested_subtitles": null,
+  "resolution": "320x240",
+  "stretched_ratio": null,
+  "tags": ["me at the zoo", "jawed karim", "first youtube video"],
+  "tbr": 200.62,
+  "thumbnail": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AG-AoAC8AGKAgwIABABGFUgWShlMA8=&rs=AOn4CLA9eLBatYv9WbkD4BbZ2Im-biSPTw",
+  "thumbnails": [
+    {
+      "id": "0",
+      "preference": -37,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/3.jpg"
+    },
+    {
+      "id": "1",
+      "preference": -36,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/3.webp"
+    },
+    {
+      "id": "2",
+      "preference": -35,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/2.jpg"
+    },
+    {
+      "id": "3",
+      "preference": -34,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/2.webp"
+    },
+    {
+      "id": "4",
+      "preference": -33,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/1.jpg"
+    },
+    {
+      "id": "5",
+      "preference": -32,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/1.webp"
+    },
+    {
+      "id": "6",
+      "preference": -31,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/mq3.jpg"
+    },
+    {
+      "id": "7",
+      "preference": -30,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/mq3.webp"
+    },
+    {
+      "id": "8",
+      "preference": -29,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/mq2.jpg"
+    },
+    {
+      "id": "9",
+      "preference": -28,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/mq2.webp"
+    },
+    {
+      "id": "10",
+      "preference": -27,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/mq1.jpg"
+    },
+    {
+      "id": "11",
+      "preference": -26,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/mq1.webp"
+    },
+    {
+      "id": "12",
+      "preference": -25,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hq3.jpg"
+    },
+    {
+      "id": "13",
+      "preference": -24,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/hq3.webp"
+    },
+    {
+      "id": "14",
+      "preference": -23,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hq2.jpg"
+    },
+    {
+      "id": "15",
+      "preference": -22,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/hq2.webp"
+    },
+    {
+      "id": "16",
+      "preference": -21,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hq1.jpg"
+    },
+    {
+      "id": "17",
+      "preference": -20,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/hq1.webp"
+    },
+    {
+      "id": "18",
+      "preference": -19,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/sd3.jpg"
+    },
+    {
+      "id": "19",
+      "preference": -18,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/sd3.webp"
+    },
+    {
+      "id": "20",
+      "preference": -17,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/sd2.jpg"
+    },
+    {
+      "id": "21",
+      "preference": -16,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/sd2.webp"
+    },
+    {
+      "id": "22",
+      "preference": -15,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/sd1.jpg"
+    },
+    {
+      "id": "23",
+      "preference": -14,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/sd1.webp"
+    },
+    {
+      "id": "24",
+      "preference": -13,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/default.jpg"
+    },
+    {
+      "id": "25",
+      "preference": -12,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/default.webp"
+    },
+    {
+      "id": "26",
+      "preference": -11,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/mqdefault.jpg"
+    },
+    {
+      "height": 180,
+      "id": "27",
+      "preference": -11,
+      "resolution": "320x180",
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/mqdefault.jpg?sqp=-oaymwEmCMACELQB8quKqQMa8AEB-AG-AoAC8AGKAgwIABABGFUgWShlMA8=&rs=AOn4CLBRVpapZEM7Lkg18qfB9zqpZTRA8Q",
+      "width": 320
+    },
+    {
+      "id": "28",
+      "preference": -10,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/mqdefault.webp"
+    },
+    {
+      "id": "29",
+      "preference": -9,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/0.jpg"
+    },
+    {
+      "id": "30",
+      "preference": -8,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/0.webp"
+    },
+    {
+      "id": "31",
+      "preference": -7,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg"
+    },
+    {
+      "height": 94,
+      "id": "32",
+      "preference": -7,
+      "resolution": "168x94",
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwE1CKgBEF5IVfKriqkDKAgBFQAAiEIYAXABwAEG8AEB-AG-AoAC8AGKAgwIABABGFUgWShlMA8=&rs=AOn4CLD0z8RhQhBpOGg7rE1WwNmsXhJviQ",
+      "width": 168
+    },
+    {
+      "height": 110,
+      "id": "33",
+      "preference": -7,
+      "resolution": "196x110",
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwE1CMQBEG5IVfKriqkDKAgBFQAAiEIYAXABwAEG8AEB-AG-AoAC8AGKAgwIABABGFUgWShlMA8=&rs=AOn4CLDEByjISd3w-TM9Pzzz3rxWDxLQNw",
+      "width": 196
+    },
+    {
+      "height": 138,
+      "id": "34",
+      "preference": -7,
+      "resolution": "246x138",
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwE2CPYBEIoBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBvgKAAvABigIMCAAQARhVIFkoZTAP&rs=AOn4CLAtWrYHlO_zHK-I-52tzA86tqSeAw",
+      "width": 246
+    },
+    {
+      "height": 188,
+      "id": "35",
+      "preference": -7,
+      "resolution": "336x188",
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwE2CNACELwBSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBvgKAAvABigIMCAAQARhVIFkoZTAP&rs=AOn4CLB7NY0fx4yZYDj27223V3b7Sowf5w",
+      "width": 336
+    },
+    {
+      "height": 360,
+      "id": "36",
+      "preference": -7,
+      "resolution": "480x360",
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=-oaymwEmCOADEOgC8quKqQMa8AEB-AG-AoAC8AGKAgwIABABGFUgWShlMA8=&rs=AOn4CLA9eLBatYv9WbkD4BbZ2Im-biSPTw",
+      "width": 480
+    },
+    {
+      "id": "37",
+      "preference": -6,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/hqdefault.webp"
+    },
+    {
+      "id": "38",
+      "preference": -5,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/sddefault.jpg"
+    },
+    {
+      "id": "39",
+      "preference": -4,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/sddefault.webp"
+    },
+    {
+      "id": "40",
+      "preference": -3,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/hq720.jpg"
+    },
+    {
+      "id": "41",
+      "preference": -2,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/hq720.webp"
+    },
+    {
+      "id": "42",
+      "preference": -1,
+      "url": "https://i.ytimg.com/vi/jNQXAC9IVRw/maxresdefault.jpg"
+    },
+    {
+      "id": "43",
+      "preference": 0,
+      "url": "https://i.ytimg.com/vi_webp/jNQXAC9IVRw/maxresdefault.webp"
+    }
+  ],
+  "timestamp": 1114313512,
+  "title": "Me at the zoo",
+  "upload_date": "20050424",
+  "uploader": "jawed",
+  "uploader_id": "@jawed",
+  "uploader_url": "https://www.youtube.com/@jawed",
+  "vbr": 94.556,
+  "vcodec": "av01.0.00M.08.0.110.05.01.06.0",
+  "view_count": 434216048,
+  "was_live": false,
+  "webpage_url": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+  "webpage_url_basename": "watch",
+  "webpage_url_domain": "youtube.com",
+  "width": 320
+}

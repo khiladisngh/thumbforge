@@ -1,0 +1,40 @@
+{
+  "_type": "playlist",
+  "availability": "public",
+  "channel": "Music",
+  "channel_follower_count": null,
+  "channel_id": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+  "channel_url": "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+  "description": "Visit the YouTube Music Channel to find today\u2019s top talent, featured artists, and playlists. Subscribe to see the latest in the music world.\nThis channel was generated automatically by YouTube's video discovery system.",
+  "entries": [],
+  "epoch": 1789885012,
+  "extractor": "youtube:tab",
+  "extractor_key": "YoutubeTab",
+  "id": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+  "modified_date": null,
+  "original_url": "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+  "playlist_count": 0,
+  "release_year": null,
+  "tags": [],
+  "thumbnails": [
+    {
+      "height": 900,
+      "id": "0",
+      "resolution": "900x900",
+      "url": "https://yt3.googleusercontent.com/M1Hbe-1uiAYWJI8-1ZzV3uf7MwoWcEmKAPbIivbKs3buggZcVLov91trUzy8y-96unrkOcv3oA=s900-c-k-c0x00ffffff-no-rj",
+      "width": 900
+    },
+    {
+      "id": "avatar_uncropped",
+      "preference": 1,
+      "url": "https://yt3.googleusercontent.com/M1Hbe-1uiAYWJI8-1ZzV3uf7MwoWcEmKAPbIivbKs3buggZcVLov91trUzy8y-96unrkOcv3oA=s0"
+    }
+  ],
+  "title": "Music",
+  "uploader": "Music",
+  "uploader_url": null,
+  "view_count": null,
+  "webpage_url": "https://www.youtube.com/channel/UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+  "webpage_url_basename": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+  "webpage_url_domain": "youtube.com"
+}
