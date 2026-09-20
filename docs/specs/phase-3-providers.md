@@ -103,6 +103,19 @@ caught exactly that during P3.2. The entry-point group is purely the third-party
 
 Designed around **measured** behaviour: spikes S1–S8 ran against `agy 1.2.6` and are recorded in `docs/spikes/antigravity.md`. They confirmed the image tool exists (`generate_image`) and falsified four of the original design points, so ADR 0013 is now `Accepted` and the design below reflects the measurements, not the docs. Only the unauthenticated path (S6a) is still unverified.
 
+The wrapper prompt is a **module constant in `providers/antigravity.py`**, not the
+`antigravity_wrapper.j2` file ADR 0013 named. Three reasons: it needs no template engine
+(Jinja2 arrives with Phase 4's _user-authored_ templates, and this text is provider-internal
+rather than editable), a packaged data file would have to be declared for the wheel where a
+constant cannot go missing, and it is only ever rendered with four substitutions. ADR 0013 is
+Accepted, so it is left as written.
+
+`provider_version` comes from `agy --version`, **not** the envelope: the envelope carries no
+version field — its measured keys are `conversation_id`, `status`, `response`,
+`duration_seconds`, `num_turns`, `usage` — so reading it there left every stored row saying
+`unknown`. The value is cached per instance so a batch does not spawn `agy --version` per
+image.
+
 1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call `generate_image` exactly once, (b) states the aspect ratio in words ("16:9 widescreen") — S3 measured this as the only lever on output size, (c) lists reference image absolute paths for the agent to `view_file`, (d) forbids running shell commands or other tools. It states **no output path**: `generate_image` accepts only `ImageName` and `Prompt`.
 2. Run `[binary, "-p", prompt, "--output-format", "json", "--add-dir", str(workdir), *("--add-dir", d for d in reference_dirs), "--print-timeout", f"{timeout_s}s", *(["--dangerously-skip-permissions"] if skip_permissions else []), *(["--model", model] if model else []), *(["--effort", effort] if effort else [])]` via `asyncio.create_subprocess_exec(..., cwd=workdir, stdout=PIPE, stderr=PIPE)`.
 3. Locate the image by globbing `~/.gemini/antigravity-cli/brain/<conversation_id>/` using the envelope's `conversation_id`, then copy it into the asset store. Success ⇔ exit `0` **and** `status == "SUCCESS"` **and** exactly one image found **and** Pillow opens it.
@@ -164,7 +177,7 @@ Secrets (`PLAN.md` §8): lookup order environment variable `THUMBFORGE_PROVIDERS
 
 - Unit: registry merging with monkeypatched `entry_points`; FakeProvider determinism and failure markers; AntigravityProvider argv construction (exact list from step 2), envelope parsing for every `status`, error mapping table row by row using a stub `agy` executable written to `tmp_path`.
 - Contract: `tests/contract/test_provider_contract.py` parametrised over `registry.keys()`; per provider asserts `capabilities` is a `ProviderCapabilities`, `info()` and `healthcheck()` return the documented models, `generate` returns a `GenerationResult` whose `image_path` exists and opens with Pillow at width/height consistent with `capabilities.supports_aspect_ratio`, and that failures are `ProviderError` subclasses. Antigravity participates only under `-m integration`.
-- Integration (`-m integration`): live Antigravity generation; skipped unless `agy` is on PATH and authenticated.
+- Integration (`-m integration`): the **contract suite itself** is the live test. `antigravity` is a parametrised case marked `integration`, so `uv run pytest -m integration tests/contract/` drives real generations, and the fixture skips rather than fails when `agy` is absent. A separate live test would duplicate it. Measured: `5 passed, 3 skipped, 9 deselected in 63.12s` — the 3 skips are the seed and reference cases the provider does not claim.
 - Golden: none.
 
 ## Resolved spikes

@@ -12,6 +12,7 @@ cost of checking it differs.
 
 from __future__ import annotations
 
+import shutil
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -32,9 +33,12 @@ if TYPE_CHECKING:
 
     from thumbforge.core.providers import ImageProvider
 
-#: Providers that cannot run in the default suite. Keyed rather than detected, because
-#: "needs a real binary" is a property of the provider, not something to probe for.
-NEEDS_REAL_WORLD = frozenset({"antigravity"})
+#: Providers that cannot run in the default suite, mapped to the executable they need.
+#: Keyed rather than detected, because "needs a real binary" is a property of the provider.
+#: The binary is named so `-m integration` *skips* on a machine without it instead of
+#: failing — CI excludes these by marker, but a developer opting in should not see a
+#: confusing error just because the CLI is not installed.
+NEEDS_REAL_WORLD: dict[str, str] = {"antigravity": "agy"}
 
 
 def _provider_params() -> list[Any]:
@@ -54,7 +58,11 @@ def _provider_params() -> list[Any]:
 @pytest.fixture(params=_provider_params())
 def provider(request: pytest.FixtureRequest) -> ImageProvider:
     """A registered provider, constructed the way the CLI constructs one."""
-    return registry.get(str(request.param))
+    key = str(request.param)
+    binary = NEEDS_REAL_WORLD.get(key)
+    if binary is not None and shutil.which(binary) is None:
+        pytest.skip(f"{key} needs {binary!r} on PATH")
+    return registry.get(key)
 
 
 def _request(**overrides: object) -> GenerationRequest:
