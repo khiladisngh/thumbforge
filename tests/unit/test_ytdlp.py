@@ -11,11 +11,12 @@ import json
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 from tenacity import wait_none
-from yt_dlp.networking.exceptions import TransportError
+from yt_dlp.networking.exceptions import HTTPError, TransportError
 from yt_dlp.utils import DownloadError, ExtractorError
 
 from thumbforge.core.enums import ChannelSource, UrlKind
@@ -241,3 +242,59 @@ def test_unexpected_extractor_failure_maps_to_source_error() -> None:
     mapped = _translate(_download_error(inner), "https://x")
     assert type(mapped) is SourceError
     assert mapped.exit_code is ExitCode.UNEXPECTED
+
+
+def test_network_error_wrapped_by_the_extractor_is_still_transient() -> None:
+    """yt-dlp's top-level handler hides a network failure behind `expected=True`.
+
+    `IE.extract()` raises `ExtractorError("A network error has occurred.", cause=e,
+    expected=True)`. Classifying on `expected` before inspecting `cause` would report a
+    retryable network failure as a missing video: exit 3, and no retries at all.
+    """
+    inner = ExtractorError(
+        "A network error has occurred.", cause=TransportError("connection reset"), expected=True
+    )
+    mapped = _translate(_download_error(inner), "https://x")
+    assert isinstance(mapped, SourceTransientError)
+
+
+def test_retryable_http_status_behind_the_extractor_wrapper_is_transient() -> None:
+    """A 503 nested in an `ExtractorError` must retry, not fail as "not found"."""
+    response = SimpleNamespace(status=503, reason="Service Unavailable")
+    inner = ExtractorError("boom", cause=HTTPError(cast("Any", response)), expected=True)
+    mapped = _translate(_download_error(inner), "https://x")
+    assert isinstance(mapped, SourceTransientError)
+
+
+def test_cause_chain_survives_a_cycle() -> None:
+    """`cause` is a plain attribute yt-dlp sets, so nothing guarantees it terminates."""
+    first = ExtractorError("a", expected=True)
+    second = ExtractorError("b", expected=True)
+    first.cause = second
+    second.cause = first
+
+    mapped = _translate(_download_error(first), "https://x")
+    assert isinstance(mapped, NotFoundError)
+
+
+@pytest.mark.parametrize(
+    ("label", "entries"),
+    [
+        ("entries is not iterable", 7),
+        ("an entry is not a mapping", ["oops"]),
+        ("thumbnails is not iterable", [{"id": "x" * 11, "thumbnails": 5}]),
+    ],
+)
+async def test_unexpected_metadata_shape_is_a_source_error(label: str, entries: Any) -> None:
+    """A YouTube change can make yt-dlp return the wrong type for a field.
+
+    Without the boundary guard these raise `TypeError`/`AttributeError`, which escape
+    `handle_errors` (it only catches `ThumbforgeError`) and show the user a traceback.
+    """
+    info = {"id": "PL0000000000000000", "title": "t", "entries": entries}
+    source = YtDlpSource(_Recorder(info))
+
+    with pytest.raises(SourceError) as caught:
+        await source.fetch_playlist("PL0000000000000000")
+    assert caught.value.exit_code is ExitCode.UNEXPECTED
+    assert caught.value.hint is not None

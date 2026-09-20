@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import contextmanager
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any, ClassVar, Final, cast
 
@@ -30,13 +31,18 @@ from tenacity import (
 )
 
 from thumbforge.core.enums import ChannelSource
-from thumbforge.core.errors import NotFoundError, SourceError, SourceTransientError
+from thumbforge.core.errors import (
+    NotFoundError,
+    SourceError,
+    SourceTransientError,
+    ThumbforgeError,
+)
 from thumbforge.core.models import ChannelMeta, PlaylistItemMeta, PlaylistMeta, VideoMeta
 from thumbforge.core.urls import classify_url
 from thumbforge.logging import get_logger
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable, Generator, Iterator, Mapping
 
     from tenacity import RetryCallState
 
@@ -114,15 +120,61 @@ def _translate(exc: Exception, url: str) -> SourceError | NotFoundError:
         inner = exc.exc_info[1]
 
     message = str(inner) or str(exc)
-    if isinstance(inner, TransportError):
-        return SourceTransientError(f"network error fetching {url}: {message}")
-    if isinstance(inner, HTTPError) and inner.status in _RETRY_STATUSES:
-        return SourceTransientError(f"HTTP {inner.status} fetching {url}: {message}")
+
+    # A network failure may arrive already wrapped: yt-dlp's top-level extractor handler
+    # raises `ExtractorError("A network error has occurred.", cause=e, expected=True)`.
+    # Trusting `expected` before looking at the cause would report a retryable network
+    # failure as a missing video — exit 3 with no retries.
+    for link in _cause_chain(inner):
+        if isinstance(link, TransportError):
+            return SourceTransientError(f"network error fetching {url}: {message}")
+        if isinstance(link, HTTPError) and link.status in _RETRY_STATUSES:
+            return SourceTransientError(f"HTTP {link.status} fetching {url}: {message}")
+
     if isinstance(inner, ExtractorError) and inner.expected:
         # yt-dlp's own flag for "YouTube told us this, it is not a bug": unavailable,
         # private, removed, geo-restricted. All mean "you cannot have this id".
         return NotFoundError(message, hint="check the id is public and still exists")
     return SourceError(f"yt-dlp failed for {url}: {message}")
+
+
+def _cause_chain(exc: BaseException, limit: int = 5) -> Iterator[BaseException]:
+    """Yield `exc` and its `cause` links; `ExtractorError` nests the real failure there.
+
+    Bounded because `cause` is an ordinary attribute yt-dlp sets, not the `__cause__`
+    Python manages, so nothing guarantees the chain is acyclic.
+    """
+    seen: list[int] = []
+    current: BaseException | None = exc
+    while current is not None and len(seen) < limit and id(current) not in seen:
+        seen.append(id(current))
+        yield current
+        nxt = getattr(current, "cause", None)
+        current = nxt if isinstance(nxt, BaseException) else None
+
+
+@contextmanager
+def _shape_errors(url: str) -> Generator[None]:
+    """Turn an unexpected yt-dlp info-dict *shape* into a `SourceError`.
+
+    yt-dlp parses whatever YouTube currently serves, so a schema change upstream can hand
+    back a value of the wrong type. Without this, a `TypeError`/`AttributeError` from the
+    mapping escapes `handle_errors` — which only catches `ThumbforgeError` — and the user
+    sees a traceback instead of a diagnosable error.
+
+    This deliberately guards the boundary rather than modelling it: a Pydantic schema
+    mirroring yt-dlp's ~40-key info dict would have to be maintained against every upstream
+    release, and would reject shapes that are merely unfamiliar rather than actually
+    unusable. The fields that matter are already validated by the `core.models` they flow
+    into.
+    """
+    try:
+        yield
+    except ThumbforgeError:
+        raise
+    except (AttributeError, LookupError, TypeError, ValueError) as exc:
+        msg = f"unexpected metadata shape from {url}: {exc}"
+        raise SourceError(msg, hint="yt-dlp may need upgrading for a YouTube change") from exc
 
 
 def _text(info: RawInfo, key: str) -> str:
@@ -220,8 +272,10 @@ class YtDlpSource:
 
     async def fetch_video(self, youtube_id: str) -> VideoMeta:
         """Full extract of one video, so `description` and `published_at` are populated."""
-        info = await self._info(_WATCH_URL.format(youtube_id), flat=False)
-        return _video_meta(info)
+        url = _WATCH_URL.format(youtube_id)
+        info = await self._info(url, flat=False)
+        with _shape_errors(url):
+            return _video_meta(info)
 
     async def fetch_playlist(self, youtube_id: str) -> PlaylistMeta:
         """Flat extract of a playlist and its items, in playlist order.
@@ -233,19 +287,20 @@ class YtDlpSource:
         """
         url = _PLAYLIST_URL.format(youtube_id)
         info = await self._info(url, flat=True)
-        entries = [entry for entry in info.get("entries") or () if entry]
-        items = tuple(
-            PlaylistItemMeta(video=_video_meta(entry), position=position)
-            for position, entry in enumerate(entries, start=1)
-        )
-        return PlaylistMeta(
-            youtube_id=_text(info, "id") or youtube_id,
-            title=_text(info, "title"),
-            url=_text(info, "webpage_url") or url,
-            channel_id=_text(info, "channel_id") or None,
-            description=_text(info, "description"),
-            items=items,
-        )
+        with _shape_errors(url):
+            entries = [entry for entry in info.get("entries") or () if entry]
+            items = tuple(
+                PlaylistItemMeta(video=_video_meta(entry), position=position)
+                for position, entry in enumerate(entries, start=1)
+            )
+            return PlaylistMeta(
+                youtube_id=_text(info, "id") or youtube_id,
+                title=_text(info, "title"),
+                url=_text(info, "webpage_url") or url,
+                channel_id=_text(info, "channel_id") or None,
+                description=_text(info, "description"),
+                items=items,
+            )
 
     async def fetch_channel(self, youtube_id: str) -> ChannelMeta:
         """Channel metadata only — never its video list.
@@ -264,11 +319,12 @@ class YtDlpSource:
             else _HANDLE_URL.format(youtube_id)
         )
         info = await self._info(url, flat=True, items="0")
-        return ChannelMeta(
-            youtube_id=_text(info, "channel_id") or _text(info, "id") or youtube_id,
-            title=_text(info, "title") or _text(info, "channel"),
-            url=_text(info, "channel_url") or _text(info, "webpage_url") or url,
-        )
+        with _shape_errors(url):
+            return ChannelMeta(
+                youtube_id=_text(info, "channel_id") or _text(info, "id") or youtube_id,
+                title=_text(info, "title") or _text(info, "channel"),
+                url=_text(info, "channel_url") or _text(info, "webpage_url") or url,
+            )
 
     async def _info(self, url: str, *, flat: bool, items: str | None = None) -> RawInfo:
         """Extract off the event loop, retrying only transient failures (PLAN.md §7.2)."""

@@ -264,28 +264,28 @@
     "semantic_hash": "739ec148f028dde77cd123e6984fd2eb"
   },
   "src/thumbforge/sources/ytdlp.py": {
-    "mtime": 1789884970.7293043,
-    "seen": 1789885060.2107496,
-    "ast_hash": "b86c99b1968ab187b85d93e247ce6f81",
-    "semantic_hash": "b86c99b1968ab187b85d93e247ce6f81"
+    "mtime": 1789885808.3517075,
+    "seen": 1789885852.48363,
+    "ast_hash": "a6dee4500b3ad08ecf566a5dc4c3fd60",
+    "semantic_hash": "a6dee4500b3ad08ecf566a5dc4c3fd60"
   },
   "tests/fixtures/ytdlp/channel.json": {
-    "mtime": 1789885051.4314985,
-    "seen": 1789885060.211615,
-    "ast_hash": "87ef73c3c6fcad8e155fcb465328935a",
-    "semantic_hash": "87ef73c3c6fcad8e155fcb465328935a"
+    "mtime": 1789885837.7290485,
+    "seen": 1789885852.4845102,
+    "ast_hash": "7002a8dcfbeef3185dabb97a50e8dbc7",
+    "semantic_hash": "7002a8dcfbeef3185dabb97a50e8dbc7"
   },
   "tests/fixtures/ytdlp/playlist.json": {
-    "mtime": 1789885051.4820082,
-    "seen": 1789885060.2116168,
-    "ast_hash": "c7e80bf5943d4590fe44022d81ca2e42",
-    "semantic_hash": "c7e80bf5943d4590fe44022d81ca2e42"
+    "mtime": 1789885836.5274887,
+    "seen": 1789885852.484512,
+    "ast_hash": "39f5ec73500eb228bbe0e8d667c0269f",
+    "semantic_hash": "39f5ec73500eb228bbe0e8d667c0269f"
   },
   "tests/fixtures/ytdlp/video.json": {
-    "mtime": 1789885051.4314985,
-    "seen": 1789885060.2116187,
-    "ast_hash": "a754d4f6950b3f522327c3cbb79c1346",
-    "semantic_hash": "a754d4f6950b3f522327c3cbb79c1346"
+    "mtime": 1789885835.2826717,
+    "seen": 1789885852.4845135,
+    "ast_hash": "70903aee8f540713249de1473f4b26ab",
+    "semantic_hash": "70903aee8f540713249de1473f4b26ab"
   },
   "tests/integration/test_ytdlp_record.py": {
     "mtime": 1789885007.6045485,
@@ -294,9 +294,9 @@
     "semantic_hash": "24715da7962f95c8025c69adf9021aa8"
   },
   "tests/unit/test_ytdlp.py": {
-    "mtime": 1789884928.0293505,
-    "seen": 1789885060.2133138,
-    "ast_hash": "00605ce440a8cb9b4a0508606b3fd057",
-    "semantic_hash": "00605ce440a8cb9b4a0508606b3fd057"
+    "mtime": 1789885795.0301113,
+    "seen": 1789885852.4862149,
+    "ast_hash": "9e36b28ee72d71ebc482100ede491f69",
+    "semantic_hash": "9e36b28ee72d71ebc482100ede491f69"
   }
 }
