@@ -91,6 +91,16 @@ class SourceError(ThumbforgeError):
     exit_code = ExitCode.UNEXPECTED
 
 
+class SourceTransientError(SourceError):
+    """A metadata source failed for a reason worth retrying (network, throttling).
+
+    Separate from `SourceError` only so the retry policy in `PLAN.md` §7.2 can select it;
+    it keeps `SourceError`'s exit code, so exhausting the retries still exits `1`.
+    """
+
+    code = "source_transient"
+
+
 class DatabaseError(ThumbforgeError):
     """A database operation failed (e.g. migration, lock, disk failure)."""
 

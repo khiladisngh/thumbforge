@@ -26,8 +26,10 @@ dependencies = [
   "rich>=15.0.0",
   "sqlalchemy>=2.0",
   "structlog>=26.1.0",
+  "tenacity>=9.0",
   "tomli-w>=1.2.0",
   "typer",
+  "yt-dlp>=2026.8.19",
 ]
 
 [project.urls]

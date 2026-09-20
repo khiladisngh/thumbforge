@@ -49,8 +49,8 @@ class VideoMeta(_Meta):
     """A fetched YouTube video.
 
     `channel_id` is the channel's *YouTube* id, not a thumbforge ULID; the repository
-    resolves it to a row. It is optional because `extract_flat` playlist entries may omit
-    it (spike S11).
+    resolves it to a row. It stays optional because yt-dlp does not guarantee it, though
+    spike S11 measured it present on all 183 flat entries it sampled.
     """
 
     channel_id: str | None = None
