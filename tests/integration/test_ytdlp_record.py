@@ -39,6 +39,9 @@ DROPPED_KEYS = frozenset(
     {
         "_format_sort_fields",
         "automatic_captions",
+        # When the extraction ran. Nothing reads it, and keeping it makes every re-record a
+        # dirty diff even when YouTube returned identical metadata.
+        "epoch",
         "formats",
         "heatmap",
         "requested_formats",
@@ -53,7 +56,10 @@ def _write(name: str, info: Any) -> None:
     """Persist an info dict, minus the media-delivery keys listed in `DROPPED_KEYS`."""
     FIXTURES.mkdir(parents=True, exist_ok=True)
     trimmed = {key: value for key, value in info.items() if key not in DROPPED_KEYS}
-    payload = json.dumps(trimmed, indent=1, sort_keys=True, default=str)
+    # indent=2 matches prettier, which owns every *.json outside graphify-out/. With any
+    # other width a re-record and the pre-commit hook fight, and the diff is 900 lines of
+    # indentation instead of the field changes a yt-dlp upgrade actually made (#31).
+    payload = json.dumps(trimmed, indent=2, sort_keys=True, default=str)
     (FIXTURES / f"{name}.json").write_text(payload + "\n", encoding="utf-8")
 
 

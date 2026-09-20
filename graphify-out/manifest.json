@@ -1,7 +1,7 @@
 {
   "pyproject.toml": {
-    "mtime": 1789884440.4448166,
-    "seen": 1789885060.2087927,
+    "mtime": 1789886976.951978,
+    "seen": 1789892752.019483,
     "ast_hash": "5e2c311452a20889a2529d5b1fd14dab",
     "semantic_hash": "5e2c311452a20889a2529d5b1fd14dab"
   },
@@ -42,10 +42,10 @@
     "semantic_hash": "2440e2164c2487f1a7c350d06de6a51e"
   },
   "src/thumbforge/cli/app.py": {
-    "mtime": 1789835702.8488877,
-    "seen": 1789843331.8209662,
-    "ast_hash": "bbf049abb2bc03e4ded68793c566e80e",
-    "semantic_hash": "bbf049abb2bc03e4ded68793c566e80e"
+    "mtime": 1789892222.1164544,
+    "seen": 1789892752.0202527,
+    "ast_hash": "87673c89d19a5fde529de66af56d3cd7",
+    "semantic_hash": "87673c89d19a5fde529de66af56d3cd7"
   },
   "src/thumbforge/cli/config.py": {
     "mtime": 1789835702.8498564,
@@ -72,8 +72,8 @@
     "semantic_hash": "37949a9a57203dab9689cad49ae7a6b0"
   },
   "src/thumbforge/core/errors.py": {
-    "mtime": 1789884456.7394679,
-    "seen": 1789885060.2100892,
+    "mtime": 1789886976.9535048,
+    "seen": 1789892752.0207973,
     "ast_hash": "83782ddaf928eed28e9474b9c98e0672",
     "semantic_hash": "83782ddaf928eed28e9474b9c98e0672"
   },
@@ -138,10 +138,10 @@
     "semantic_hash": "3df28b3542424b1074a1bcbe061a830e"
   },
   "src/thumbforge/storage/repositories.py": {
-    "mtime": 1789835702.8525636,
-    "seen": 1789843331.8209815,
-    "ast_hash": "b083e441921d66313d9b87f564710fee",
-    "semantic_hash": "b083e441921d66313d9b87f564710fee"
+    "mtime": 1789891989.2380924,
+    "seen": 1789892752.023753,
+    "ast_hash": "9d77ebad1c8ed3c0b2a0c2fe4b1851cf",
+    "semantic_hash": "9d77ebad1c8ed3c0b2a0c2fe4b1851cf"
   },
   "tests/conftest.py": {
     "mtime": 1789799780.4166772,
@@ -228,10 +228,10 @@
     "semantic_hash": "2a91ed4de45cc7bde92ec00756ba3413"
   },
   "src/thumbforge/core/models.py": {
-    "mtime": 1789884911.0829136,
-    "seen": 1789885060.2101982,
-    "ast_hash": "7097bbb97698664b23822e8748c1840c",
-    "semantic_hash": "7097bbb97698664b23822e8748c1840c"
+    "mtime": 1789886976.954569,
+    "seen": 1789892752.0209155,
+    "ast_hash": "5d26afb876e04c4d77c687066fb8f62f",
+    "semantic_hash": "5d26afb876e04c4d77c687066fb8f62f"
   },
   "src/thumbforge/core/urls.py": {
     "mtime": 1789883330.6733463,
@@ -240,16 +240,10 @@
     "semantic_hash": "add259e8ab7f4735a54a5226d9afddfb"
   },
   "src/thumbforge/sources/__init__.py": {
-    "mtime": 1789884911.0819118,
-    "seen": 1789885060.210639,
-    "ast_hash": "0c6a8a008393cb3c0470915b21226f34",
-    "semantic_hash": "0c6a8a008393cb3c0470915b21226f34"
-  },
-  "src/thumbforge/sources/base.py": {
-    "mtime": 1789883330.6733463,
-    "seen": 1789883511.4271169,
-    "ast_hash": "c48ef3269fba563066bf066f1ded1734",
-    "semantic_hash": "c48ef3269fba563066bf066f1ded1734"
+    "mtime": 1789892054.2427602,
+    "seen": 1789892752.0213795,
+    "ast_hash": "1a1fb7e18f3d04a0cd06532aac600ba2",
+    "semantic_hash": "1a1fb7e18f3d04a0cd06532aac600ba2"
   },
   "tests/unit/test_core_models.py": {
     "mtime": 1789884261.0902052,
@@ -264,39 +258,99 @@
     "semantic_hash": "739ec148f028dde77cd123e6984fd2eb"
   },
   "src/thumbforge/sources/ytdlp.py": {
-    "mtime": 1789886537.445582,
-    "seen": 1789886558.6189773,
-    "ast_hash": "39057e7b6bbe57cfef4026d322300311",
-    "semantic_hash": "39057e7b6bbe57cfef4026d322300311"
+    "mtime": 1789892309.4300823,
+    "seen": 1789892752.0213816,
+    "ast_hash": "9d22cdbd3c2974885899411363b3ab30",
+    "semantic_hash": "9d22cdbd3c2974885899411363b3ab30"
   },
   "tests/fixtures/ytdlp/channel.json": {
-    "mtime": 1789885837.7290485,
-    "seen": 1789885852.4845102,
-    "ast_hash": "7002a8dcfbeef3185dabb97a50e8dbc7",
-    "semantic_hash": "7002a8dcfbeef3185dabb97a50e8dbc7"
+    "mtime": 1789892738.5461364,
+    "seen": 1789892752.0239549,
+    "ast_hash": "d00b9239012438be96eef303374a83ce",
+    "semantic_hash": "d00b9239012438be96eef303374a83ce"
   },
   "tests/fixtures/ytdlp/playlist.json": {
-    "mtime": 1789885836.5274887,
-    "seen": 1789885852.484512,
-    "ast_hash": "39f5ec73500eb228bbe0e8d667c0269f",
-    "semantic_hash": "39f5ec73500eb228bbe0e8d667c0269f"
+    "mtime": 1789892737.4264283,
+    "seen": 1789892752.023957,
+    "ast_hash": "0da03ef2c34d2909876992e76a52532c",
+    "semantic_hash": "0da03ef2c34d2909876992e76a52532c"
   },
   "tests/fixtures/ytdlp/video.json": {
-    "mtime": 1789885835.2826717,
-    "seen": 1789885852.4845135,
-    "ast_hash": "70903aee8f540713249de1473f4b26ab",
-    "semantic_hash": "70903aee8f540713249de1473f4b26ab"
+    "mtime": 1789892736.131971,
+    "seen": 1789892752.0239594,
+    "ast_hash": "c4a2f13ec7cd2b004d025e4b599c6b25",
+    "semantic_hash": "c4a2f13ec7cd2b004d025e4b599c6b25"
   },
   "tests/integration/test_ytdlp_record.py": {
-    "mtime": 1789885007.6045485,
-    "seen": 1789885060.2117286,
-    "ast_hash": "24715da7962f95c8025c69adf9021aa8",
-    "semantic_hash": "24715da7962f95c8025c69adf9021aa8"
+    "mtime": 1789892676.428684,
+    "seen": 1789892752.0240896,
+    "ast_hash": "19fc64d718bc43bad2a97ba211bc5766",
+    "semantic_hash": "19fc64d718bc43bad2a97ba211bc5766"
   },
   "tests/unit/test_ytdlp.py": {
-    "mtime": 1789886534.6008158,
-    "seen": 1789886558.6223233,
-    "ast_hash": "6eaa507395b32c83284b9f212a0307a0",
-    "semantic_hash": "6eaa507395b32c83284b9f212a0307a0"
+    "mtime": 1789892054.442265,
+    "seen": 1789892752.0261087,
+    "ast_hash": "b020b6679a580a03a5df836842fabde3",
+    "semantic_hash": "b020b6679a580a03a5df836842fabde3"
+  },
+  "src/thumbforge/cli/_youtube.py": {
+    "mtime": 1789892137.6761565,
+    "seen": 1789892752.02025,
+    "ast_hash": "a2207eda8af1d54f70baf1a5d4569de4",
+    "semantic_hash": "a2207eda8af1d54f70baf1a5d4569de4"
+  },
+  "src/thumbforge/cli/fetch.py": {
+    "mtime": 1789892309.4306035,
+    "seen": 1789892752.020489,
+    "ast_hash": "82bb6db4762f5225b8d317eaa27defc4",
+    "semantic_hash": "82bb6db4762f5225b8d317eaa27defc4"
+  },
+  "src/thumbforge/cli/playlist.py": {
+    "mtime": 1789892203.4464738,
+    "seen": 1789892752.0204911,
+    "ast_hash": "2eb2751f8c4d71d0e77bc32d4be11830",
+    "semantic_hash": "2eb2751f8c4d71d0e77bc32d4be11830"
+  },
+  "src/thumbforge/cli/video.py": {
+    "mtime": 1789892191.0597212,
+    "seen": 1789892752.0204923,
+    "ast_hash": "9857d571a8e030fd8e02f9ef787d15f2",
+    "semantic_hash": "9857d571a8e030fd8e02f9ef787d15f2"
+  },
+  "src/thumbforge/core/services/__init__.py": {
+    "mtime": 1789891932.9632034,
+    "seen": 1789892752.0210314,
+    "ast_hash": "aac42c2e60c853c13b4440bec67462fb",
+    "semantic_hash": "aac42c2e60c853c13b4440bec67462fb"
+  },
+  "src/thumbforge/core/services/fetch.py": {
+    "mtime": 1789892115.073349,
+    "seen": 1789892752.0210333,
+    "ast_hash": "8e857fc983f53284f9cc47dcb4b75a65",
+    "semantic_hash": "8e857fc983f53284f9cc47dcb4b75a65"
+  },
+  "src/thumbforge/core/sources.py": {
+    "mtime": 1789892054.239247,
+    "seen": 1789892752.0210345,
+    "ast_hash": "aed829c24a82e55fc39b557aab9a57ac",
+    "semantic_hash": "aed829c24a82e55fc39b557aab9a57ac"
+  },
+  "tests/unit/test_cli_fetch.py": {
+    "mtime": 1789892546.268105,
+    "seen": 1789892752.024538,
+    "ast_hash": "4203703a5e436056e3245753c99338d9",
+    "semantic_hash": "4203703a5e436056e3245753c99338d9"
+  },
+  "tests/unit/test_fetch_service.py": {
+    "mtime": 1789892448.710601,
+    "seen": 1789892752.0249023,
+    "ast_hash": "2325a57ee1cb7dfedfdca36f48c5c6ff",
+    "semantic_hash": "2325a57ee1cb7dfedfdca36f48c5c6ff"
+  },
+  "tests/unit/test_repositories.py": {
+    "mtime": 1789892409.9695761,
+    "seen": 1789892752.0256488,
+    "ast_hash": "4ee7b21b1000f749cd562a343f458c1a",
+    "semantic_hash": "4ee7b21b1000f749cd562a343f458c1a"
   }
 }

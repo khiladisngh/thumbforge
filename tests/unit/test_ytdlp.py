@@ -26,8 +26,9 @@ from thumbforge.core.errors import (
     SourceError,
     SourceTransientError,
 )
+from thumbforge.core.sources import MetadataSource
 from thumbforge.logging import configure_logging
-from thumbforge.sources import MetadataSource, ytdlp
+from thumbforge.sources import ytdlp
 from thumbforge.sources.ytdlp import YtDlpSource, _translate
 
 if TYPE_CHECKING:

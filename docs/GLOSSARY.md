@@ -16,7 +16,7 @@
 | **Provider profile** | Snapshot of the provider key, version and parameters used by a run. Never contains secrets.                                                              |
 | **Capabilities**     | Flags a provider declares: reference image, seed, negative prompt, aspect ratio, batch size, concurrency, output formats.                                |
 | **Metadata source**  | An implementation of `MetadataSource` (`ytdlp`, `api`) that fetches channel/playlist/video data.                                                         |
-| **Part number**      | The ordinal shown on a playlist thumbnail ("Part 3"); defaults to position + 1, editable via `playlist renumber`.                                        |
+| **Part number**      | The ordinal shown on a playlist thumbnail ("Part 3"); defaults to `position`, editable via `playlist renumber`.                                          |
 | **Idempotency key**  | Hash identifying an iteration's inputs; lets a batch resume without regenerating finished items.                                                         |
 | **Compliance**       | Check against YouTube thumbnail requirements: 16:9, width ≥ 1280, JPEG/PNG, ≤ 2 MB by default, sRGB.                                                     |
 | **Spike**            | A time-boxed verification of an unknown fact, tracked in `OPEN_QUESTIONS.md` (S-items), results in `docs/spikes/`.                                       |

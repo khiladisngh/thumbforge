@@ -1,9 +1,15 @@
 """The `MetadataSource` Protocol every metadata backend implements (ADR 0005).
 
 A Protocol rather than a base class so `YtDlpSource` (P2.2) and the Phase 8 Data API
-source stay independent implementations; `cli/fetch.py` selects one and `core` only ever
-sees this shape. Methods are async because both implementations do network I/O — `yt_dlp`
-is synchronous and is called through `asyncio.to_thread`.
+source stay independent implementations; `cli` selects one and everything else sees only
+this shape. Methods are async because both implementations do network I/O — `yt_dlp` is
+synchronous and is called through `asyncio.to_thread`.
+
+It lives in `core` rather than in `sources/` because `core.services.fetch` consumes it and
+`core` may not import `sources`. `docs/specs/phase-1-skeleton.md` anticipated this: *"If
+`providers.base` must be importable from `core.services`, the Protocol moves to `core` —
+the contract is the rule, the file placement bends."* The alternative was a second,
+structurally identical Protocol inside `core`, which would drift from this one.
 """
 
 from __future__ import annotations

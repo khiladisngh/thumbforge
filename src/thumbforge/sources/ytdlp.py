@@ -330,7 +330,10 @@ class YtDlpSource:
         with _shape_errors(url):
             return ChannelMeta(
                 youtube_id=_text(info, "channel_id") or _text(info, "id") or youtube_id,
-                title=_text(info, "title") or _text(info, "channel"),
+                # `channel` before `title`: a channel URL can resolve to a tab, whose
+                # `title` carries a suffix ("jawed - Videos") while `channel` is the name
+                # itself ("jawed"). Measured on UC4QobU6STFB0P71PMvOGN5A.
+                title=_text(info, "channel") or _text(info, "title"),
                 url=_text(info, "channel_url") or _text(info, "webpage_url") or url,
             )
 

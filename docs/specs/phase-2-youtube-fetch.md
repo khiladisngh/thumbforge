@@ -10,7 +10,7 @@ Fetch channel, playlist and video metadata from YouTube via `yt-dlp` (no API key
 
 - **P2.1** `sources/base.py` (`MetadataSource` Protocol), `core/enums.py` (`UrlKind`), `core/models.py` (`ChannelMeta`, `PlaylistMeta`, `VideoMeta`, `PlaylistItemMeta`, `ResolvedUrl`), `core/urls.py` (URL classifier).
 - **P2.2** `sources/ytdlp.py` (`YtDlpSource`) + recorded fixtures under `tests/fixtures/ytdlp/*.json`.
-- **P2.3** `storage/repositories.py` (`ChannelRepository`, `PlaylistRepository`, `VideoRepository`), `cli/fetch.py`, `cli/video.py`, `cli/playlist.py`.
+- **P2.3** `storage/repositories.py` (`ChannelRepository`, `PlaylistRepository`, `VideoRepository`, `Repositories`), `core/services/fetch.py` (`FetchService`), `cli/fetch.py`, `cli/video.py`, `cli/playlist.py`, `cli/_youtube.py`.
 - **P2.4** `playlist renumber`.
 
 ## Non-goals
@@ -58,6 +58,42 @@ Unrecognised input raises `UrlError` (code `url`, exit `2`) — a validation fai
 `ValueError`: it is caught and re-raised as `UrlError` so it cannot escape `handle_errors`,
 which only handles `ThumbforgeError`.
 
+`MetadataSource` lives in **`core/sources.py`**, not in `sources/`. `core.services.fetch`
+consumes it and `core` may not import `sources`; the alternative was a second, structurally
+identical Protocol inside `core` that would drift from the first. `phase-1-skeleton.md`
+anticipated exactly this ("the contract is the rule, the file placement bends").
+
+`FetchService` owns the decisions — kind dispatch, the freshness rule, which rows each kind
+writes — because `AGENTS.md` forbids business logic in `cli/`. It receives a `MetadataSource`
+and a narrow `FetchStore` Protocol, both injected by `cli/_youtube.py`. It deliberately does
+**not** log: the `core is pure` import contract forbids `core -> thumbforge.logging`, and
+everything worth reporting is rendered by `cli/fetch.py`.
+
+Repositories reconcile `core.models` snapshots with ORM rows under three rules: identity is
+`youtube_id` and an upsert never changes a row's ULID; timestamps convert to the ISO-8601 UTC
+strings the schema stores; and user edits survive a re-fetch. Two consequences are not
+obvious:
+
+- **Items are deleted and re-inserted, not updated in place.** `playlist_item` has
+  `UNIQUE(playlist_id, position)`, so two videos swapping places collide mid-update unless
+  the writes are staged. Nothing holds a foreign key to `playlist_item`, which makes
+  replacement the simpler correct option; `part_number`/`part_label` are carried across by
+  video id.
+- **A playlist item's video is linked to a channel row only when that channel is already
+  stored.** S11 measured a different `channel_id` on every entry of the sampled playlist, so
+  resolving each one would turn a single request into hundreds. `video.channel_id` is
+  nullable for this reason and is populated when that video (or its channel) is fetched in
+  its own right. A single-video `fetch` _does_ fetch the channel — one extra request is
+  affordable for one video, and `video list --channel` needs it.
+
+Empty values from a flat extract never overwrite stored ones: `description` and
+`published_at` are absent from playlist entries (S11), so treating them as "no value" would
+let a playlist re-fetch destroy what a full single-video extract had already stored.
+
+A playlist whose `channel_id` is missing raises `SourceError` rather than inventing a
+placeholder channel, because `playlist.channel_id` is `NOT NULL` and a placeholder would have
+to be reconciled against the real channel later.
+
 `YtDlpSource` wraps `yt_dlp.YoutubeDL` with `quiet=True, skip_download=True, extract_flat="in_playlist"` for playlists and a full extract for single videos; called through `asyncio.to_thread`. Network errors (`yt_dlp.utils.DownloadError` with a network cause) are retried per `PLAN.md` §7.2; anything else becomes `SourceError` (exit `1`). An id that YouTube reports as unavailable becomes `NotFoundError` (exit `3`).
 
 Commands (from `PLAN.md` §5.2):
@@ -73,7 +109,7 @@ Commands (from `PLAN.md` §5.2):
 
 ## Behaviour
 
-1. `fetch <url>` resolves the URL kind, calls the matching `fetch_*`, and upserts by `youtube_id` (insert or update `title`, `description`, `fetched_at`, …; never changes `id`). Playlist fetch upserts the owning channel, the playlist, every video, and `playlist_item` rows with `position` = 1-based index from yt-dlp; `part_number` is set to `position + 1` only when the row is new (existing overrides survive re-fetch). Items no longer in the playlist are deleted from `playlist_item` (videos stay).
+1. `fetch <url>` resolves the URL kind, calls the matching `fetch_*`, and upserts by `youtube_id` (insert or update `title`, `description`, `fetched_at`, …; never changes `id`, because runs, iterations and assets reference it). Playlist fetch upserts the owning channel, the playlist, every video, and `playlist_item` rows with `position` = 1-based enumeration index (`playlist_index` does not exist under `extract_flat`, per S11); `part_number` is set to `position` only when the row is new, so the first video is "Part 1" as in `PLAN.md` §5.3 and an existing `playlist renumber` survives a re-fetch. Items no longer in the playlist are deleted from `playlist_item` (videos stay, because their generated thumbnails are still real artefacts).
 2. Without `--refresh`, a playlist fetched less than 24 h ago is reported from the DB without a network call; `--refresh` forces the fetch.
 3. `--source api` in Phase 2 exits `2` with hint "install the `api` extra (Phase 8)".
 4. `video show` / `playlist show` accept a ULID, a YouTube id or a URL; unknown → `NotFoundError`, exit `3`.
@@ -84,14 +120,14 @@ Commands (from `PLAN.md` §5.2):
 
 - `thumbforge fetch "https://www.youtube.com/playlist?list=PLxxxx"` against the recorded fixture prints the playlist panel and item table from `PLAN.md` §5.3 and the line `Stored 1 channel, 1 playlist, 12 videos.`; exit `0`.
 - Re-running the same `fetch` without `--refresh` prints the same table with `(cached)` in the panel and makes no yt-dlp call (asserted via a spy).
-- `thumbforge playlist show PLxxxx --videos` shows `part` = `position + 1` for every row; after `thumbforge playlist renumber PLxxxx --start 0 --skip-ids dQw4w9WgXcQ`, `part` for the skipped video is `—` and the rest are `0,1,2…`.
+- `thumbforge playlist show PLxxxx --videos` shows `part` = `position` for every row; after `thumbforge playlist renumber PLxxxx --start 0 --skip-ids dQw4w9WgXcQ`, `part` for the skipped video is `—` and the rest are `0,1,2…`.
 - `thumbforge video show doesnotexist` exits `3` and prints `not_found: video 'doesnotexist'` on stderr.
 - `thumbforge fetch <playlist>` where yt-dlp raises a network error retries 3 times with backoff (observable via structlog `retry` events) and then exits `1`.
 - `thumbforge --json fetch <video url>` prints one JSON object with `kind == "video"`.
 
 ## Test plan
 
-- Unit: `YtDlpSource` against `tests/fixtures/ytdlp/{video,playlist,channel}.json` loaded by a `FakeYoutubeDL` fixture; repositories on an in-memory SQLite with the Phase 1 migrations; CLI via `CliRunner`.
+- Unit: `YtDlpSource` against `tests/fixtures/ytdlp/{video,playlist,channel}.json` through an injected extractor; repositories on a `tmp_path` SQLite built by the Phase 1 migrations; `FetchService` against fakes (what is under test is which calls it makes); CLI via `CliRunner` with `cli.fetch.build_source` patched. The patch target matters: `cli/fetch.py` binds `build_source` at import, so patching `cli._youtube.build_source` leaves the bound reference alone and the real source reaches the network.
 - Fixture recorder: `uv run pytest -m integration tests/integration/test_ytdlp_record.py` rewrites the fixtures from live YouTube; the recorded JSON is committed and the recorder runs only under the `integration` marker. It also asserts the S11 field set, so a yt-dlp upgrade that changes the info-dict shape fails loudly instead of silently producing empty metadata. Media-delivery keys (`formats`, `subtitles`, `heatmap`, …) are stripped before writing — thumbforge sets `skip_download` and never reads them, and they are ~80 KB of the ~87 KB a full extract returns.
 - Integration (`-m integration`): one live `fetch` of a public playlist, asserting the field set from spike S11.
 - No golden/contract tests.
