@@ -61,7 +61,9 @@ src/thumbforge/
 
 ### 2.2 Dependency rule
 
-`cli → core, storage, providers, sources, templates, imaging`; `core → nothing internal except errors/ids`; `providers/sources/storage/templates/imaging → core`; nothing imports `cli`.
+`cli → core, storage, providers, sources, templates, imaging`; `core → no other internal package`; `providers/sources/storage/templates/imaging → core`; nothing imports `cli`.
+
+`core` is one layer: its modules may import each other (`core.models → core.enums`, services `→ core.models`), while `core.enums`, `core.errors` and `core.ids` stay leaves that import nothing from `core`. Cross-package purity and the leaf rule are separate import-linter contracts.
 
 Enforced by an `import-linter` contract added in Phase 1 (`uv add --dev import-linter`). A PR that violates a contract fails CI.
 

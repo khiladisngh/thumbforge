@@ -63,6 +63,13 @@ class SettingsError(ThumbforgeError):
     exit_code = ExitCode.USAGE
 
 
+class UrlError(ThumbforgeError):
+    """A supplied URL or identifier is not recognisable YouTube input."""
+
+    code = "url"
+    exit_code = ExitCode.USAGE
+
+
 class TemplateError(ThumbforgeError):
     """A template's layout spec or prompt failed to load, validate or render."""
 

@@ -20,7 +20,7 @@ docs/           ARCHITECTURE.md ROADMAP.md CONVENTIONS.md TESTING.md GLOSSARY.md
 graphify-out/   generated codebase knowledge graph (committed; cache/ and cost.json ignored)
 ```
 
-Dependency rule: `cli → core, storage, providers, sources, templates, imaging`; `core` imports nothing internal except `core.errors`/`core.ids`; every other package may import `core` only; nothing imports `cli`. Enforced by import-linter.
+Dependency rule: `cli → core, storage, providers, sources, templates, imaging`; `core` imports no other internal **package**; every other package may import `core` only; nothing imports `cli`. Within `core`, modules may import each other — `core.models` needs `core.enums`, services need `core.models` — but `core.enums`, `core.errors` and `core.ids` are leaves and import nothing from `core`. Enforced by import-linter.
 
 ## Commands (always via uv)
 
