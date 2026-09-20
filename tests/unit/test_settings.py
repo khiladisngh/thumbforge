@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 
 def write_config(path: Path, body: str) -> Path:
+    """Write a config file and return its path, so tests read as one expression."""
     path.write_text(body, encoding="utf-8")
     return path
 

@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 1180 nodes · 2406 edges · 87 communities (61 shown, 26 thin omitted)
+- 1183 nodes · 2409 edges · 87 communities (60 shown, 27 thin omitted)
 - Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 234 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `954107c3`
+- Built from commit: `e19a79ef`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -109,263 +109,259 @@
 4. `load_settings()` - 24 edges
 5. `get_engine()` - 22 edges
 6. `AssetStore` - 21 edges
-7. `AppContext` - 20 edges
-8. `YtDlpSource` - 20 edges
-9. `AssetKind` - 20 edges
-10. `ThumbforgeError` - 19 edges
+7. `YtDlpSource` - 20 edges
+8. `AssetKind` - 20 edges
+9. `AppContext` - 20 edges
+10. `FetchService` - 19 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `repeating()` --calls--> `PlaylistItemMeta`  [INFERRED]
   tests/unit/test_cli_fetch.py → src/thumbforge/core/models.py
-- `test_unique_constraint_template_name_version()` --uses--> `Template`  [INFERRED]
-  tests/unit/test_storage_models.py → src/thumbforge/storage/models.py
-- `_json_context()` --uses--> `AppContext`  [INFERRED]
-  tests/unit/test_render.py → src/thumbforge/cli/_render.py
-- `test_rich_mode_uses_the_renderer_and_prints_no_json()` --uses--> `AppContext`  [INFERRED]
-  tests/unit/test_render.py → src/thumbforge/cli/_render.py
 - `_playlist()` --calls--> `PlaylistItemMeta`  [INFERRED]
   tests/unit/test_repositories.py → src/thumbforge/core/models.py
+- `test_duplicate_video_in_a_playlist_is_listed_once()` --calls--> `PlaylistItemMeta`  [INFERRED]
+  tests/unit/test_repositories.py → src/thumbforge/core/models.py
+- `repos()` --uses--> `Repositories`  [INFERRED]
+  tests/unit/test_repositories.py → src/thumbforge/storage/repositories.py
+- `test_channel_url_does_not_enumerate_videos()` --uses--> `FetchService`  [INFERRED]
+  tests/unit/test_fetch_service.py → src/thumbforge/core/services/fetch.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (87 total, 26 thin omitted)
+## Communities (87 total, 27 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.05
-Nodes (50): functools, IntEnum, _app_context(), wrapper(), _is_json_mode(), Turn exceptions into process exits. The only module permitted to exit the…, Find the :class:`AppContext` the root callback stored on the Click context.…, _report() (+42 more)
+Cohesion: 0.06
+Nodes (55): data_dir(), ChannelMeta, fixture, Path, VideoMeta, `fetch`, `video` and `playlist` through `CliRunner`, with no network (ROADMAP…, An initialised database, since every command here needs the schema., The `PLAN.md` §5.3 shape: panel, `#`/`Part` table, then the stored counts. (+47 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.06
-Nodes (54): data_dir(), ChannelMeta, fixture, Path, VideoMeta, `fetch`, `video` and `playlist` through `CliRunner`, with no network (ROADMAP…, An initialised database, since every command here needs the schema., The `PLAN.md` §5.3 shape: panel, `#`/`Part` table, then the stored counts. (+46 more)
+Nodes (44): field_validator, pydantic, ChannelMeta, _Meta, PlaylistItemMeta, PlaylistMeta, datetime, Boundary models for YouTube metadata (PLAN.md §3, ADR 0005). These mirror the… (+36 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.08
-Nodes (45): _channel(), _playlist(), ChannelMeta, PlaylistMeta, VideoMeta, Upsert semantics the rest of Phase 2 depends on (ROADMAP P2.3, PLAN.md §3)., `UNIQUE(playlist_id, position)` makes an in-place swap a constraint violation., A video dropped from a playlist keeps its row: its thumbnails are still real. (+37 more)
+Cohesion: 0.09
+Nodes (47): The repository bundle services receive (`docs/specs/phase-6-hero.md`)., Repositories, _channel(), _playlist(), ChannelMeta, PlaylistMeta, VideoMeta, Upsert semantics the rest of Phase 2 depends on (ROADMAP P2.3, PLAN.md §3). (+39 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.07
-Nodes (40): Any, importlib_util, json, ModuleType, declarations(), main(), Path, Compare a committed graphify graph against a freshly extracted one. Only… (+32 more)
+Cohesion: 0.11
+Nodes (43): DeclarativeBase, enum, ChannelSource, Domain enumerations for thumbforge lifecycle and data classification (PLAN.md…, What a YouTube URL or bare identifier refers to., Lifecycle classification of a thumbnail generation run., Execution status for runs and iterations., Origin of channel metadata. (+35 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.11
-Nodes (35): io, AssetKind, Functional role of a stored image asset., AssetError, An asset could not be written, verified, or identified., AssetStore, Content-addressed storage for thumbnail iterations, raw art, and style…, asset_store() (+27 more)
+Cohesion: 0.07
+Nodes (30): What persisting a playlist actually wrote. Returned instead of the ORM row…, StoredPlaylist, FakeSource, FakeStore, ChannelMeta, DateTime, PlaylistMeta, VideoMeta (+22 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.10
-Nodes (31): `FetchService` — resolve a YouTube URL, fetch it, persist it (ROADMAP P2.3).…, FakeSource, FakeStore, DateTime, `FetchService` decisions: kind dispatch, the freshness rule, and what each…, If the fake drifts from `MetadataSource`, these tests stop meaning anything., A single video can afford the channel request, which populates…, One playlist request plus one channel request, regardless of item count. (+23 more)
+Cohesion: 0.09
+Nodes (28): importlib_metadata, thumbforge: consistent, spec-compliant YouTube thumbnails from a hero image and…, Path, Root application behaviour: version, exit codes, and diagnostics from the…, The failure happens inside the root callback, before ctx.obj is assigned. The…, The hint tells users to run `config init --force`; that must actually be…, `config set` still needs a parseable file, but must fail cleanly rather than…, test_broken_config_reports_json_when_json_mode_is_set() (+20 more)
 
 ### Community 6 - "Community 6"
-Cohesion: 0.16
-Nodes (29): DeclarativeBase, Lifecycle classification of a thumbnail generation run., Execution status for runs and iterations., RunKind, RunStatus, Storage layer for thumbforge (SQLite + SQLAlchemy 2.0 + Alembic)., Asset, Base (+21 more)
+Cohesion: 0.10
+Nodes (31): Config, DatabaseError, A database operation failed (e.g. migration, lock, disk failure)., _alembic_config(), get_db_status(), get_engine(), Path, Build an Alembic configuration targeting ``db_path``. (+23 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.15
-Nodes (29): MonkeyPatch, default_config_path(), load_settings(), Build the effective settings. ``config_path`` and ``data_dir`` are the CLI…, Path, Configuration precedence, validation and the secrets prohibition., width and height must change in one call; neither halfway state is 16:9., A generated config must contain defaults, not whatever the current shell… (+21 more)
+Cohesion: 0.10
+Nodes (26): functools, IntEnum, rich_console, _app_context(), wrapper(), _is_json_mode(), Turn exceptions into process exits. The only module permitted to exit the…, Find the :class:`AppContext` the root callback stored on the Click context.… (+18 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.10
-Nodes (26): Path, Root application behaviour: version, exit codes, and diagnostics from the…, The failure happens inside the root callback, before ctx.obj is assigned. The…, The hint tells users to run `config init --force`; that must actually be…, `config set` still needs a parseable file, but must fail cleanly rather than…, test_broken_config_reports_json_when_json_mode_is_set(), test_broken_config_reports_rich_without_json_mode(), test_config_set_also_works_against_a_broken_config() (+18 more)
+Cohesion: 0.12
+Nodes (28): Engine, init_db(), Session, sessionmaker, Ensure directory exists and upgrade DB to head. Returns: Tuple of…, Delete unreferenced ``assets/`` files and stale ``tmp/`` entries older than the…, Create a thread-safe sessionmaker bound to ``engine``., Transactional context manager: commits on clean exit, rolls back on error. (+20 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.16
 Nodes (26): BoundLogger, CaptureFixture, LogFormat, configure_logging(), get_logger(), Path, Return a bound logger. Use ``get_logger(__name__)``., Configure structlog and the stdlib root logger. Safe to call more than once. (+18 more)
 
 ### Community 10 - "Community 10"
-Cohesion: 0.09
-Nodes (25): pydantic, PlaylistItemMeta, One video's place in a playlist., PlaylistMeta, Invariants the metadata boundary models enforce (PLAN.md §3, ADR 0005)., `resolve()` returns both halves (ADR 0005); an empty id is never a valid result., A minimal valid video, so each test states only the field it is about., A fetched snapshot is a value; mutating one would desync it from `fetched_at`. (+17 more)
+Cohesion: 0.10
+Nodes (21): dataclasses, json, pathlib, rich_panel, rich_table, declarations(), main(), Path (+13 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.15
-Nodes (21): rich_console, main(), Root Typer application: global flags, context construction, sub-app…, ``thumbforge fetch`` — pull YouTube metadata into the database (ROADMAP P2.3)., ``thumbforge playlist`` — list and inspect stored playlists (ROADMAP P2.3)., ``thumbforge video`` — list and inspect stored videos (ROADMAP P2.3)., channel_payload(), lookup_key() (+13 more)
+Cohesion: 0.14
+Nodes (25): list_(), Argument, command, Context, handle_errors, help, Option, ``thumbforge playlist`` — list and inspect stored playlists (ROADMAP P2.3). (+17 more)
 
 ### Community 12 - "Community 12"
-Cohesion: 0.11
-Nodes (24): Argument, importlib_metadata, metavar, rich_syntax, _as_toml(), _config_path(), init_(), path_() (+16 more)
+Cohesion: 0.13
+Nodes (23): Any, importlib_util, ModuleType, _deep_merge(), Build settings where the environment outranks the TOML file. File values cannot…, Merge ``override`` into ``base``, recursing into nested tables., _declaration(), _graph() (+15 more)
 
 ### Community 13 - "Community 13"
+Cohesion: 0.13
+Nodes (22): collections_abc, JsonPayload, RenderableType, JsonPayload, ``thumbforge fetch`` — pull YouTube metadata into the database (ROADMAP P2.3)., Build the JSON payload and the Rich renderable from the **stored** rows.…, _view(), ``thumbforge video`` — list and inspect stored videos (ROADMAP P2.3). (+14 more)
+
+### Community 14 - "Community 14"
 Cohesion: 0.12
 Nodes (23): re, find_secret_keys(), is_secret_key(), Secret detection shared by configuration loading and logging (ADR 0014, ADR…, Split a key into lowercase words across separators and camelCase boundaries., Return whether ``key`` names a secret. Matching is on word boundaries, not raw…, Return the dotted paths of every secret-looking key in a nested structure., Return a copy of ``value`` with every secret-keyed entry replaced. A copy,… (+15 more)
 
-### Community 14 - "Community 14"
-Cohesion: 0.10
-Nodes (24): BaseException, DownloadError, NotFoundError, SourceError, _cause_chain(), Exception, Map a `yt_dlp` exception onto the thumbforge error hierarchy. Measured against…, Yield `exc` and its `cause` links; `ExtractorError` nests the real failure… (+16 more)
-
 ### Community 15 - "Community 15"
-Cohesion: 0.12
-Nodes (21): BaseModel, model_validator, platformdirs, pydantic_settings, Self, AntigravitySettings, BatchSettings, ConfigSchema (+13 more)
+Cohesion: 0.19
+Nodes (24): default_config_path(), load_settings(), Build the effective settings. ``config_path`` and ``data_dir`` are the CLI…, Path, Configuration precedence, validation and the secrets prohibition., width and height must change in one call; neither halfway state is 16:9., Spike S5 superseded decision D4: the dangerous flag is not opted into by…, Write a config file and return its path, so tests read as one expression. (+16 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.11
-Nodes (18): pil, shutil, new_id(), Path, Identifier and content-hash helpers. ULIDs are used for primary keys: they sort…, Return a 26-character Crockford base32 ULID: 48-bit timestamp + 80 random bits., Return the hex SHA-256 of ``data``., Return the hex SHA-256 of a file, read in chunks so large images stay off the… (+10 more)
+Cohesion: 0.10
+Nodes (22): BaseModel, model_validator, platformdirs, pydantic_settings, Self, AntigravitySettings, BatchSettings, _format_validation_error() (+14 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.10
-Nodes (17): collections_abc, logging_handlers, os, pathlib, bind(), clear_context(), structlog configuration (ADR 0015). One pipeline for everything. Application…, Bind context onto every subsequent log record in this task (run id, provider,… (+9 more)
+Cohesion: 0.14
+Nodes (21): Argument, metavar, rich_syntax, _as_toml(), _config_path(), init_(), path_(), command (+13 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.11
-Nodes (19): ResolvedUrl, A supplied URL or identifier is not recognisable YouTube input., UrlError, _channel_handle(), classify_id(), classify_url(), _expect_kind(), UrlKind (+11 more)
+Cohesion: 0.15
+Nodes (21): min, P, R, init_(), path_(), command, Context, help (+13 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.17
-Nodes (19): P, R, init_(), path_(), command, Context, help, Option (+11 more)
+Cohesion: 0.13
+Nodes (18): RawInfo, _duration(), ChannelMeta, PlaylistMeta, VideoMeta, Turn an unexpected yt-dlp info-dict *shape* into a `SourceError`. yt-dlp parses…, Read a string field, treating a missing key and an explicit `None` alike. Both…, Read `duration` as whole seconds. Flat and full extracts disagree by up to a… (+10 more)
 
 ### Community 20 - "Community 20"
-Cohesion: 0.13
-Nodes (17): parametrize, Boundary models for YouTube metadata (PLAN.md §3, ADR 0005). These mirror the…, Classify YouTube URLs and bare identifiers (ADR 0005, ROADMAP P2.1). Pure…, UrlKind, Which YouTube URLs and ids resolve to which kind (ADR 0005, ROADMAP P2.1)., `@` alone names no channel, so it must not resolve successfully., `urlparse` raises `ValueError` on these; the CLI only handles…, Every URL form thumbforge accepts, and the exact identifier it must extract. (+9 more)
+Cohesion: 0.12
+Nodes (21): DownloadError, NotFoundError, SourceError, Exception, Map a `yt_dlp` exception onto the thumbforge error hierarchy. Measured against…, _translate(), _download_error(), Exception (+13 more)
 
 ### Community 21 - "Community 21"
-Cohesion: 0.13
-Nodes (19): `YtDlpSource` against recorded fixtures — no network, no `yt_dlp` call (ROADMAP…, S11: a flat extract cannot supply these, so the defaults must survive.…, Enumerating a channel is a non-goal and expensive, so pin the cheap request., `@handle` is not a `UC…` id, so it must not be pasted into the /channel/ path., A source wired to a fixture, plus the recorder that captured its calls., Classification is pure, so `resolve` must not spend a network call., A single video must be extracted deeply: that is the only way to get…, `position` comes from enumeration order because `playlist_index` is absent… (+11 more)
+Cohesion: 0.11
+Nodes (15): alembic, alembic_config, alembic_runtime_migration, alembic_script, Connection, ConnectionPoolEntry, sqlalchemy, sqlalchemy_pool (+7 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.16
-Nodes (12): Collection, PlaylistRepository, Playlist, PlaylistItem, Playlist rows and their ordered items., Return the row for a YouTube playlist id, or `None`., Look a playlist up by ULID or YouTube id, raising `NotFoundError` if absent., Insert or refresh a playlist. `channel_row_id` is required: the column is NOT… (+4 more)
+Cohesion: 0.15
+Nodes (15): BaseSettings, Return the settings, or re-raise the failure that prevented loading them.…, Configuration is missing, malformed, or contains something it must not., SettingsError, _atomic_write(), default_data_dir(), default_state_dir(), Path (+7 more)
 
 ### Community 23 - "Community 23"
 Cohesion: 0.12
 Nodes (14): Protocol, FetchStore, ChannelMeta, datetime, MetadataSource, PlaylistMeta, VideoMeta, Take the metadata source and persistence layer the CLI selected. (+6 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.19
-Nodes (19): list_(), Argument, command, Context, handle_errors, help, Option, Reassign part numbers sequentially, optionally leaving some videos unnumbered.… (+11 more)
-
-### Community 25 - "Community 25"
-Cohesion: 0.16
-Nodes (13): ChannelMeta, _Meta, PlaylistMeta, Shared configuration and provenance for every fetched snapshot., A fetched YouTube channel., A fetched YouTube video. `channel_id` is the channel's *YouTube* id, not a…, A fetched YouTube playlist and its ordered items., Number of items fetched, for the `playlist.item_count` column. (+5 more)
-
-### Community 26 - "Community 26"
 Cohesion: 0.16
 Nodes (12): FetchResult, FetchService, ResolvedUrl, Playlist rows written., Fetch YouTube metadata and persist it., Resolve `url`, fetch the thing it names, and store it., A single video, plus its channel when the video names one. The extra channel…, A playlist, its owning channel, its videos and its item order. (+4 more)
 
-### Community 27 - "Community 27"
-Cohesion: 0.17
-Nodes (17): asyncio, contextlib, RawInfo, _duration(), _published_at(), datetime, `YtDlpSource` — YouTube metadata via `yt-dlp`, no API key (ADR 0005, ROADMAP…, Read a string field, treating a missing key and an explicit `None` alike. Both… (+9 more)
+### Community 25 - "Community 25"
+Cohesion: 0.14
+Nodes (18): `YtDlpSource` against recorded fixtures — no network, no `yt_dlp` call (ROADMAP…, S11: a flat extract cannot supply these, so the defaults must survive.…, Enumerating a channel is a non-goal and expensive, so pin the cheap request., `@handle` is not a `UC…` id, so it must not be pasted into the /channel/ path., A source wired to a fixture, plus the recorder that captured its calls., Classification is pure, so `resolve` must not spend a network call., A single video must be extracted deeply: that is the only way to get…, `position` comes from enumeration order because `playlist_index` is absent… (+10 more)
 
-### Community 28 - "Community 28"
-Cohesion: 0.15
-Nodes (18): Engine, integration, Session, sessionmaker, Create a thread-safe sessionmaker bound to ``engine``., Transactional context manager: commits on clean exit, rolls back on error., session_factory(), session_scope() (+10 more)
-
-### Community 29 - "Community 29"
-Cohesion: 0.15
-Nodes (16): enum, sqlalchemy, sqlalchemy_exc, ChannelSource, Domain enumerations for thumbforge lifecycle and data classification (PLAN.md…, What a YouTube URL or bare identifier refers to., Origin of channel metadata., UrlKind (+8 more)
-
-### Community 30 - "Community 30"
-Cohesion: 0.15
-Nodes (15): alembic, alembic_config, alembic_runtime_migration, alembic_script, Config, sqlalchemy_pool, sqlite3, _alembic_config() (+7 more)
-
-### Community 31 - "Community 31"
+### Community 26 - "Community 26"
 Cohesion: 0.12
 Nodes (17): callback, count, envvar, is_eager, Context, handle_errors, help, Option (+9 more)
 
+### Community 27 - "Community 27"
+Cohesion: 0.15
+Nodes (15): _fixture(), Any, yt-dlp yields `None` for a deleted video; positions must stay contiguous., A video id is the one field nothing can be reconstructed from., A YouTube change can make yt-dlp return the wrong type for a field. Without the…, `datetime.fromtimestamp` rejects these, and not all of them as `ValueError`.…, Only `None` is the documented "could not fetch" sentinel. An empty dict is an…, Load one recorded yt-dlp info dict. (+7 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.18
+Nodes (10): PlaylistRepository, Playlist, PlaylistItem, Playlist rows and their ordered items., Return the row for a YouTube playlist id, or `None`., Look a playlist up by ULID or YouTube id, raising `NotFoundError` if absent., Insert or refresh a playlist. `channel_row_id` is required: the column is NOT…, Rewrite a playlist's items to exactly `video_ids`, in order. Rows are deleted… (+2 more)
+
+### Community 29 - "Community 29"
+Cohesion: 0.15
+Nodes (13): pil, shutil, sqlalchemy_exc, new_id(), Path, Identifier and content-hash helpers. ULIDs are used for primary keys: they sort…, Return a 26-character Crockford base32 ULID: 48-bit timestamp + 80 random bits., Return the hex SHA-256 of ``data``. (+5 more)
+
+### Community 30 - "Community 30"
+Cohesion: 0.18
+Nodes (15): get_app_context(), Context, Extract and validate the AppContext from a Typer execution context., list_(), Argument, command, Context, handle_errors (+7 more)
+
+### Community 31 - "Community 31"
+Cohesion: 0.15
+Nodes (15): ProviderAuthError, ProviderError, ProviderOutputMissingError, ProviderPermanentError, ProviderRegistryError, ProviderTimeoutError, ProviderTransientError, Base class for image-provider failures. (+7 more)
+
 ### Community 32 - "Community 32"
-Cohesion: 0.17
-Nodes (16): min, list_(), Argument, command, Context, handle_errors, help, Option (+8 more)
+Cohesion: 0.15
+Nodes (13): asyncio, BaseException, contextlib, RetryCallState, _cause_chain(), _log_retry(), _published_at(), datetime (+5 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.14
-Nodes (12): RetryCallState, _log_retry(), ChannelMeta, PlaylistMeta, VideoMeta, Turn an unexpected yt-dlp info-dict *shape* into a `SourceError`. yt-dlp parses…, Full extract of one video, so `description` and `published_at` are populated., Flat extract of a playlist and its items, in playlist order. One network round… (+4 more)
-
-### Community 34 - "Community 34"
-Cohesion: 0.18
-Nodes (14): DatabaseError, A database operation failed (e.g. migration, lock, disk failure)., get_db_status(), Path, Inspect migration revision and file metadata for ``db_path``., Run Alembic upgrade to ``revision`` on ``db_path``., Reclaim free space, truncate the WAL, and delete unreferenced asset files.…, Delete unreferenced ``assets/`` files and stale ``tmp/`` entries older than the… (+6 more)
-
-### Community 35 - "Community 35"
-Cohesion: 0.17
-Nodes (15): Configuration is missing, malformed, or contains something it must not., SettingsError, _atomic_write(), _format_validation_error(), _parse_scalar(), Replace ``path`` atomically: write a sibling temp file, fsync, then rename. A…, Write the commented default configuration, refusing to clobber unless ``force``., Apply several dotted keys to the TOML file, validating the result once. All… (+7 more)
-
-### Community 36 - "Community 36"
-Cohesion: 0.18
-Nodes (13): _fixture(), Any, yt-dlp yields `None` for a deleted video; positions must stay contiguous., A video id is the one field nothing can be reconstructed from., A YouTube change can make yt-dlp return the wrong type for a field. Without the…, Only `None` is the documented "could not fetch" sentinel. An empty dict is an…, Load one recorded yt-dlp info dict., Extractor stub that returns a fixture and remembers how it was called. (+5 more)
-
-### Community 37 - "Community 37"
-Cohesion: 0.14
 Nodes (14): ChannelSource, MetadataSource, fetch(), Argument, ChannelSource, Context, handle_errors, help (+6 more)
 
-### Community 38 - "Community 38"
-Cohesion: 0.14
-Nodes (11): Extractor, Metadata sources: concrete `core.sources.MetadataSource` implementations (ADR…, Fetch YouTube metadata with `yt-dlp` (a `MetadataSource` implementation)., Wire the extractor: tests pass a fixture-backed one, production gets yt-dlp., YtDlpSource, A missing video will still be missing on attempt three; retrying just wastes…, `datetime.fromtimestamp` rejects these, and not all of them as `ValueError`.…, `cli/fetch.py` selects a source by Protocol, so drift here breaks dispatch. (+3 more)
+### Community 34 - "Community 34"
+Cohesion: 0.19
+Nodes (12): io, _make_jpeg_bytes(), _make_png_bytes(), MonkeyPatch, Unit tests for content-addressed AssetStore (PLAN.md §3.2, ADR 0011)., A failed insert never unlinks the published file, and a retry adopts it. A…, Generate synthetic PNG image bytes for testing., Generate synthetic JPEG image bytes for testing. (+4 more)
 
-### Community 39 - "Community 39"
+### Community 35 - "Community 35"
+Cohesion: 0.23
+Nodes (10): pytest, `FetchService` — resolve a YouTube URL, fetch it, persist it (ROADMAP P2.3).…, Classify YouTube URLs and bare identifiers (ADR 0005, ROADMAP P2.1). Pure…, `FetchService` decisions: kind dispatch, the freshness rule, and what each…, Which YouTube URLs and ids resolve to which kind (ADR 0005, ROADMAP P2.1)., thumbforge_core_enums, thumbforge_core_errors, thumbforge_core_models (+2 more)
+
+### Community 36 - "Community 36"
+Cohesion: 0.15
+Nodes (10): PartialBatchError, Exception, A batch finished with some items failed; the run is resumable., Base class for every expected failure. Subclasses set ``code`` and…, A template's layout spec or prompt failed to load, validate or render., TemplateError, ThumbforgeError, parametrize (+2 more)
+
+### Community 37 - "Community 37"
 Cohesion: 0.19
 Nodes (9): Video, VideoMeta, Look a video up by ULID or YouTube id, raising `NotFoundError` if absent. Both…, Insert or refresh a video, preserving its ULID. `channel_row_id` is supplied…, Videos, newest fetch first, optionally restricted to one channel., Persist one video and, when known, its channel. A single-video fetch can afford…, Video rows, keyed by YouTube video id., Return the row for a YouTube video id, or `None`. (+1 more)
 
+### Community 38 - "Community 38"
+Cohesion: 0.15
+Nodes (10): ResolvedUrl, classify_url(), Resolve a YouTube URL, handle or bare id to its kind and identifier. A `watch`…, ResolvedUrl, Classify input without touching the network; `core.urls` does the work., ResolvedUrl, `v=` wins over `list=`: the URL names a video being watched inside a playlist.…, Pasted URLs routinely carry a trailing newline or space. (+2 more)
+
+### Community 39 - "Community 39"
+Cohesion: 0.17
+Nodes (9): Extractor, Metadata sources: concrete `core.sources.MetadataSource` implementations (ADR…, Fetch YouTube metadata with `yt-dlp` (a `MetadataSource` implementation)., Wire the extractor: tests pass a fixture-backed one, production gets yt-dlp., YtDlpSource, A missing video will still be missing on attempt three; retrying just wastes…, `cli/fetch.py` selects a source by Protocol, so drift here breaks dispatch., test_permanent_failures_are_not_retried() (+1 more)
+
 ### Community 40 - "Community 40"
-Cohesion: 0.18
-Nodes (13): JsonPayload, RenderableType, JsonPayload, Build the JSON payload and the Rich renderable from the **stored** rows.…, _view(), item_payload(), item_rows(), playlist_payload() (+5 more)
-
-### Community 41 - "Community 41"
-Cohesion: 0.22
-Nodes (12): get_engine(), Format a SQLite connection URL for SQLAlchemy., Create a SQLAlchemy engine configured for thumbforge SQLite usage., sqlite_url(), get_url(), Alembic environment configuration for thumbforge (ADR 0004)., Resolve database URL from config options or active thumbforge settings., Run migrations in 'offline' mode with SQL script output. (+4 more)
-
-### Community 42 - "Community 42"
-Cohesion: 0.29
-Nodes (12): init_db(), Ensure directory exists and upgrade DB to head. Returns: Tuple of…, Path, Unit tests for database engine, pragmas, sessions, and status helpers (ADR…, test_engine_pragmas_on_file(), test_get_db_status_nonexistent_and_initialized(), test_init_db_and_idempotence(), test_session_scope_commits_on_success() (+4 more)
-
-### Community 43 - "Community 43"
-Cohesion: 0.23
-Nodes (7): BaseSettings, Return the settings, or re-raise the failure that prevented loading them.…, default_data_dir(), default_state_dir(), Path, Effective configuration for one invocation: defaults, then file, then…, Settings
-
-### Community 44 - "Community 44"
-Cohesion: 0.18
-Nodes (10): datetime, sqlalchemy_orm, _iso(), Upsert and lookup for fetched YouTube metadata (ROADMAP P2.3, ADR 0004).…, When a stored playlist was last fetched, or `None` if it is not stored. Parsed…, One item's `part_number` before and after a `playlist renumber`. Captured per…, Render an aware datetime as the ISO-8601 UTC string the schema stores., Renumbering (+2 more)
-
-### Community 45 - "Community 45"
 Cohesion: 0.17
 Nodes (8): hashlib, Domain layer: models, errors and services. Imports nothing internal except…, MonkeyPatch, Path, ULIDs must be unique and time-sortable; hashes must match the content they…, `runs list` orders by id, so a later id must sort after an earlier one., test_ids_sort_by_creation_time(), test_sha256_file_matches_sha256_bytes()
 
-### Community 46 - "Community 46"
+### Community 41 - "Community 41"
+Cohesion: 0.17
+Nodes (12): parametrize, UrlKind, `@` alone names no channel, so it must not resolve successfully., `urlparse` raises `ValueError` on these; the CLI only handles…, Every URL form thumbforge accepts, and the exact identifier it must extract., Bad input must be a usage error (exit 2), not a source failure or a crash., An explicit form fixes the kind; the id's shape must not override it.…, test_classify_url() (+4 more)
+
+### Community 42 - "Community 42"
+Cohesion: 0.26
+Nodes (12): AssetKind, Functional role of a stored image asset., AssetError, An asset could not be written, verified, or identified., AssetStore, Content-addressed storage for thumbnail iterations, raw art, and style…, Bytes Pillow cannot identify are rejected, and the temp file is cleaned up., A `Path` source that does not exist fails before anything is written. (+4 more)
+
+### Community 43 - "Community 43"
 Cohesion: 0.20
 Nodes (12): A metadata source failed., A metadata source failed for a reason worth retrying (network, throttling).…, SourceError, SourceTransientError, CaptureFixture, MonkeyPatch, Three attempts, then exit 1 — `SourceTransientError` keeps `SourceError`'s code., Phase 2 acceptance criteria require retries to be observable in the logs. (+4 more)
 
-### Community 47 - "Community 47"
+### Community 44 - "Community 44"
+Cohesion: 0.20
+Nodes (12): _extract_with_ytdlp(), Run a real `yt_dlp` extraction and translate its failures. `yt_dlp` is imported…, Any, CaptureFixture, `playlist_items="0"` must return channel fields and no entries., Persist an info dict, minus the media-delivery keys listed in `DROPPED_KEYS`., A full extract must carry the fields a flat entry cannot (S11). Also the only…, Re-assert the S11 field set, so a yt-dlp upgrade that changes it fails loudly. (+4 more)
+
+### Community 45 - "Community 45"
 Cohesion: 0.21
 Nodes (8): ChannelRepository, Channel, ChannelMeta, Persist a channel on its own (a channel URL was fetched)., Channel rows, keyed by YouTube channel id., Return the row for a YouTube channel id, or `None`., Insert or refresh a channel, preserving its ULID., Every channel, newest fetch first.
 
-### Community 48 - "Community 48"
+### Community 46 - "Community 46"
 Cohesion: 0.29
 Nodes (10): Console, emit(), JsonValue, Print ``data`` as JSON in ``--json`` mode, otherwise print ``render()``.…, _json_context(), `emit` is the machine boundary: what it prints must always be parseable JSON., test_json_mode_output_round_trips(), test_non_finite_floats_are_rejected() (+2 more)
 
+### Community 47 - "Community 47"
+Cohesion: 0.20
+Nodes (11): asset_store(), _backdate(), fixture, Path, `db vacuum` deletes expired unreferenced files and stale tmp entries (ADR 0011)., A file from an in-flight `put` is newer than the grace age, so vacuum leaves…, Age files past the vacuum grace window without sleeping., Provide an initialized AssetStore backed by a temporary SQLite database. (+3 more)
+
+### Community 48 - "Community 48"
+Cohesion: 0.22
+Nodes (8): datetime, sqlalchemy_orm, _iso(), Upsert and lookup for fetched YouTube metadata (ROADMAP P2.3, ADR 0004).…, When a stored playlist was last fetched, or `None` if it is not stored. Parsed…, Render an aware datetime as the ISO-8601 UTC string the schema stores., thumbforge_core_services_fetch, thumbforge_storage_models
+
 ### Community 49 - "Community 49"
-Cohesion: 0.18
-Nodes (5): What persisting a playlist actually wrote. Returned instead of the ORM row…, StoredPlaylist, ChannelMeta, PlaylistMeta, VideoMeta
+Cohesion: 0.20
+Nodes (10): ConfigSchema, default_config_toml(), The shape of ``config.toml``, with no environment involvement. Kept separate…, Write the commented default configuration, refusing to clobber unless ``force``., Render the default configuration as commented TOML for ``config init``., _toml_value(), write_default_config(), test_non_16_9_output_is_rejected() (+2 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.29
-Nodes (6): dataclasses, rich_panel, rich_table, panel(), The only module allowed to write to stdout. Every command produces one of two…, Build a titled Rich panel.
+Cohesion: 0.25
+Nodes (8): Collection, NotFoundError, A referenced entity does not exist., Reassign `part_number` sequentially from `start` in playlist order. Videos…, One item's `part_number` before and after a `playlist renumber`. Captured per…, Renumbering, test_hint_and_code_reach_stderr(), boom()
 
 ### Community 51 - "Community 51"
+Cohesion: 0.22
+Nodes (8): os, structlog, isolate_user_environment(), fixture, MonkeyPatch, Path, Shared fixtures. Establishes ``tests/`` as the pytest root., Redirect every user directory into ``tmp_path`` and clear ``THUMBFORGE_*``.…
+
+### Community 52 - "Community 52"
+Cohesion: 0.25
+Nodes (9): A supplied URL or identifier is not recognisable YouTube input., UrlError, _channel_handle(), classify_id(), _expect_kind(), UrlKind, Classify a bare YouTube identifier by its shape. Order matters: a channel id…, Classify `value` and require it to be the kind its URL form promises. An… (+1 more)
+
+### Community 53 - "Community 53"
+Cohesion: 0.25
+Nodes (7): _fsync_dir(), Path, Session, sessionmaker, Flush a directory entry to disk so a publication survives power loss. Fsyncing…, Bind the store to a data directory and the session factory used for asset rows., Store an image file or bytes content-addressed by SHA-256. If identical content…
+
+### Community 54 - "Community 54"
+Cohesion: 0.25
+Nodes (7): logging_handlers, bind(), clear_context(), structlog configuration (ADR 0015). One pipeline for everything. Application…, Bind context onto every subsequent log record in this task (run id, provider,…, Drop all bound context., structlog_stdlib
+
+### Community 55 - "Community 55"
+Cohesion: 0.29
+Nodes (6): integration, testcontainers_core_container, Path, Integration tests using Testcontainers for database verification (ADR 0004)., Verify that a database initialized on host can be mounted and read in a Linux…, test_sqlite_database_in_container()
+
+### Community 56 - "Community 56"
 Cohesion: 0.38
 Nodes (3): Session, Build the three repositories over one session, so they share a transaction., Bind to the caller's session; the service owns the transaction.
 
-### Community 52 - "Community 52"
-Cohesion: 0.33
-Nodes (5): field_validator, datetime, Default for `fetched_at`: an aware UTC instant, never a naive local one., Reject naive datetimes: `fetched_at` is persisted as ISO-8601 UTC., _utcnow()
-
-### Community 53 - "Community 53"
-Cohesion: 0.50
-Nodes (4): Connection, ConnectionPoolEntry, Apply PRAGMA statements required by ADR 0004 on every SQLite connection., _set_sqlite_pragmas()
-
-### Community 54 - "Community 54"
-Cohesion: 0.50
-Nodes (3): pytest, testcontainers_core_container, Integration tests using Testcontainers for database verification (ADR 0004).
-
-### Community 55 - "Community 55"
-Cohesion: 0.67
-Nodes (4): NotFoundError, A referenced entity does not exist., test_hint_and_code_reach_stderr(), boom()
-
-### Community 56 - "Community 56"
-Cohesion: 0.50
-Nodes (3): _deep_merge(), Build settings where the environment outranks the TOML file. File values cannot…, Merge ``override`` into ``base``, recursing into nested tables.
-
 ### Community 57 - "Community 57"
-Cohesion: 0.50
-Nodes (3): Session, sessionmaker, Bind the store to a data directory and the session factory used for asset rows.
-
-### Community 58 - "Community 58"
-Cohesion: 0.50
-Nodes (3): DbStatus, Whether the database is fully migrated to the latest revision., Migration status and storage health metadata.
+Cohesion: 0.40
+Nodes (5): MonkeyPatch, A generated config must contain defaults, not whatever the current shell…, A valid env override must not let an invalid assignment be written to disk., test_environment_cannot_mask_an_invalid_file_value(), test_init_defaults_ignore_the_environment()
 
 ### Community 59 - "Community 59"
 Cohesion: 0.50
@@ -377,18 +373,18 @@ Nodes (3): E, _enum_values(), Extract serialized string values from an Enum clas
 
 ## Knowledge Gaps
 - **1 isolated node(s):** `thumbforge`
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 560 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **26 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 563 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **27 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Repositories` connect `Community 11` to `Community 2`, `Community 39`, `Community 40`, `Community 44`, `Community 47`, `Community 51`, `Community 59`, `Community 28`?**
-  _High betweenness centrality (0.038) - this node is a cross-community bridge._
-- **Why does `open_repositories()` connect `Community 11` to `Community 32`, `Community 37`, `Community 41`, `Community 24`, `Community 28`?**
-  _High betweenness centrality (0.035) - this node is a cross-community bridge._
-- **Why does `YtDlpSource` connect `Community 38` to `Community 33`, `Community 36`, `Community 37`, `Community 46`, `Community 18`, `Community 21`, `Community 27`?**
-  _High betweenness centrality (0.034) - this node is a cross-community bridge._
+- **Why does `FetchService` connect `Community 24` to `Community 33`, `Community 35`, `Community 4`, `Community 13`, `Community 23`?**
+  _High betweenness centrality (0.032) - this node is a cross-community bridge._
+- **Why does `FetchStore` connect `Community 23` to `Community 35`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `Repositories` connect `Community 2` to `Community 37`, `Community 8`, `Community 11`, `Community 45`, `Community 13`, `Community 48`, `Community 56`, `Community 59`?**
+  _High betweenness centrality (0.027) - this node is a cross-community bridge._
 - **Are the 20 inferred relationships involving `Repositories` (e.g. with `_view()` and `open_repositories()`) actually correct?**
   _`Repositories` has 20 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 6 inferred relationships involving `emit()` (e.g. with `fetch()` and `list_()`) actually correct?**
@@ -396,4 +392,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `thumbforge` to the rest of the system?**
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.0519774011299435 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.056107539450613676 - nodes in this community are weakly interconnected._

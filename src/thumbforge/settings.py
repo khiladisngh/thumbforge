@@ -85,6 +85,8 @@ class BatchSettings(BaseModel):
 
 
 class AntigravitySettings(BaseModel):
+    """How to invoke the Antigravity CLI (ADR 0013, measured in `docs/spikes/antigravity.md`)."""
+
     model_config = ConfigDict(extra="forbid")
 
     binary: str = "agy"
@@ -99,6 +101,8 @@ class AntigravitySettings(BaseModel):
 
 
 class ProviderSettings(BaseModel):
+    """Per-provider configuration, keyed by provider registry name."""
+
     model_config = ConfigDict(extra="forbid")
 
     antigravity: AntigravitySettings = Field(default_factory=AntigravitySettings)
