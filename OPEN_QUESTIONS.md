@@ -58,6 +58,13 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 - Verify: `uv tool install graphifyy && graphify extract . --code-only && graphify cluster-only . --no-label`
 - Result: working seamlessly under Windows with uv; generated `graphify-out/` committed to repo.
 
+### S10 — terminal image preview with `rich-pixels` in Windows Terminal
+
+- Verify: render a generated 1920×1080 thumbnail with `rich_pixels.Pixels.from_image_path`, scaled to the terminal width, in Windows Terminal; confirm the block-character output is legible at `--columns 2` grid scale.
+- Changes: the `_render.preview()` helper and P5.4. If unusable, `preview` prints the asset paths plus the `thumb export` hint and `thumb show` falls back to a table (ADR 0002).
+
+### S11 — yt-dlp flat playlist fields under `extract_flat`
+
 - Verify: `uv run --with yt-dlp python -c "import yt_dlp,json; print(json.dumps(yt_dlp.YoutubeDL({'extract_flat':'in_playlist','quiet':True}).extract_info('<playlist url>', download=False)['entries'][0], indent=1))"`; confirm `playlist_index`, `channel_id`, `title`, `id`, `duration` are present.
 - Changes: `VideoMeta` fields and the P2.2 fixture recorder.
 
