@@ -24,6 +24,7 @@ from thumbforge.core.errors import NotFoundError, ProviderRegistryError
 # Runtime import, not TYPE_CHECKING: `get` isinstance-checks the constructed provider
 # against this runtime-checkable Protocol.
 from thumbforge.core.providers import ImageProvider
+from thumbforge.providers.antigravity import AntigravityProvider
 from thumbforge.providers.fake import FakeProvider
 
 if TYPE_CHECKING:
@@ -41,12 +42,15 @@ ENTRY_POINT_GROUP = "thumbforge.providers"
 #: then cannot meaningfully check. `get` narrows it with `isinstance` instead.
 type ProviderFactory = Callable[[Mapping[str, JsonValue]], object]
 
-#: Providers shipped in this package. `antigravity` is added by P3.4.
+#: Providers shipped in this package.
 #:
 #: A builtin belongs here and **not** in the `thumbforge.providers` entry points: this map is
 #: *merged with* that group, so declaring one in both makes it collide with itself under the
 #: duplicate-key rule. The group is purely the third-party extension point.
-BUILTIN: dict[str, ProviderFactory] = {"fake": FakeProvider}
+BUILTIN: dict[str, ProviderFactory] = {
+    "antigravity": AntigravityProvider,
+    "fake": FakeProvider,
+}
 
 
 def _discover() -> dict[str, ProviderFactory]:

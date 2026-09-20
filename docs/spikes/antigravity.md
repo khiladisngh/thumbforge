@@ -286,6 +286,37 @@ After all seven generations the five-hour figure moved `99% → 98%`, and the we
 did not move from `71%`. So a 12-video playlist is nowhere near a limit, and
 `max_concurrency` can safely be raised above 1.
 
+### Correction, measured during P3.4: the limit does exist, and it hides inside `SUCCESS`
+
+"Generous" is not "absent". A later contract run on the same account exhausted the **image
+model's** quota — a separate budget from the `/usage` figures above, which track the chat
+models. The shape is the important part, because it is indistinguishable from success at the
+envelope level:
+
+```
+status  : SUCCESS
+turns   : 1
+duration: 7.47
+usage   : {'input_tokens': 20068, 'output_tokens': 511, 'thinking_tokens': 345,
+           'cache_read_tokens': 16280, 'total_tokens': 20579}
+response: The image generation request was sent with the specified prompt and 16:9 aspect
+          ratio, but the service returned a quota exhaustion error:
+          > **429 Too Many Requests**: `RESOURCE_EXHAUSTED` - You have exhausted your
+          capacity on the image model (`gemini-3.1-flash-image`). Quota resets in
+          approximately 2 hours and 20 minutes.
+```
+
+Exit code `0`, `status: SUCCESS`, a full turn of real token usage, and **no image**. The 429
+appears nowhere machine-readable — not in `error`, not in stderr, not in the status — only as
+prose the agent wrote. The brain directory is created and contains only the usual empty
+`.system_generated/`, `.user_uploaded/` and `scratch/` subdirectories.
+
+So S6c is not the only "SUCCESS means failure" case, and the adapter cannot treat "SUCCESS
+with no image" as permanent. `AntigravityProvider` scans the response for `RESOURCE_EXHAUSTED`
+/ `429` / quota / rate-limit markers **when and only when no image was produced**, and raises
+a retryable `ProviderTransientError`. Two hours of unavailability is a wait, not a defect, and
+the permanent classification would abandon the batch item while blaming the user's setup.
+
 ## S8 — Cost / usage fields — **tokens only, no credit or currency**
 
 | Run             | input | output | thinking | cache_read | total |
