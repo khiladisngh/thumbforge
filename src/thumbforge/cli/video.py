@@ -13,6 +13,7 @@ from thumbforge.cli._youtube import (
     JsonPayload,
     channel_payload,
     duration,
+    lookup_key,
     open_repositories,
     video_payload,
 )
@@ -72,15 +73,11 @@ def show(
     Accepts a ULID, a YouTube id or a URL; a URL is classified first so that pasting the
     same thing that was fetched works (spec behaviour 4).
     """
-    from thumbforge.core.urls import classify_url
-
     app_ctx = get_app_context(ctx)
     settings = app_ctx.require_settings()
 
     with open_repositories(settings.db_path) as repos:
-        lookup = reference
-        if "/" in reference or "." in reference:
-            lookup = classify_url(reference).youtube_id
+        lookup = lookup_key(reference)
         video = repos.videos.resolve(lookup)
 
         payload: JsonPayload = video_payload(video)

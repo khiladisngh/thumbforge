@@ -11,7 +11,7 @@ Fetch channel, playlist and video metadata from YouTube via `yt-dlp` (no API key
 - **P2.1** `core/sources.py` (`MetadataSource` Protocol — introduced in P2.1 as `sources/base.py`, moved in P2.3; see Interfaces), `core/enums.py` (`UrlKind`), `core/models.py` (`ChannelMeta`, `PlaylistMeta`, `VideoMeta`, `PlaylistItemMeta`, `ResolvedUrl`), `core/urls.py` (URL classifier).
 - **P2.2** `sources/ytdlp.py` (`YtDlpSource`) + recorded fixtures under `tests/fixtures/ytdlp/*.json`.
 - **P2.3** `storage/repositories.py` (`ChannelRepository`, `PlaylistRepository`, `VideoRepository`, `Repositories`), `core/services/fetch.py` (`FetchService`), `cli/fetch.py`, `cli/video.py`, `cli/playlist.py`, `cli/_youtube.py`.
-- **P2.4** `playlist renumber`.
+- **P2.4** `playlist renumber` (`PlaylistRepository.renumber`, `cli/playlist.py`).
 
 ## Non-goals
 
@@ -113,7 +113,7 @@ Commands (from `PLAN.md` §5.2):
 2. Without `--refresh`, a playlist fetched less than 24 h ago is reported from the DB without a network call; `--refresh` forces the fetch.
 3. `--source api` in Phase 2 exits `2` with hint "install the `api` extra (Phase 8)".
 4. `video show` / `playlist show` accept a ULID, a YouTube id or a URL; unknown → `NotFoundError`, exit `3`.
-5. `playlist renumber P --start 3 --skip-ids a,b` assigns `part_number` 3,4,5… to items in `position` order, skipping `a` and `b` (set to `NULL`); prints the before/after table.
+5. `playlist renumber P --start 3 --skip-ids a,b` assigns `part_number` 3,4,5… to items in `position` order, skipping `a` and `b` (set to `NULL`); prints the before/after table. Skipped items are **not counted**, so the remaining parts stay consecutive — the point of skipping a trailer is to keep "Part 1, Part 2" contiguous, not to reserve a number for the video that was excluded. `--start` defaults to `1`, matching the `part_number = position` default. A `--skip-ids` entry that is not in the playlist raises `NotFoundError` (exit `3`) and writes nothing: ignoring it would silently renumber everything one step off, with nothing to alert the user. Values written here survive a later `fetch --refresh` through the carry-across in `replace_items`.
 6. All commands honour `--json`: `fetch` emits `{"kind": "playlist", "channel": {...}, "playlist": {...}, "videos": [...]}`.
 
 ## Acceptance criteria

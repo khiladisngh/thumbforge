@@ -10,10 +10,12 @@ from rich.console import Group
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
 from thumbforge.cli._youtube import (
+    EMPTY,
     JsonPayload,
     channel_payload,
     item_payload,
     item_rows,
+    lookup_key,
     open_repositories,
     playlist_payload,
 )
@@ -69,15 +71,11 @@ def show(
     ] = False,
 ) -> None:
     """Show one playlist, optionally with its ordered items."""
-    from thumbforge.core.urls import classify_url
-
     app_ctx = get_app_context(ctx)
     settings = app_ctx.require_settings()
 
     with open_repositories(settings.db_path) as repos:
-        lookup = reference
-        if "/" in reference or "." in reference:
-            lookup = classify_url(reference).youtube_id
+        lookup = lookup_key(reference)
         playlist = repos.playlists.resolve(lookup)
 
         payload: JsonPayload = playlist_payload(playlist)
@@ -104,4 +102,67 @@ def show(
         app_ctx,
         payload,
         render=lambda: Group(summary, table(["#", "Part", "Video ID", "Title"], rows)),
+    )
+
+
+@app.command("renumber")
+@handle_errors
+def renumber(
+    ctx: typer.Context,
+    reference: Annotated[str, typer.Argument(help="Playlist ULID, YouTube id, or URL.")],
+    start: Annotated[
+        int,
+        typer.Option("--start", help="First part number to assign, in playlist order."),
+    ] = 1,
+    skip_ids: Annotated[
+        str | None,
+        typer.Option(
+            "--skip-ids",
+            help="Comma-separated YouTube video ids to leave unnumbered.",
+        ),
+    ] = None,
+) -> None:
+    """Reassign part numbers sequentially, optionally leaving some videos unnumbered.
+
+    Skipped videos are not counted, so the remaining parts stay consecutive — the point of
+    skipping a trailer or an outro rather than removing it from the playlist.
+    """
+    app_ctx = get_app_context(ctx)
+    settings = app_ctx.require_settings()
+    skipped = [item.strip() for item in (skip_ids or "").split(",") if item.strip()]
+
+    with open_repositories(settings.db_path) as repos:
+        playlist = repos.playlists.resolve(lookup_key(reference))
+        changes = repos.playlists.renumber(playlist, start=start, skip_ids=skipped)
+
+        payload: JsonPayload = {
+            "playlist": playlist_payload(playlist),
+            "start": start,
+            "skipped": skipped,
+            "items": [
+                {
+                    "position": change.position,
+                    "youtube_id": change.youtube_id,
+                    "title": change.title,
+                    "before": change.before,
+                    "after": change.after,
+                }
+                for change in changes
+            ],
+        }
+        rows = [
+            [
+                str(change.position),
+                EMPTY if change.before is None else str(change.before),
+                EMPTY if change.after is None else str(change.after),
+                change.youtube_id,
+                change.title,
+            ]
+            for change in changes
+        ]
+
+    emit(
+        app_ctx,
+        payload,
+        render=lambda: table(["#", "Was", "Now", "Video ID", "Title"], rows),
     )
