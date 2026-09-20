@@ -10,7 +10,7 @@
 
 ## Decision
 
-- `sources/base.py` defines a `MetadataSource` Protocol:
+- `core/sources.py` defines a `MetadataSource` Protocol (this decision said `sources/base.py`; the Protocol moved in P2.3 because `core.services.fetch` consumes it and `core` may not import `sources`. Only the file placement changed, so this is a factual correction rather than a superseding decision):
 
     ```python
     class MetadataSource(Protocol):

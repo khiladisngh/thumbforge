@@ -31,7 +31,7 @@ Spec: `docs/specs/phase-1-skeleton.md`
 
 Spec: `docs/specs/phase-2-youtube-fetch.md`
 
-- P2.1 MetadataSource protocol + models — deps: P1.5 — AC: `sources/base.py` `MetadataSource` Protocol; `core/models.py` `ChannelMeta`, `PlaylistMeta`, `VideoMeta`; URL classifier (`video | playlist | channel`) with unit tests.
+- P2.1 MetadataSource protocol + models — deps: P1.5 — AC: `MetadataSource` Protocol (added as `sources/base.py`, moved to `core/sources.py` in P2.3 so `core.services` can consume it); `core/models.py` `ChannelMeta`, `PlaylistMeta`, `VideoMeta`; URL classifier (`video | playlist | channel`) with unit tests.
 - P2.2 YtDlpSource with recorded fixtures — deps: P2.1, spike S11 — AC: `sources/ytdlp.py` using `extract_flat="in_playlist"`; fixture recorder marked `integration` writes `tests/fixtures/ytdlp/*.json`; unit tests replay fixtures with no network.
 - P2.3 Repositories + fetch/video/playlist commands — deps: P1.3, P2.2 — AC: upsert semantics for channel/playlist/video/playlist_item; `thumbforge fetch <url>`, `video list|show`, `playlist list|show [--videos]`; `--refresh` re-fetches; `--json` output.
 - P2.4 Playlist renumber — deps: P2.3 — AC: `thumbforge playlist renumber <playlist> --start N [--skip-ids …]` rewrites `part_number` sequentially, skipped videos get NULL; `playlist show --videos` reflects it.

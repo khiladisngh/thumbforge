@@ -12,8 +12,9 @@ the **database**, never from the fetched snapshot: `part_number` can have been r
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
+from thumbforge.cli._render import JsonValue
 from thumbforge.core.enums import ChannelSource
 from thumbforge.core.errors import SettingsError
 from thumbforge.storage.db import get_engine, session_scope
@@ -28,6 +29,11 @@ if TYPE_CHECKING:
 
 #: Shown where a nullable column has no value, per `PLAN.md` §5.3.
 EMPTY = "—"
+
+#: A mutable JSON object under construction. `JsonValue` for the values rather than `Any`
+#: keeps `emit`'s serialisability guarantee: a stray `Path` or `datetime` is a type error
+#: here instead of a runtime failure in output someone parses.
+type JsonPayload = dict[str, JsonValue]
 
 
 def build_source(source: ChannelSource) -> MetadataSource:
@@ -73,7 +79,7 @@ def item_rows(items: Sequence[PlaylistItem]) -> list[list[str]]:
     ]
 
 
-def item_payload(items: Sequence[PlaylistItem]) -> list[dict[str, Any]]:
+def item_payload(items: Sequence[PlaylistItem]) -> list[JsonPayload]:
     """The machine-readable form of the same rows."""
     return [
         {
@@ -88,7 +94,7 @@ def item_payload(items: Sequence[PlaylistItem]) -> list[dict[str, Any]]:
     ]
 
 
-def playlist_payload(playlist: Playlist) -> dict[str, Any]:
+def playlist_payload(playlist: Playlist) -> JsonPayload:
     """Playlist fields common to `fetch`, `playlist list` and `playlist show`."""
     return {
         "id": playlist.id,
@@ -100,7 +106,7 @@ def playlist_payload(playlist: Playlist) -> dict[str, Any]:
     }
 
 
-def video_payload(video: Video) -> dict[str, Any]:
+def video_payload(video: Video) -> JsonPayload:
     """Video fields common to `fetch`, `video list` and `video show`."""
     return {
         "id": video.id,
@@ -114,7 +120,7 @@ def video_payload(video: Video) -> dict[str, Any]:
     }
 
 
-def channel_payload(channel: Channel) -> dict[str, Any]:
+def channel_payload(channel: Channel) -> JsonPayload:
     """Channel fields common to every command that mentions one."""
     return {
         "id": channel.id,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
 import typer
 from rich.console import Group
@@ -10,6 +10,7 @@ from rich.console import Group
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
 from thumbforge.cli._youtube import (
+    JsonPayload,
     channel_payload,
     item_payload,
     item_rows,
@@ -79,7 +80,7 @@ def show(
             lookup = classify_url(reference).youtube_id
         playlist = repos.playlists.resolve(lookup)
 
-        payload: dict[str, Any] = playlist_payload(playlist)
+        payload: JsonPayload = playlist_payload(playlist)
         payload["channel"] = channel_payload(playlist.channel)
         fields: dict[str, object] = {
             "Title": playlist.title,

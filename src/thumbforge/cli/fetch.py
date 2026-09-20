@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated
 
 import typer
 from rich.console import Group
@@ -11,6 +11,7 @@ from rich.console import Group
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, panel, table
 from thumbforge.cli._youtube import (
+    JsonPayload,
     build_source,
     channel_payload,
     item_payload,
@@ -43,14 +44,14 @@ def _summary(result: FetchResult) -> str:
     return line
 
 
-def _view(result: FetchResult, repos: Repositories) -> tuple[dict[str, Any], RenderableType]:
+def _view(result: FetchResult, repos: Repositories) -> tuple[JsonPayload, RenderableType]:
     """Build the JSON payload and the Rich renderable from the **stored** rows.
 
     Reading the database rather than the fetched snapshot is what makes the cached path
     render the same table (spec acceptance criteria) and what keeps a `playlist renumber`
     visible in `Part` instead of being overwritten by the position.
     """
-    payload: dict[str, Any] = {
+    payload: JsonPayload = {
         "kind": result.kind.value,
         "youtube_id": result.youtube_id,
         "cached": result.cached,

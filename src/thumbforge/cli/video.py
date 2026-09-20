@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Any
+from typing import Annotated
 
 import typer
 
@@ -10,6 +10,7 @@ from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
 from thumbforge.cli._youtube import (
     EMPTY,
+    JsonPayload,
     channel_payload,
     duration,
     open_repositories,
@@ -82,7 +83,7 @@ def show(
             lookup = classify_url(reference).youtube_id
         video = repos.videos.resolve(lookup)
 
-        payload: dict[str, Any] = video_payload(video)
+        payload: JsonPayload = video_payload(video)
         if video.channel is not None:
             payload["channel"] = channel_payload(video.channel)
         payload["playlists"] = [

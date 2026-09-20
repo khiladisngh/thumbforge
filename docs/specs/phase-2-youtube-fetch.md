@@ -8,7 +8,7 @@ ADRs: `docs/adr/0005-ytdlp-metadata-source.md`, `docs/adr/0004-sqlite-sqlalchemy
 
 Fetch channel, playlist and video metadata from YouTube via `yt-dlp` (no API key), persist it, and expose it through `fetch`, `video` and `playlist` commands. Establishes the `MetadataSource` protocol that Phase 8's Data API source also implements.
 
-- **P2.1** `sources/base.py` (`MetadataSource` Protocol), `core/enums.py` (`UrlKind`), `core/models.py` (`ChannelMeta`, `PlaylistMeta`, `VideoMeta`, `PlaylistItemMeta`, `ResolvedUrl`), `core/urls.py` (URL classifier).
+- **P2.1** `core/sources.py` (`MetadataSource` Protocol — introduced in P2.1 as `sources/base.py`, moved in P2.3; see Interfaces), `core/enums.py` (`UrlKind`), `core/models.py` (`ChannelMeta`, `PlaylistMeta`, `VideoMeta`, `PlaylistItemMeta`, `ResolvedUrl`), `core/urls.py` (URL classifier).
 - **P2.2** `sources/ytdlp.py` (`YtDlpSource`) + recorded fixtures under `tests/fixtures/ytdlp/*.json`.
 - **P2.3** `storage/repositories.py` (`ChannelRepository`, `PlaylistRepository`, `VideoRepository`, `Repositories`), `core/services/fetch.py` (`FetchService`), `cli/fetch.py`, `cli/video.py`, `cli/playlist.py`, `cli/_youtube.py`.
 - **P2.4** `playlist renumber`.

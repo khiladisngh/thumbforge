@@ -39,6 +39,7 @@ class ChannelRepository:
     """Channel rows, keyed by YouTube channel id."""
 
     def __init__(self, session: Session) -> None:
+        """Bind to the caller's session; the service owns the transaction."""
         self._session = session
 
     def get(self, youtube_id: str) -> Channel | None:
@@ -69,6 +70,7 @@ class VideoRepository:
     """Video rows, keyed by YouTube video id."""
 
     def __init__(self, session: Session) -> None:
+        """Bind to the caller's session; the service owns the transaction."""
         self._session = session
 
     def get(self, youtube_id: str) -> Video | None:
@@ -135,6 +137,7 @@ class PlaylistRepository:
     """Playlist rows and their ordered items."""
 
     def __init__(self, session: Session) -> None:
+        """Bind to the caller's session; the service owns the transaction."""
         self._session = session
 
     def get(self, youtube_id: str) -> Playlist | None:
@@ -152,7 +155,12 @@ class PlaylistRepository:
         return row
 
     def upsert(self, meta: PlaylistMeta, *, channel_row_id: str) -> Playlist:
-        """Insert or refresh a playlist. `channel_row_id` is required: the column is NOT NULL."""
+        """Insert or refresh a playlist. `channel_row_id` is required: the column is NOT NULL.
+
+        `item_count` is deliberately **not** written here. `replace_items` owns it, because
+        it is the only place that knows how many rows were actually stored — which can be
+        fewer than `meta.item_count`. Callers must follow an upsert with `replace_items`.
+        """
         row = self.get(meta.youtube_id)
         if row is None:
             row = Playlist(youtube_id=meta.youtube_id)
@@ -161,7 +169,6 @@ class PlaylistRepository:
         row.title = meta.title
         row.description = meta.description
         row.url = meta.url
-        row.item_count = meta.item_count
         row.fetched_at = _iso(meta.fetched_at)
         self._session.flush()
         return row
@@ -177,6 +184,11 @@ class PlaylistRepository:
         `part_number` is carried across by video id, so a `playlist renumber` survives a
         re-fetch. New rows default it to `position`, i.e. the first video is "Part 1"
         (`PLAN.md` §5.3).
+
+        `playlist.item_count` is set from the rows written, not from the fetched entry
+        count. A playlist that lists the same video twice yields fewer rows than entries
+        (`UNIQUE(playlist_id, video_id)`), and taking the count from the snapshot would
+        print "3 videos" above a two-row table.
 
         Returns the number of items removed, which `fetch` reports.
         """
@@ -201,6 +213,7 @@ class PlaylistRepository:
                     part_label=part_label,
                 )
             )
+        playlist.item_count = len(video_ids)
         self._session.flush()
         return removed
 
@@ -224,6 +237,7 @@ class Repositories:
     """The repository bundle services receive (`docs/specs/phase-6-hero.md`)."""
 
     def __init__(self, session: Session) -> None:
+        """Build the three repositories over one session, so they share a transaction."""
         self.session = session
         self.channels = ChannelRepository(session)
         self.playlists = PlaylistRepository(session)

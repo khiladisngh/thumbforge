@@ -38,6 +38,7 @@ FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "ytdlp"
 
 
 def _fixture(name: str) -> dict[str, Any]:
+    """Load one recorded yt-dlp info dict."""
     return json.loads((FIXTURES / f"{name}.json").read_text(encoding="utf-8"))
 
 
@@ -54,6 +55,7 @@ class _Recorder:
 
 
 def _source(name: str) -> tuple[YtDlpSource, _Recorder]:
+    """A source wired to a fixture, plus the recorder that captured its calls."""
     recorder = _Recorder(_fixture(name))
     return YtDlpSource(recorder), recorder
 

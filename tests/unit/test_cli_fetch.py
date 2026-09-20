@@ -87,6 +87,7 @@ class StubSource:
 
 @pytest.fixture
 def source(monkeypatch: pytest.MonkeyPatch) -> StubSource:
+    """Replace the real source so no test touches the network."""
     stub = StubSource()
     # Patch the name *as imported by the command module*: `cli.fetch` does
     # `from ._youtube import build_source`, so patching `_youtube.build_source` would leave
@@ -97,6 +98,7 @@ def source(monkeypatch: pytest.MonkeyPatch) -> StubSource:
 
 @pytest.fixture
 def data_dir(tmp_path: Path) -> Path:
+    """An initialised database, since every command here needs the schema."""
     directory = tmp_path / "data"
     result = runner.invoke(app, ["--data-dir", str(directory), "db", "init"])
     assert result.exit_code == 0, result.stdout

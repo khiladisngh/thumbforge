@@ -23,6 +23,7 @@ OTHER = "UC" + "x" * 22
 
 @pytest.fixture
 def repos(tmp_path: Path) -> Iterator[Repositories]:
+    """Repositories over a real migrated SQLite file: the constraints are under test."""
     db_file = tmp_path / "repos.sqlite3"
     init_db(db_file)
     engine = get_engine(db_file)
@@ -33,10 +34,12 @@ def repos(tmp_path: Path) -> Iterator[Repositories]:
 
 
 def _channel(youtube_id: str = OWNER, title: str = "Owner") -> ChannelMeta:
+    """A minimal valid channel, so each test states only the field it is about."""
     return ChannelMeta(youtube_id=youtube_id, title=title, url=f"https://yt/{youtube_id}")
 
 
 def _video(suffix: str, *, channel_id: str | None = OWNER, **extra: object) -> VideoMeta:
+    """A video whose YouTube id is `suffix` padded to the required 11 characters."""
     youtube_id = suffix.ljust(11, "z")
     return VideoMeta(
         youtube_id=youtube_id,
@@ -48,6 +51,7 @@ def _video(suffix: str, *, channel_id: str | None = OWNER, **extra: object) -> V
 
 
 def _playlist(*videos: VideoMeta, title: str = "Series") -> PlaylistMeta:
+    """A playlist over `videos`, numbered 1..n in the order given."""
     return PlaylistMeta(
         youtube_id="PL" + "p" * 16,
         title=title,
@@ -148,9 +152,13 @@ def test_duplicate_video_in_a_playlist_is_listed_once(repos: Repositories) -> No
 
     repos.store_playlist(playlist, _channel())
 
-    items = repos.playlists.items(repos.playlists.resolve(playlist.youtube_id))
+    stored = repos.playlists.resolve(playlist.youtube_id)
+    items = repos.playlists.items(stored)
     assert [item.position for item in items] == [1, 2]
     assert [item.video.youtube_id for item in items] == ["azzzzzzzzzz", "bzzzzzzzzzz"]
+    # item_count must match the rows written, not the three entries fetched: `fetch` would
+    # otherwise print "3 videos" above a two-row table and `playlist list` would agree.
+    assert stored.item_count == 2
 
 
 def test_foreign_channel_videos_are_not_linked(repos: Repositories) -> None:
