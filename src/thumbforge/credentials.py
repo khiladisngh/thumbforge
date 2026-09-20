@@ -39,14 +39,26 @@ def env_var(provider_key: str) -> str:
     return f"THUMBFORGE_PROVIDERS__{provider_key.upper()}__API_KEY"
 
 
+def _from_env(provider_key: str) -> str | None:
+    """The key this provider's environment variable supplies, if it supplies one.
+
+    Whitespace-only counts as absent, matching `store_api_key`: an exported-but-blank
+    variable is how a shell leaves a value unset, and letting it win would mask a perfectly
+    good keyring entry. The value itself is returned unstripped — trimming a credential
+    silently changes it.
+    """
+    value = os.environ.get(env_var(provider_key))
+    return value if value and value.strip() else None
+
+
 def api_key(provider_key: str) -> str | None:
     """This provider's API key, or `None` when neither source has one.
 
     A keyring that is absent or locked is *not* an error here: the environment may well have
     supplied the key, and a missing key is a reportable state rather than a failure.
     """
-    from_env = os.environ.get(env_var(provider_key))
-    if from_env:
+    from_env = _from_env(provider_key)
+    if from_env is not None:
         return from_env
 
     try:
@@ -56,6 +68,28 @@ def api_key(provider_key: str) -> str | None:
         # unavailable" answers that with "not from here" rather than aborting the command.
         log.debug("credentials.keyring_unavailable", provider=provider_key, error=str(exc))
         return None
+
+
+def describe(provider_key: str) -> str:
+    """Where this provider's key would come from, and which keyring backend is active.
+
+    ADR 0014 asks `provider check` to name the backend: on a CI runner `keyring` resolves to
+    a backend that stores nothing, which is otherwise indistinguishable from a working store
+    that happens to be empty. Never includes the value.
+
+    Lives here rather than in `cli/` because deciding which source wins is credential logic,
+    and `cli/` holds no business logic.
+    """
+    variable = env_var(provider_key)
+    if _from_env(provider_key) is not None:
+        return f"key from {variable}"
+    backend = type(keyring.get_keyring()).__name__
+    found = (
+        "key in keyring"
+        if api_key(provider_key) is not None
+        else f"no key stored; set {variable} to supply one"
+    )
+    return f"{found} (backend: {backend})"
 
 
 def store_api_key(provider_key: str, value: str) -> None:

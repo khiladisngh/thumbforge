@@ -414,33 +414,33 @@
     "semantic_hash": "4892909acdd7ba15d30276f4b58b6622"
   },
   "src/thumbforge/providers/antigravity.py": {
-    "mtime": 1789908445.5347905,
-    "seen": 1789909230.1326976,
-    "ast_hash": "836d4a06043a66c327a8435bd5c01672",
-    "semantic_hash": "836d4a06043a66c327a8435bd5c01672"
+    "mtime": 1789910241.5048683,
+    "seen": 1789910320.630051,
+    "ast_hash": "43e422b9c2bcda06a48d427e55e0c126",
+    "semantic_hash": "43e422b9c2bcda06a48d427e55e0c126"
   },
   "tests/unit/test_antigravity_provider.py": {
-    "mtime": 1789908209.5215743,
-    "seen": 1789909230.1347153,
-    "ast_hash": "9477b0d30d43692fa679b2da0c759833",
-    "semantic_hash": "9477b0d30d43692fa679b2da0c759833"
+    "mtime": 1789910194.8075416,
+    "seen": 1789910320.6321352,
+    "ast_hash": "54e6a48fd4be2ae26d5ace97179f66d0",
+    "semantic_hash": "54e6a48fd4be2ae26d5ace97179f66d0"
   },
   "src/thumbforge/cli/provider.py": {
-    "mtime": 1789908873.4747732,
-    "seen": 1789909230.1309576,
-    "ast_hash": "1e975c5484069b7cad3e718372c101f8",
-    "semantic_hash": "1e975c5484069b7cad3e718372c101f8"
+    "mtime": 1789909980.8004036,
+    "seen": 1789910320.6283693,
+    "ast_hash": "6ee9559a8b90b660938af99ef78d7ad3",
+    "semantic_hash": "6ee9559a8b90b660938af99ef78d7ad3"
   },
   "src/thumbforge/credentials.py": {
-    "mtime": 1789908402.5731843,
-    "seen": 1789909230.1324608,
-    "ast_hash": "20805b5badad5f1985c3d1a86774d1ea",
-    "semantic_hash": "20805b5badad5f1985c3d1a86774d1ea"
+    "mtime": 1789910243.2865622,
+    "seen": 1789910320.6298277,
+    "ast_hash": "7b9bda29d48a307f5334336850c729b6",
+    "semantic_hash": "7b9bda29d48a307f5334336850c729b6"
   },
   "tests/unit/test_cli_provider.py": {
-    "mtime": 1789908892.678766,
-    "seen": 1789909230.135196,
-    "ast_hash": "172d29ea8c02bad99d3596133045ef2b",
-    "semantic_hash": "172d29ea8c02bad99d3596133045ef2b"
+    "mtime": 1789910194.718445,
+    "seen": 1789910320.6325648,
+    "ast_hash": "3d5a638b30694716a6de32fcdc612933",
+    "semantic_hash": "3d5a638b30694716a6de32fcdc612933"
   }
 }

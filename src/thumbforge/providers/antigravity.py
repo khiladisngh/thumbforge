@@ -82,6 +82,20 @@ _VERSION_TIMEOUT_S: Final = 30
 #: purely local version read. Measured at ~5 s.
 _MODELS_TIMEOUT_S: Final = 60
 
+
+class _TimedOut:
+    """A subcommand that never answered, which is not the same as one that failed.
+
+    Distinct from `None` because "no reply" is no evidence about credentials, whereas a clean
+    non-zero exit from `agy models` is exactly the evidence that the CLI is not signed in.
+    """
+
+    __slots__ = ()
+
+
+#: The single `_TimedOut` instance; compared with `isinstance`, so identity is incidental.
+TIMED_OUT: Final = _TimedOut()
+
 #: Markers the agent uses when it *relays* an upstream image-model failure in prose instead
 #: of failing the run. Measured live: a 429 arrived as `status: "SUCCESS"` with no image and
 #: "429 Too Many Requests: RESOURCE_EXHAUSTED - You have exhausted your capacity on the image
@@ -256,20 +270,36 @@ class AntigravityProvider:
         )
 
         # `agy models` is the cheapest call that needs real credentials, so it doubles as
-        # the auth probe `info()` deliberately will not make (see its docstring). A failure
-        # here is the only evidence this adapter can get that the CLI is not signed in.
-        models = await self._models() if binary_path else None
-        checks.append(
-            Check(
-                name="auth",
-                ok=models is not None,
-                detail=f"{len(models)} models available"
-                if models is not None
-                else "could not list models; the CLI may not be signed in",
+        # the auth probe `info()` deliberately will not make (see its docstring). A clean
+        # failure is the only evidence this adapter can get that the CLI is not signed in.
+        listed = await self._models() if binary_path else None
+        if isinstance(listed, _TimedOut):
+            # Reported under its own name, not `auth`: the call never finished, so it is no
+            # evidence either way about credentials.
+            checks.append(
+                Check(
+                    name="models",
+                    ok=False,
+                    detail=(
+                        f"`{self._binary} models` did not answer within {_MODELS_TIMEOUT_S}s, "
+                        "so the credentials could not be checked"
+                    ),
+                )
             )
-        )
+            models: tuple[str, ...] = ()
+        else:
+            models = listed or ()
+            checks.append(
+                Check(
+                    name="auth",
+                    ok=listed is not None,
+                    detail=f"{len(models)} models available"
+                    if listed is not None
+                    else "could not list models; the CLI may not be signed in",
+                )
+            )
 
-        return HealthReport(checks=tuple(checks), models=models or ())
+        return HealthReport(checks=tuple(checks), models=models)
 
     async def generate(self, request: GenerationRequest, *, workdir: Path) -> GenerationResult:
         """Run one generation and copy its output into `workdir`."""
@@ -404,13 +434,14 @@ class AntigravityProvider:
             )
         return candidates[-1]
 
-    async def _capture(self, *args: str, timeout: float) -> str | None:
-        """Run a short `agy` subcommand and return its stdout, or `None` if it did not work.
+    async def _capture(self, *args: str, timeout: float) -> str | _TimedOut | None:
+        """Run a short `agy` subcommand and return its stdout, or why it produced none.
 
-        Shared by `--version` and `models` so the create/wait/reap dance exists once. A
-        non-zero exit returns `None` rather than its output: `agy models` signals "not signed
-        in" that way, and treating a failed call's stdout as data would report zero models as
-        though the account genuinely had none.
+        Shared by `--version` and `models` so the create/wait/reap dance exists once. Three
+        outcomes, because they mean different things to a caller: the text, `TIMED_OUT`, and
+        `None` for "ran and failed". A non-zero exit is `None` rather than its output —
+        `agy models` signals "not signed in" that way, and treating a failed call's stdout as
+        data would report zero models as though the account genuinely had none.
         """
         if shutil.which(self._binary) is None:
             return None
@@ -422,8 +453,14 @@ class AntigravityProvider:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            # TimeoutError is an OSError subclass, so this catches the wait_for expiry too.
             out, _ = await asyncio.wait_for(process.communicate(), timeout=timeout)
+        except TimeoutError:
+            # Separated from the other OSErrors below: an unfinished call proves nothing
+            # about credentials, and reporting it as an auth failure sends the user to sign
+            # in to an account that is already signed in.
+            if process is not None:
+                await _reap(process)
+            return TIMED_OUT
         except OSError:
             if process is not None:
                 await _reap(process)
@@ -439,20 +476,23 @@ class AntigravityProvider:
         if self._run is not None:
             return "injected"
         out = await self._capture("--version", timeout=_VERSION_TIMEOUT_S)
-        self._version_cache = (out or "").strip() or None
+        # A version read that timed out is as unusable as one that failed; `info()` must not
+        # raise for a provider that is merely unreachable.
+        text = out if isinstance(out, str) else ""
+        self._version_cache = text.strip() or None
         return self._version_cache
 
-    async def _models(self) -> tuple[str, ...] | None:
-        """Model slugs from `agy models`, or `None` when the call failed.
+    async def _models(self) -> tuple[str, ...] | _TimedOut | None:
+        """Model slugs from `agy models`, `TIMED_OUT`, or `None` when the call failed.
 
-        `None` and `()` mean different things and both are reachable: the call failing is the
-        adapter's only evidence that the CLI is not signed in, while an empty list would mean
-        it answered and offered nothing.
+        All three are distinct and reachable: a clean failure is the adapter's only evidence
+        that the CLI is not signed in, `()` would mean it answered and offered nothing, and a
+        timeout means the question went unanswered.
         """
         if self._run is not None:
             return ("injected",)
         out = await self._capture("models", timeout=_MODELS_TIMEOUT_S)
-        return None if out is None else _parse_models(out)
+        return out if out is None or isinstance(out, _TimedOut) else _parse_models(out)
 
 
 def _parse_models(text: str) -> tuple[str, ...]:

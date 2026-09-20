@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import os
 from typing import TYPE_CHECKING, Annotated
 
-import keyring
 import typer
 
 from thumbforge import credentials
@@ -64,22 +62,6 @@ def _summarise(provider: ImageProvider) -> str:
     ]
     formats = "/".join(sorted(caps.output_formats))
     return f"{', '.join(flags) or 'none'} · {formats} · x{caps.max_concurrency}"
-
-
-def _credential_state(key: str) -> str:
-    """Where this provider's API key would be found, and which keyring backend is active.
-
-    ADR 0014 asks `provider check` to name the backend: on a CI runner `keyring` resolves to
-    a backend that stores nothing, which is otherwise indistinguishable from a working store
-    that happens to be empty. Never prints the value.
-    """
-    variable = credentials.env_var(key)
-    if os.environ.get(variable):
-        return f"key from {variable}"
-    backend = type(keyring.get_keyring()).__name__
-    stored = credentials.api_key(key) is not None
-    found = "key in keyring" if stored else f"no key stored; set {variable} to supply one"
-    return f"{found} (backend: {backend})"
 
 
 def _raise_for_report(key: str, report: HealthReport) -> None:
@@ -156,7 +138,7 @@ def check(ctx: typer.Context, key: _KEY_ARGUMENT) -> None:
     provider = registry.get(key, _config(settings, key))
     report = asyncio.run(provider.healthcheck())
     # Resolved once: the render thunk would otherwise repeat the keyring read.
-    credential_state = _credential_state(key)
+    credential_state = credentials.describe(key)
     payload: JsonPayload = {
         "provider": key,
         "ok": report.ok,

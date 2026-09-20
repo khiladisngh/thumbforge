@@ -215,14 +215,21 @@ def test_the_environment_beats_the_keyring(
     assert credentials.api_key("fake") == "from-keyring"
 
 
+@pytest.mark.parametrize("blank", ["", "   ", "\t\n"])
 def test_a_blank_environment_variable_falls_through_to_the_keyring(
-    monkeypatch: pytest.MonkeyPatch, _no_real_keyring: dict[tuple[str, str], str]
+    monkeypatch: pytest.MonkeyPatch, _no_real_keyring: dict[tuple[str, str], str], blank: str
 ) -> None:
-    """An exported-but-empty variable is how shells leave unset values; it must not win."""
+    """An exported-but-empty variable is how shells leave unset values; it must not win.
+
+    Whitespace-only is included because `""` alone is falsy and passes a plain truthiness
+    check, leaving the real case — a variable holding a stray space — masking a good keyring
+    entry. `store_api_key` rejects the same input.
+    """
     _no_real_keyring[credentials.SERVICE, "fake"] = "from-keyring"
-    monkeypatch.setenv(credentials.env_var("fake"), "")
+    monkeypatch.setenv(credentials.env_var("fake"), blank)
 
     assert credentials.api_key("fake") == "from-keyring"
+    assert "keyring" in credentials.describe("fake"), "and `check` must not claim the env wins"
 
 
 def test_an_unusable_keyring_reports_no_key_rather_than_failing(
