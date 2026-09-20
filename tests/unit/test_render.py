@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 from rich.console import Console
 
-from thumbforge.cli._render import AppContext, JsonValue, emit, kv
+from thumbforge.cli._render import AppContext, emit, kv
+
+if TYPE_CHECKING:
+    from thumbforge.core.json import JsonValue
 
 
 def _json_context() -> tuple[AppContext, Console]:

@@ -8,7 +8,7 @@ ADRs: `docs/adr/0010-provider-plugin-architecture.md`, `docs/adr/0013-antigravit
 
 Define the `ImageProvider` protocol, capabilities, registry with entry-point discovery, the deterministic `FakeProvider`, the `AntigravityProvider` subprocess adapter, and the `provider` commands.
 
-- **P3.1** `providers/base.py`, `providers/registry.py`, `[project.entry-points."thumbforge.providers"]`.
+- **P3.1** `core/providers.py` (Protocol and boundary models), `core/json.py` (`JsonValue`), `providers/registry.py`, `[project.entry-points."thumbforge.providers"]`.
 - **P3.2** `providers/fake.py` + `tests/contract/test_provider_contract.py`.
 - **P3.3** spikes S1–S8 executed; findings in `docs/spikes/antigravity.md`.
 - **P3.4** `providers/antigravity.py`, `providers/antigravity_wrapper.j2`, marker-gated integration test.
@@ -31,11 +31,11 @@ class ProviderCapabilities(BaseModel, frozen=True):
     supports_negative_prompt: bool
     supports_aspect_ratio: bool
     max_batch: int            # images per call; 1 for Antigravity
-    max_concurrency: int      # provider-side safe parallelism; 1 for Antigravity
+    max_concurrency: int      # provider-side safe parallelism; 2 for Antigravity (spike S7)
     output_formats: frozenset[str]   # {"jpeg"} for Antigravity
 
 class ImageProvider(Protocol):
-    key: ClassVar[str]        # "antigravity", "fake"
+    key: ClassVar[str]        # "antigravity", "fake"; matches the entry-point name
     capabilities: ProviderCapabilities
     async def info(self) -> ProviderInfo          # name, version string, auth state
     async def healthcheck(self) -> HealthReport   # binary found, auth ok, model list
@@ -65,16 +65,24 @@ class GenerationResult(BaseModel, frozen=True):
     raw_response: dict[str, JsonValue]
 ```
 
-`ProviderInfo(key, name, version, auth: Literal["ok", "missing", "unknown"])`; `HealthReport(ok: bool, checks: list[Check(name, ok, detail)], models: list[str])`.
+`ProviderInfo(key, name, version, auth: Literal["ok", "missing", "unknown"])`; `HealthReport(checks, models)` with **`ok` derived** as `all(check.ok …)` rather than supplied, so a report cannot claim health while carrying a failed check. `auth="unknown"` is deliberately distinct from `"missing"`: a provider that cannot cheaply prove its credentials must not be reported as unauthenticated, or `provider check` would tell users to fix something that is not broken.
+
+**Placement.** The Protocol and these models live in **`core/providers.py`**, not `providers/base.py` as an earlier draft of this spec said. `core.services` consumes them — `HeroService` (P6.1) builds a `GenerationRequest` and reads a `GenerationResult` — and `core` may not import `providers`. This is the same constraint that moved `MetadataSource` to `core/sources.py` in P2.3, and `phase-1-skeleton.md` pre-authorised it: _"the contract is the rule, the file placement bends."_ `JsonValue` moved to `core/json.py` for the same reason: `cli` emits it, `core.providers` carries it in `params`/`raw_response`, and `storage` persists it, so it cannot live in `cli`.
+
+`supports_aspect_ratio` means the requested ratio _influences_ the result; it does **not** promise the exact width and height. Spike S3 measured Antigravity honouring "16:9 widescreen" while always returning 1376x768, so Phase 5 fits every result regardless of this flag.
 
 ### Registry (`PLAN.md` §4.1)
 
-- Builtin map `{"fake": FakeProvider, "antigravity": AntigravityProvider}` is merged with `importlib.metadata.entry_points(group="thumbforge.providers")`. The entry-point **name** is the provider key; the value is an `ImageProvider` class.
-- Duplicate key (builtin vs plugin, or two plugins) → `ProviderRegistryError` at load time.
-- Unknown key on the CLI → `NotFoundError` → exit `3`.
+- Builtin map `{"fake": FakeProvider, "antigravity": AntigravityProvider}` is merged with `importlib.metadata.entry_points(group="thumbforge.providers")`. The entry-point **name** is the provider key; the value is an `ImageProvider` class whose `__init__` takes its config mapping. `BUILTIN` starts empty and is populated by P3.2 and P3.4.
+- Duplicate key (builtin vs plugin, or two plugins) → `ProviderRegistryError` at discovery. An error rather than a precedence rule: silently shadowing a provider would make `--provider x` mean different things depending on what else is installed, and that failure surfaces as wrong images rather than as a message.
+- A plugin that raises on import → `ProviderRegistryError` naming the entry-point value, with the original error as `__cause__`. Skipping it is indistinguishable from "never installed", which is the harder failure to diagnose.
+- An entry point whose value is not callable → `ProviderRegistryError`.
+- Unknown key on the CLI → `NotFoundError` → exit `3`, hinting the available keys.
 - Core code never imports a concrete provider; it asks the registry.
 
-`registry.get(key: str, settings: Settings) -> ImageProvider`; `registry.keys() -> list[str]`.
+`registry.get(key: str, config: Mapping[str, JsonValue] | None = None) -> ImageProvider`; `registry.keys() -> list[str]`.
+
+A provider is constructed from **its own config mapping**, not from `Settings` as an earlier draft said. `storage` and `sources` likewise take plain values, so no adapter depends on the application's whole configuration tree — `cli` extracts `settings.providers.<key>` and passes it down. A mapping rather than a typed model because the registry cannot know which model a third-party provider wants, and `provider_profile.params_json` already stores provider config this way.
 
 ### FakeProvider (`PLAN.md` §4.2)
 

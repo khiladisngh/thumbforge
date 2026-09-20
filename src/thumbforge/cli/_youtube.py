@@ -14,9 +14,9 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
-from thumbforge.cli._render import JsonValue
 from thumbforge.core.enums import ChannelSource
 from thumbforge.core.errors import SettingsError
+from thumbforge.core.json import JsonPayload
 from thumbforge.storage.db import get_engine, session_scope
 from thumbforge.storage.repositories import Repositories
 
@@ -29,11 +29,6 @@ if TYPE_CHECKING:
 
 #: Shown where a nullable column has no value, per `PLAN.md` §5.3.
 EMPTY = "—"
-
-#: A mutable JSON object under construction. `JsonValue` for the values rather than `Any`
-#: keeps `emit`'s serialisability guarantee: a stray `Path` or `datetime` is a type error
-#: here instead of a runtime failure in output someone parses.
-type JsonPayload = dict[str, JsonValue]
 
 
 def build_source(source: ChannelSource) -> MetadataSource:
