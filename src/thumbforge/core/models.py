@@ -66,7 +66,7 @@ class PlaylistItemMeta(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     video: VideoMeta
-    position: int = Field(ge=1, description="1-based index from yt-dlp's playlist_index")
+    position: int = Field(ge=1, description="1-based position in playlist order")
 
 
 class PlaylistMeta(_Meta):

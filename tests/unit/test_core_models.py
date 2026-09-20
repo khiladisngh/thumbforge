@@ -79,7 +79,11 @@ def test_negative_duration_is_rejected() -> None:
 
 
 def test_playlist_position_is_one_based() -> None:
-    """`position` mirrors yt-dlp's 1-based `playlist_index`; 0 would break part numbering."""
+    """`position` is 1-based playlist order; 0 would break part numbering.
+
+    Not sourced from yt-dlp's `playlist_index` — spike S11 measured that field as absent
+    under `extract_flat`, so the position comes from enumeration order.
+    """
     with pytest.raises(ValidationError):
         PlaylistItemMeta(video=_video(), position=0)
 

@@ -98,4 +98,4 @@ Commands (from `PLAN.md` §5.2):
 
 ## Open spikes
 
-- **S11** yt-dlp flat playlist fields — confirms `playlist_index`, `channel_id`, `title` are present per entry with `extract_flat="in_playlist"`. If absent, `fetch_playlist` falls back to a per-video full extract (slower; `--refresh` cost rises) and the fixture format changes.
+- **S11** yt-dlp flat playlist fields — **resolved**, see `docs/spikes/ytdlp.md`. `id`, `title`, `duration`, `channel_id`, `channel`, `url`, `thumbnails` and `view_count` are always present per entry under `extract_flat="in_playlist"`. `playlist_index` is **absent**, so `PlaylistItemMeta.position` is derived from enumeration order. `description` is **absent** from every entry, and `timestamp`, `availability` and `live_status` are present but always `None`, so playlist-sourced `VideoMeta` rows keep their empty `description` and `published_at=None`; a per-video full extract fills them, and `fetch` must not fan out one per item.

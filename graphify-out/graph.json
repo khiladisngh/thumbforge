@@ -3436,7 +3436,7 @@
       "file_type": "code",
       "norm_label": "test_item_count_tracks_items()",
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L87"
+      "source_location": "L91"
     },
     {
       "id": "tests_unit_test_core_models_test_playlist_position_is_one_based",
@@ -3460,7 +3460,7 @@
       "file_type": "code",
       "norm_label": "test_resolved_url_carries_kind_and_id()",
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L102"
+      "source_location": "L106"
     },
     {
       "id": "tests_unit_test_core_models_test_snapshots_are_frozen",
@@ -7142,7 +7142,7 @@
       "source_location": "L1"
     },
     {
-      "id": "tests_unit_test_core_models_rationale_103",
+      "id": "tests_unit_test_core_models_rationale_107",
       "label": "`resolve()` returns both halves (ADR 0005); an empty id is never a valid result.",
       "_origin": "ast",
       "community": 9,
@@ -7150,7 +7150,7 @@
       "file_type": "rationale",
       "norm_label": "`resolve()` returns both halves (adr 0005); an empty id is never a valid result.",
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L103"
+      "source_location": "L107"
     },
     {
       "id": "tests_unit_test_core_models_rationale_21",
@@ -7187,17 +7187,17 @@
     },
     {
       "id": "tests_unit_test_core_models_rationale_82",
-      "label": "`position` mirrors yt-dlp's 1-based `playlist_index`; 0 would break part\u2026",
+      "label": "`position` is 1-based playlist order; 0 would break part numbering. Not sourced\u2026",
       "_origin": "ast",
       "community": 9,
       "community_name": "Community 9",
       "file_type": "rationale",
-      "norm_label": "`position` mirrors yt-dlp's 1-based `playlist_index`; 0 would break part...",
+      "norm_label": "`position` is 1-based playlist order; 0 would break part numbering. not sourced...",
       "source_file": "tests/unit/test_core_models.py",
       "source_location": "L82"
     },
     {
-      "id": "tests_unit_test_core_models_rationale_88",
+      "id": "tests_unit_test_core_models_rationale_92",
       "label": "`item_count` feeds the `playlist.item_count` column, so it must not drift.",
       "_origin": "ast",
       "community": 9,
@@ -7205,7 +7205,7 @@
       "file_type": "rationale",
       "norm_label": "`item_count` feeds the `playlist.item_count` column, so it must not drift.",
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L88"
+      "source_location": "L92"
     },
     {
       "id": "io",
@@ -7336,6 +7336,30 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "typer",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "thumbforge_core_enums",
+      "label": "thumbforge_core_enums",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "Community 12",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "thumbforge_core_enums",
+      "source_file": "",
+      "type": "external"
+    },
+    {
+      "id": "thumbforge_core_errors",
+      "label": "thumbforge_core_errors",
+      "_origin": "semantic",
+      "community": 12,
+      "community_name": "Community 12",
+      "external": true,
+      "file_type": "concept",
+      "norm_label": "thumbforge_core_errors",
       "source_file": "",
       "type": "external"
     },
@@ -7744,28 +7768,6 @@
       "external": true,
       "file_type": "concept",
       "norm_label": "pydantic",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "thumbforge_core_enums",
-      "label": "thumbforge_core_enums",
-      "community": 12,
-      "community_name": "Community 12",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "thumbforge_core_enums",
-      "source_file": "",
-      "type": "external"
-    },
-    {
-      "id": "thumbforge_core_errors",
-      "label": "thumbforge_core_errors",
-      "community": 12,
-      "community_name": "Community 12",
-      "external": true,
-      "file_type": "concept",
-      "norm_label": "thumbforge_core_errors",
       "source_file": "",
       "type": "external"
     }
@@ -9232,7 +9234,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L94",
+      "source_location": "L98",
       "weight": 1.0
     },
     {
@@ -9244,7 +9246,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L84",
+      "source_location": "L88",
       "weight": 1.0
     },
     {
@@ -18776,7 +18778,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L102",
+      "source_location": "L106",
       "weight": 1.0
     },
     {
@@ -18875,7 +18877,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L87",
+      "source_location": "L91",
       "weight": 1.0
     },
     {
@@ -22421,14 +22423,14 @@
       "weight": 1.0
     },
     {
-      "source": "tests_unit_test_core_models_rationale_103",
+      "source": "tests_unit_test_core_models_rationale_107",
       "target": "tests_unit_test_core_models_test_resolved_url_carries_kind_and_id",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L103",
+      "source_location": "L107",
       "weight": 1.0
     },
     {
@@ -22520,14 +22522,14 @@
       "weight": 1.0
     },
     {
-      "source": "tests_unit_test_core_models_rationale_88",
+      "source": "tests_unit_test_core_models_rationale_92",
       "target": "tests_unit_test_core_models_test_item_count_tracks_items",
       "relation": "rationale_for",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L88",
+      "source_location": "L92",
       "weight": 1.0
     },
     {
@@ -23714,7 +23716,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L89",
+      "source_location": "L93",
       "weight": 0.8
     },
     {
@@ -23725,7 +23727,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L94",
+      "source_location": "L98",
       "weight": 0.8
     },
     {
@@ -23758,7 +23760,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L84",
+      "source_location": "L88",
       "weight": 0.8
     },
     {
@@ -23769,7 +23771,7 @@
       "confidence": "INFERRED",
       "confidence_score": 0.95,
       "source_file": "tests/unit/test_core_models.py",
-      "source_location": "L104",
+      "source_location": "L108",
       "weight": 0.8
     },
     {
@@ -24489,5 +24491,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2ed011b3be89c86adc1820faf17efe9e7fda3c40"
+  "built_at_commit": "087a07b5b2a56e20d15bb939c432f2fe401c4a7b"
 }
