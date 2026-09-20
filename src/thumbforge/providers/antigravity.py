@@ -267,7 +267,7 @@ class AntigravityProvider:
 
         conversation_id = _as_str(envelope.get("conversation_id"), "")
         response = _as_str(envelope.get("response"), "")
-        produced = self._locate_output(conversation_id, stderr, response)
+        produced = await asyncio.to_thread(self._locate_output, conversation_id, stderr, response)
         destination = workdir / f"{request.idempotency_key}.jpg"
         # Off the loop: with max_concurrency=2 a copy plus a Pillow decode would otherwise
         # stall the sibling generation. FakeProvider.generate uses the same pattern.
@@ -337,9 +337,7 @@ class AntigravityProvider:
                 process.communicate(), timeout=self._timeout_s + _KILL_GRACE_S
             )
         except TimeoutError as exc:
-            process.kill()
-            with contextlib.suppress(ProcessLookupError):
-                await process.wait()
+            await _reap(process)
             msg = f"{self._binary} did not exit within {self._timeout_s + _KILL_GRACE_S}s"
             raise ProviderTimeoutError(msg, hint="raise providers.antigravity.timeout_s") from exc
 
@@ -408,13 +406,22 @@ class AntigravityProvider:
             out, _ = await asyncio.wait_for(process.communicate(), timeout=_VERSION_TIMEOUT_S)
         except OSError:
             if process is not None:
-                # Same reaping as _invoke: a hung `agy --version` must not outlive the call.
-                process.kill()
-                with contextlib.suppress(ProcessLookupError):
-                    await process.wait()
+                await _reap(process)
             return None
         self._version_cache = out.decode(errors="replace").strip() or None
         return self._version_cache
+
+
+async def _reap(process: asyncio.subprocess.Process) -> None:
+    """Kill a child and collect it, tolerating one that has already exited.
+
+    The exit can land between the timeout expiring and the kill, so both calls are inside the
+    suppression: `kill()` on a reaped process raises `ProcessLookupError`, and letting that
+    escape would replace the timeout diagnosis with an unrelated traceback.
+    """
+    with contextlib.suppress(ProcessLookupError):
+        process.kill()
+        await process.wait()
 
 
 def _relayed_exhaustion(response: str) -> str | None:

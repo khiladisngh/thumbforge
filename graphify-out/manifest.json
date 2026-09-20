@@ -414,15 +414,15 @@
     "semantic_hash": "4892909acdd7ba15d30276f4b58b6622"
   },
   "src/thumbforge/providers/antigravity.py": {
-    "mtime": 1789906624.4620755,
-    "seen": 1789906725.220406,
-    "ast_hash": "b646aecc27b8eeffd7fa5578023a2e5e",
-    "semantic_hash": "b646aecc27b8eeffd7fa5578023a2e5e"
+    "mtime": 1789907828.8428884,
+    "seen": 1789907856.009048,
+    "ast_hash": "44fac56b9a87e47e08a355e5a4d75ea7",
+    "semantic_hash": "44fac56b9a87e47e08a355e5a4d75ea7"
   },
   "tests/unit/test_antigravity_provider.py": {
-    "mtime": 1789906610.1383638,
-    "seen": 1789906725.2224307,
-    "ast_hash": "40e43c4ec1a35c9af68d8efe42c8cf21",
-    "semantic_hash": "40e43c4ec1a35c9af68d8efe42c8cf21"
+    "mtime": 1789907813.9166913,
+    "seen": 1789907856.0111225,
+    "ast_hash": "ce80e84e342fe0b58d6bd0cae68551c2",
+    "semantic_hash": "ce80e84e342fe0b58d6bd0cae68551c2"
   }
 }

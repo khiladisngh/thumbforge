@@ -9,8 +9,10 @@ Every envelope below is the shape spike S6 actually measured, not an invented on
 
 from __future__ import annotations
 
+import asyncio
 import json
-from typing import TYPE_CHECKING, Any
+import sys
+from typing import TYPE_CHECKING, Any, cast
 
 import pytest
 from PIL import Image
@@ -23,6 +25,7 @@ from thumbforge.core.errors import (
     ProviderTransientError,
 )
 from thumbforge.core.providers import GenerationRequest
+from thumbforge.providers import antigravity
 from thumbforge.providers.antigravity import AntigravityProvider, _aspect_words, _wrap
 
 if TYPE_CHECKING:
@@ -374,3 +377,67 @@ def test_the_wrapper_states_no_output_path() -> None:
     assert "people" in prompt
     assert ".jpg" not in prompt
     assert "save" in prompt.lower(), "it must still forbid the agent saving the file itself"
+
+
+async def test_reap_tolerates_a_child_that_already_exited() -> None:
+    """The kill can land after the child has gone, and that must not mask the timeout.
+
+    `Process.kill()` on a reaped child raises `ProcessLookupError`; letting it escape would
+    replace the timeout diagnosis with an unrelated traceback.
+    """
+
+    class Gone:
+        waited = False
+
+        def kill(self) -> None:
+            raise ProcessLookupError
+
+        async def wait(self) -> int:
+            Gone.waited = True
+            return 0
+
+    await antigravity._reap(cast("Any", Gone()))
+
+    assert Gone.waited is False, "wait() is unreachable once kill() raises"
+
+
+async def test_reap_actually_kills_a_running_child() -> None:
+    """The spec's acceptance criterion: after a timeout the child is gone.
+
+    Uses a real process, because suppressing `ProcessLookupError` around a `kill()` that
+    never happens would pass a stub-only test while leaking a subprocess per timeout.
+    """
+    process = await asyncio.create_subprocess_exec(
+        sys.executable, "-c", "import time; time.sleep(30)"
+    )
+
+    await antigravity._reap(process)
+
+    assert process.returncode is not None, "the child outlived the call"
+
+
+async def test_a_hung_child_is_killed_and_reported_as_a_timeout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The real subprocess path, which the injected runner bypasses everywhere else.
+
+    Exercises `create_subprocess_exec`, the `wait_for` backstop for a child that ignores
+    `--print-timeout`, and `_reap`. The grace period is patched to keep it fast; without
+    that the floor is `_KILL_GRACE_S` seconds.
+    """
+    monkeypatch.setattr(antigravity, "_KILL_GRACE_S", 0)
+    brain = tmp_path / "brain"
+    brain.mkdir()
+    provider = AntigravityProvider(
+        {
+            "brain_dir": str(brain),
+            "binary": sys.executable,
+            "timeout_s": 1,
+        }
+    )
+
+    with pytest.raises(ProviderTimeoutError) as caught:
+        await provider._invoke([sys.executable, "-c", "import time; time.sleep(30)"], tmp_path)
+
+    assert "did not exit within" in str(caught.value)
+    assert caught.value.retryable is True
