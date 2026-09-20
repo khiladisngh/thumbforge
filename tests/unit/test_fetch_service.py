@@ -20,7 +20,7 @@ from thumbforge.core.models import (
     ResolvedUrl,
     VideoMeta,
 )
-from thumbforge.core.services.fetch import DEFAULT_MAX_AGE, FetchService
+from thumbforge.core.services.fetch import DEFAULT_MAX_AGE, FetchService, StoredPlaylist
 from thumbforge.core.sources import MetadataSource
 from thumbforge.core.urls import classify_url
 
@@ -79,18 +79,21 @@ class FakeSource:
 class FakeStore:
     """The `FetchStore` surface, recording what was written."""
 
-    def __init__(self, *, fetched_at: DateTime | None = None, removed: int = 0) -> None:
+    def __init__(
+        self, *, fetched_at: DateTime | None = None, removed: int = 0, stored: int = 2
+    ) -> None:
         self.written: list[str] = []
         self._fetched_at = fetched_at
         self._removed = removed
+        self._stored = stored
 
     def store_video(self, meta: VideoMeta, channel: ChannelMeta | None = None) -> object:
         self.written.append(f"video:{meta.youtube_id}:channel={channel is not None}")
         return object()
 
-    def store_playlist(self, meta: PlaylistMeta, channel: ChannelMeta) -> tuple[object, int]:
+    def store_playlist(self, meta: PlaylistMeta, channel: ChannelMeta) -> StoredPlaylist:
         self.written.append(f"playlist:{meta.youtube_id}:owner={channel.youtube_id}")
-        return object(), self._removed
+        return StoredPlaylist(item_count=self._stored, removed_items=self._removed)
 
     def store_channel(self, meta: ChannelMeta) -> object:
         self.written.append(f"channel:{meta.youtube_id}")

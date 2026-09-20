@@ -35,6 +35,21 @@ if TYPE_CHECKING:
 DEFAULT_MAX_AGE = timedelta(hours=24)
 
 
+@dataclass(frozen=True, slots=True)
+class StoredPlaylist:
+    """What persisting a playlist actually wrote.
+
+    Returned instead of the ORM row because both numbers can differ from the fetched
+    snapshot: a playlist that repeats a video stores fewer rows than it lists
+    (`UNIQUE(playlist_id, video_id)`), and a re-fetch can drop rows. A structural Protocol
+    over the row was tried first and does not work — SQLAlchemy declares columns as
+    `Mapped[int]`, which pyright will not match against a plain `int` attribute.
+    """
+
+    item_count: int
+    removed_items: int
+
+
 class FetchStore(Protocol):
     """The persistence surface a fetch needs, satisfied by `storage.Repositories`."""
 
@@ -42,8 +57,8 @@ class FetchStore(Protocol):
         """Persist one video, and its channel when the caller fetched one."""
         ...
 
-    def store_playlist(self, meta: PlaylistMeta, channel: ChannelMeta) -> tuple[object, int]:
-        """Persist a playlist, its owner, its videos and its order; return items removed."""
+    def store_playlist(self, meta: PlaylistMeta, channel: ChannelMeta) -> StoredPlaylist:
+        """Persist a playlist, its owner, its videos and its order."""
         ...
 
     def store_channel(self, meta: ChannelMeta) -> object:
@@ -59,9 +74,10 @@ class FetchStore(Protocol):
 class FetchResult:
     """What was fetched, for rendering and for the `--json` contract.
 
-    Counts are of rows *written*, which is why `videos` is 1 for a video fetch and
-    `len(items)` for a playlist: the caller reports "Stored 1 channel, 1 playlist, 12
-    videos" (`PLAN.md` §5.3) and must not have to recount.
+    Counts are of rows *written*: the caller reports "Stored 1 channel, 1 playlist, 12
+    videos" (`PLAN.md` §5.3) and must not have to recount. `videos_stored` comes from the
+    store for that reason — a playlist repeating a video stores fewer rows than it lists,
+    and counting the snapshot would print a number the table contradicts.
 
     `youtube_id` is always set, including on the cached path where no metadata was fetched,
     because the caller renders its table from the stored rows either way.
@@ -74,6 +90,9 @@ class FetchResult:
     video: VideoMeta | None = None
     cached: bool = False
     removed_items: int = 0
+    #: Video rows written, reported by the store rather than counted from the snapshot: a
+    #: playlist that repeats a video yields fewer rows than entries.
+    videos_stored: int = 0
 
     @property
     def channels_stored(self) -> int:
@@ -84,15 +103,6 @@ class FetchResult:
     def playlists_stored(self) -> int:
         """Playlist rows written."""
         return 0 if self.cached or self.playlist is None else 1
-
-    @property
-    def videos_stored(self) -> int:
-        """Video rows written."""
-        if self.cached:
-            return 0
-        if self.playlist is not None:
-            return self.playlist.item_count
-        return 0 if self.video is None else 1
 
 
 class FetchService:
@@ -137,6 +147,7 @@ class FetchService:
             youtube_id=video.youtube_id,
             video=video,
             channel=channel,
+            videos_stored=1,
         )
 
     async def _fetch_playlist(self, resolved: ResolvedUrl, *, refresh: bool) -> FetchResult:
@@ -153,13 +164,14 @@ class FetchService:
             raise SourceError(msg, hint="re-run with --refresh, or check the playlist is public")
 
         channel = await self._source.fetch_channel(playlist.channel_id)
-        _, removed = self._store.store_playlist(playlist, channel)
+        stored = self._store.store_playlist(playlist, channel)
         return FetchResult(
             kind=UrlKind.PLAYLIST,
             youtube_id=playlist.youtube_id,
             playlist=playlist,
             channel=channel,
-            removed_items=removed,
+            removed_items=stored.removed_items,
+            videos_stored=stored.item_count,
         )
 
     async def _fetch_channel(self, resolved: ResolvedUrl) -> FetchResult:

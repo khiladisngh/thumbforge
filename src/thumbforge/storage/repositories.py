@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 
 from thumbforge.core.errors import NotFoundError
+from thumbforge.core.services.fetch import StoredPlaylist
 from thumbforge.storage.models import Channel, Playlist, PlaylistItem, Video
 
 if TYPE_CHECKING:
@@ -253,12 +254,13 @@ class Repositories:
         channel_row_id = None if channel is None else self.channels.upsert(channel).id
         return self.videos.upsert(meta, channel_row_id=channel_row_id)
 
-    def store_playlist(self, meta: PlaylistMeta, channel: ChannelMeta) -> tuple[Playlist, int]:
+    def store_playlist(self, meta: PlaylistMeta, channel: ChannelMeta) -> StoredPlaylist:
         """Persist a playlist, its owning channel, its videos and its item order.
 
-        Returns the playlist row and the number of items dropped from it, so `fetch` can
-        report that a re-fetch shrank the playlist. Videos removed from a playlist keep
-        their own rows: their generated thumbnails are still real artefacts.
+        Reports what was *written* rather than returning the row: `item_count` can be lower
+        than `meta.item_count` when the playlist repeats a video, and `fetch` must print the
+        number its own table shows. Videos dropped from a playlist keep their own rows —
+        their generated thumbnails are still real artefacts.
         """
         channel_row = self.channels.upsert(channel)
         playlist = self.playlists.upsert(meta, channel_row_id=channel_row.id)
@@ -274,7 +276,7 @@ class Repositories:
                 video_ids.append(video_row.id)
 
         removed = self.playlists.replace_items(playlist, video_ids)
-        return playlist, removed
+        return StoredPlaylist(item_count=playlist.item_count, removed_items=removed)
 
     def store_channel(self, meta: ChannelMeta) -> Channel:
         """Persist a channel on its own (a channel URL was fetched)."""

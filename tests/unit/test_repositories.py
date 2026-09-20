@@ -127,9 +127,10 @@ def test_removed_items_are_reported_and_videos_kept(repos: Repositories) -> None
     """A video dropped from a playlist keeps its row: its thumbnails are still real."""
     repos.store_playlist(_playlist(_video("a"), _video("b")), _channel())
 
-    _, removed = repos.store_playlist(_playlist(_video("a")), _channel())
+    stored = repos.store_playlist(_playlist(_video("a")), _channel())
 
-    assert removed == 1
+    assert stored.removed_items == 1
+    assert stored.item_count == 1
     items = repos.playlists.items(repos.playlists.resolve("PL" + "p" * 16))
     assert len(items) == 1
     assert repos.videos.get("bzzzzzzzzzz") is not None

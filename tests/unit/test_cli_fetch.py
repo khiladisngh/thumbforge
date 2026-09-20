@@ -298,3 +298,37 @@ def test_removed_items_are_reported_on_refetch(
 
     assert result.exit_code == 0, result.stdout
     assert "1 item(s) left the playlist." in result.stdout
+
+
+def test_stored_video_count_matches_the_table_when_a_video_repeats(
+    data_dir: Path, source: StubSource, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """`UNIQUE(playlist_id, video_id)` means a repeat stores one row, not two.
+
+    The summary line and the table are read by the same person in the same breath, so
+    "Stored ... 3 videos" above a two-row table is a bug even though no data is lost.
+    """
+
+    async def repeating(self: StubSource, youtube_id: str) -> PlaylistMeta:
+        video = VideoMeta(youtube_id="vid00000001", title="First part", url="u", channel_id=OWNER)
+        other = VideoMeta(youtube_id="vid00000002", title="Second part", url="u", channel_id=OWNER)
+        return PlaylistMeta(
+            youtube_id=youtube_id,
+            title="Rust for Pythonistas",
+            url=PLAYLIST_URL,
+            channel_id=OWNER,
+            items=(
+                PlaylistItemMeta(video=video, position=1),
+                PlaylistItemMeta(video=other, position=2),
+                PlaylistItemMeta(video=video, position=3),
+            ),
+        )
+
+    monkeypatch.setattr(StubSource, "fetch_playlist", repeating)
+
+    result = runner.invoke(app, ["--json", "--data-dir", str(data_dir), "fetch", PLAYLIST_URL])
+
+    payload = json.loads(result.stdout)
+    assert len(payload["videos"]) == 2
+    assert payload["playlist"]["item_count"] == 2
+    assert payload["stored"]["videos"] == 2
