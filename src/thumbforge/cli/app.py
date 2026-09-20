@@ -19,6 +19,9 @@ from rich.console import Console
 from thumbforge import __version__
 from thumbforge.cli import config as config_cli
 from thumbforge.cli import db as db_cli
+from thumbforge.cli import fetch as fetch_cli
+from thumbforge.cli import playlist as playlist_cli
+from thumbforge.cli import video as video_cli
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import SettingsError
@@ -130,6 +133,12 @@ def root(
 
 app.add_typer(config_cli.app)
 app.add_typer(db_cli.app)
+app.add_typer(playlist_cli.app)
+app.add_typer(video_cli.app)
+
+# `fetch` is a bare top-level command (`thumbforge fetch <url>`), not a sub-app, so it is
+# registered directly rather than through add_typer.
+app.command("fetch")(fetch_cli.fetch)
 
 
 def main() -> None:

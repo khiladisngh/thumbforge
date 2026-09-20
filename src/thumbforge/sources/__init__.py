@@ -1,6 +1,5 @@
-"""Metadata sources: YouTube metadata providers behind one Protocol (ADR 0005)."""
+"""Metadata sources: concrete `core.sources.MetadataSource` implementations (ADR 0005)."""
 
-from thumbforge.sources.base import MetadataSource
 from thumbforge.sources.ytdlp import YtDlpSource
 
-__all__ = ["MetadataSource", "YtDlpSource"]
+__all__ = ["YtDlpSource"]

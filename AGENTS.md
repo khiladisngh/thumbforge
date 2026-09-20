@@ -7,9 +7,9 @@ This file is the single source of truth for how agents work in this repository. 
 ```
 src/thumbforge/
   cli/          Typer apps only; no business logic; Rich rendering in cli/_render.py; error→exit mapping in cli/_errors.py
-  core/         domain models (Pydantic v2), error hierarchy, id/hash helpers, services (hero, iterate, batch, compliance)
+  core/         domain models (Pydantic v2), error hierarchy, id/hash helpers, adapter Protocols (sources.py), services (fetch, hero, iterate, batch, compliance)
   providers/    ImageProvider protocol, capabilities, registry (entry points "thumbforge.providers"), fake.py, antigravity.py
-  sources/      MetadataSource protocol; ytdlp.py (default); youtube_api.py (optional extra)
+  sources/      MetadataSource implementations; ytdlp.py (default); youtube_api.py (optional extra). The Protocol itself lives in core/sources.py, because core.services consumes it
   storage/      SQLAlchemy 2.0 models, repositories, Alembic migrations, content-addressed AssetStore
   templates/    layout spec schema (TOML), Jinja2 prompt rendering, builtin templates
   imaging/      Pillow fit/crop, text overlay, YouTube compliance check, bundled font
