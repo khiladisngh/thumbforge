@@ -9,7 +9,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d503504a`
+- Built from commit: `600ce4f8`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -494,11 +494,11 @@ Nodes (3): Path, `providers.antigravity.*` must actually configure the instance 
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `ThumbforgeError` connect `Community 47` to `Community 33`, `Community 34`, `Community 4`, `Community 6`, `Community 71`, `Community 9`, `Community 48`, `Community 24`, `Community 57`, `Community 58`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
-- **Why does `handle_errors()` connect `Community 33` to `Community 8`, `Community 4`, `Community 47`?**
+  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+- **Why does `fetch()` connect `Community 36` to `Community 8`, `Community 28`, `Community 21`, `Community 26`, `Community 27`, `Community 60`?**
   _High betweenness centrality (0.020) - this node is a cross-community bridge._
-- **Why does `SettingsError` connect `Community 48` to `Community 34`, `Community 4`, `Community 8`, `Community 47`, `Community 20`, `Community 21`, `Community 26`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+- **Why does `AppContext` connect `Community 4` to `Community 40`, `Community 8`, `Community 21`, `Community 71`?**
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **Are the 4 inferred relationships involving `emit()` (e.g. with `check()` and `list_()`) actually correct?**
   _`emit()` has 4 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 18 inferred relationships involving `Repositories` (e.g. with `repos()` and `test_duplicate_video_in_a_playlist_is_listed_once()`) actually correct?**
