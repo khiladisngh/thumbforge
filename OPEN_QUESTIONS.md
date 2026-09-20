@@ -58,6 +58,22 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 - Verify: `uv tool install graphifyy && graphify extract . --code-only && graphify cluster-only . --no-label`
 - Result: working seamlessly under Windows with uv; generated `graphify-out/` committed to repo.
 
+### S10 — terminal image preview with `rich-pixels` in Windows Terminal
+
+- Verify (run in Windows Terminal, the primary development terminal):
+    ```
+    uv run --with rich --with rich-pixels --with pillow python -c "from PIL import Image; from rich.console import Console; from rich_pixels import Pixels; c=Console(); Image.new('RGB',(1920,1080),(200,40,40)).save('preview.png'); w=max(c.width//2-2,20); c.print(Pixels.from_image_path('preview.png',resize=(w,w*9//16)))"
+    ```
+    Replace the synthetic fill with a real thumbnail once one exists. The tile is sized to
+    half the terminal width, which is what one cell of the `--columns 2` grid gets. Confirm
+    the block-character output is legible — that the title and overall composition are
+    recognisable, not that it is pixel-accurate. Note that `rich.columns.Columns` did **not**
+    lay two `Pixels` tiles side by side in a smoke test, so P5.4 must verify the real grid
+    layout rather than assume it.
+- Changes: the `_render.preview()` helper and P5.4. If unusable, `preview` prints the asset paths plus the `thumb export` hint and `thumb show` falls back to a table (ADR 0002).
+
+### S11 — yt-dlp flat playlist fields under `extract_flat`
+
 - Verify: `uv run --with yt-dlp python -c "import yt_dlp,json; print(json.dumps(yt_dlp.YoutubeDL({'extract_flat':'in_playlist','quiet':True}).extract_info('<playlist url>', download=False)['entries'][0], indent=1))"`; confirm `playlist_index`, `channel_id`, `title`, `id`, `duration` are present.
 - Changes: `VideoMeta` fields and the P2.2 fixture recorder.
 
