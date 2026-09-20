@@ -85,26 +85,28 @@ class GenerationResult(BaseModel, frozen=True):
 
 ### AntigravityProvider (`PLAN.md` §4.3)
 
-Designed around verified behaviour only (headless docs + `agy --help`, agy 1.2.3). Everything about the image tool itself is a spike (S1–S8).
+Designed around **measured** behaviour: spikes S1–S8 ran against `agy 1.2.6` and are recorded in `docs/spikes/antigravity.md`. They confirmed the image tool exists (`generate_image`) and falsified four of the original design points, so ADR 0013 is now `Accepted` and the design below reflects the measurements, not the docs. Only the unauthenticated path (S6a) is still unverified.
 
-1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call its native image tool exactly once, (b) states the exact absolute output path `<workdir>/<idempotency_key>.jpg`, (c) states the target size as digits and words ("1920 x 1080 pixels, 16:9 widescreen"), (d) lists reference image absolute paths, (e) forbids running shell commands or other tools.
+1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call `generate_image` exactly once, (b) states the aspect ratio in words ("16:9 widescreen") — S3 measured this as the only lever on output size, (c) lists reference image absolute paths for the agent to `view_file`, (d) forbids running shell commands or other tools. It states **no output path**: `generate_image` accepts only `ImageName` and `Prompt`.
 2. Run `[binary, "-p", prompt, "--output-format", "json", "--add-dir", str(workdir), *("--add-dir", d for d in reference_dirs), "--print-timeout", f"{timeout_s}s", *(["--dangerously-skip-permissions"] if skip_permissions else []), *(["--model", model] if model else []), *(["--effort", effort] if effort else [])]` via `asyncio.create_subprocess_exec(..., cwd=workdir, stdout=PIPE, stderr=PIPE)`.
-3. Success ⇔ exit code `0` **and** `status == "SUCCESS"` **and** the output file exists **and** Pillow opens it.
-4. Error mapping:
+3. Locate the image by globbing `~/.gemini/antigravity-cli/brain/<conversation_id>/` using the envelope's `conversation_id`, then copy it into the asset store. Success ⇔ exit `0` **and** `status == "SUCCESS"` **and** exactly one image found **and** Pillow opens it.
+4. Error mapping. The timeout row **must** precede the missing-output row — agy's print timeout presents as `SUCCESS` with no file (S6c), so the reverse order makes every long generation a permanent failure:
 
-    | Observation                                            | Exception                                                                            | Retryable |
-    | ------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------- |
-    | `SUCCESS` but output file missing                      | `ProviderOutputMissingError` (message mentions `~/.gemini/antigravity-cli/scratch/`) | no        |
-    | `status ∈ {CANCELED, INTERRUPTED}`                     | `ProviderTransientError`                                                             | yes       |
-    | `ERROR` and `error` contains `authentication required` | `ProviderAuthError`                                                                  | no        |
-    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`  | `ProviderPermanentError`                                                             | no        |
-    | subprocess exceeds `timeout_s + 30`                    | `ProviderTimeoutError` (process killed)                                              | yes       |
-    | binary not found                                       | `ProviderPermanentError` with hint "install Antigravity CLI"                         | no        |
+    | Observation                                                       | Exception                                                            | Retryable |
+    | ----------------------------------------------------------------- | -------------------------------------------------------------------- | --------- |
+    | `SUCCESS`, empty `response`, `total_tokens == 0`, no output image | `ProviderTimeoutError` (agy's print timeout)                         | **yes**   |
+    | `SUCCESS` but no image in `brain/<conversation_id>/`              | `ProviderOutputMissingError` (message names the **brain** directory) | no        |
+    | `status ∈ {CANCELED, INTERRUPTED}`                                | `ProviderTransientError`                                             | yes       |
+    | `ERROR` and `error` contains `authentication required`            | `ProviderAuthError`                                                  | no        |
+    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`             | `ProviderPermanentError`                                             | no        |
+    | subprocess exceeds `timeout_s + 30`                               | `ProviderTimeoutError` (process killed)                              | yes       |
+    | binary not found                                                  | `ProviderPermanentError` with hint "install Antigravity CLI"         | no        |
 
 5. `usage` tokens and `duration_seconds` are written to `iteration.cost_json`; the whole envelope to `provider_response_json`; stdout/stderr to per-iteration log files.
 6. Never uses `--continue`/`--conversation`; every image is a fresh conversation.
-7. `providers.antigravity.skip_permissions` defaults to `true` (decision D4). The documented alternative is a `permissions.allow` rule for the image tool discovered in spike S1.
-8. Capabilities: reference=True (pending S4), seed=False, negative=True (prompt-only), aspect=True (prompt-only, pending S3), max_batch=1, max_concurrency=1, formats={"jpeg"}.
+7. `providers.antigravity.skip_permissions` defaults to **`false`** — S5 superseded decision D4 by measuring `generate_image` succeeding with neither the flag nor a `permissions.allow` rule.
+8. Capabilities, as measured: reference=**False** (S4: the agent describes a reference rather than conditioning on it), seed=False, negative=True (prompt-only), aspect=True but influence-only (S3), max_batch=1, max_concurrency=**2** (S7), formats={"jpeg"}.
+9. `healthcheck()` additionally reports `~/.gemini/config/plugins/`: every headless run inherits the developer's globally installed plugins (S4 observed a `superpowers` skill file being opened unprompted), so output is not a pure function of thumbforge's inputs.
 
 Settings consumed: `[providers.antigravity] binary, model, effort, timeout_s, skip_permissions` (see `phase-1-skeleton.md`). `healthcheck()` runs `shutil.which(binary)`, `agy --version`, `agy models`, and `agy -p "reply ok" --output-format json` and reports auth from the envelope.
 
@@ -149,15 +151,16 @@ Secrets (`PLAN.md` §8): lookup order environment variable `THUMBFORGE_PROVIDERS
 - Integration (`-m integration`): live Antigravity generation; skipped unless `agy` is on PATH and authenticated.
 - Golden: none.
 
-## Open spikes
+## Resolved spikes
 
-S1–S8 block P3.4 (adapter code is not merged until each is recorded in `docs/spikes/antigravity.md`):
+S1–S8 ran on 2026-09-20 against `agy 1.2.6` and are recorded with raw output in
+`docs/spikes/antigravity.md`. **P3.4 is unblocked.** Outcomes that changed this spec:
 
-- **S1** headless `agy -p` exposes an image tool — if absent, ADR 0013 stays _Proposed_, P3.4 is blocked, and an "external-image-file" provider (user supplies an image path) is added so Phases 5–7 proceed.
-- **S2** output path control via `--add-dir` + prompt — if the file lands only in `~/.gemini/antigravity-cli/scratch/`, the adapter must copy from scratch (and step 1(b) of the wrapper changes).
-- **S3** output format and size behaviour — decides whether Phase 5 always upscales from 1376×768 and whether `formats` stays `{"jpeg"}`.
-- **S4** reference images accepted by absolute path — decides `supports_reference_image`.
-- **S5** permission soft-deny and `permissions.allow` rule — decides the D4 default and what `provider check` must verify.
-- **S6** exit code / status matrix — confirms the error-mapping table.
-- **S7** rate limits / quota — may lower `timeout_s` defaults or add a cooldown between calls.
-- **S8** cost/usage fields — decides what `Cost` carries for Antigravity.
+- **S1** — the tool is **`generate_image`** (1 of 57 headless tools). ADR 0013 is `Accepted`; the "external-image-file" fallback provider is not needed.
+- **S2** — output path is **not controllable**. The image lands in `~/.gemini/antigravity-cli/brain/<conversation_id>/`, not `--add-dir` and not `scratch/`. The adapter globs that directory using the envelope's `conversation_id`.
+- **S3** — **always JPEG**; `"16:9 widescreen"` reliably yields **1376×768** (5 of 5), and exact dimensions are never specifiable. Phase 5 therefore always upscales 1.40× to the 1920×1080 default and crops 1.792 → 1.778.
+- **S4** — references are **prose only**: the agent `view_file`s the image and describes it, so `supports_reference_image = False`. Palette transfer measured good, but there is no image-to-image conditioning.
+- **S5** — `generate_image` needs **no permission grant**, superseding decision D4: `skip_permissions` defaults to `false`.
+- **S6** — a bad `--model` exits `1` with a clean `ERROR` envelope, but **`--print-timeout` expiry returns exit `0` and `SUCCESS` with an empty response**, which is why the timeout row precedes the missing-output row above. The unauthenticated path (S6a) remains unverified.
+- **S7** — no throttling; two concurrent runs are safe and faster, so `max_concurrency = 2`. Seven generations cost 1% of the five-hour quota.
+- **S8** — `usage` is **tokens only**, with no monetary field, so `Cost` carries tokens and `duration_seconds`.

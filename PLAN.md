@@ -197,28 +197,30 @@ Verified from the official headless docs and `agy --help` (agy 1.2.3):
 - Headless mode uses cached credentials; an unauthenticated run exits with `authentication required`.
 - Permission-gated tools are **soft-denied** in headless mode (exit 0, notice on stderr) unless allowed via `permissions.allow` in `~/.gemini/antigravity-cli/settings.json` or `--dangerously-skip-permissions`.
 
-Not verified (third-party reports only; every item is a spike in `OPEN_QUESTIONS.md` S1–S8): existence/name of the image tool in headless mode, prompt-driven output path, default scratch directory, JPEG-only output, size behaviour, reference-image passing, rate limits, cost reporting.
+Measured by spikes S1–S8 against `agy 1.2.6` (`docs/spikes/antigravity.md`): the image tool is **`generate_image`**, whose only parameters are `ImageName` and `Prompt`. Output is **always JPEG**, lands in `~/.gemini/antigravity-cli/brain/<conversation_id>/` (not `--add-dir`, not `scratch/`), and is **1376×768** whenever the prompt says "16:9 widescreen" — exact dimensions are never specifiable. A reference image is read with `view_file` and described into the prompt rather than conditioned on. `generate_image` needs no permission grant. Two concurrent invocations are safe and faster than sequential. `usage` carries tokens only, with no monetary field. **`--print-timeout` expiry returns exit `0` with `status: SUCCESS` and an empty response** — a timeout looks like a success. Still unverified: the unauthenticated path (S6a), which would require signing the maintainer out.
 
 Adapter design:
 
-1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call its native image tool exactly once, (b) states the exact absolute output path `<workdir>/<idempotency_key>.jpg`, (c) states the target size as digits and words ("1920 x 1080 pixels, 16:9 widescreen"), (d) lists reference image absolute paths, (e) forbids running shell commands or other tools.
+1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call `generate_image` exactly once, (b) states the aspect ratio in words ("16:9 widescreen") — the only measured lever on output size, (c) lists reference image absolute paths for the agent to `view_file`, (d) forbids running shell commands or other tools. It states **no output path**: `generate_image` has no path parameter, so the instruction cannot be honoured.
 2. Run `[binary, "-p", prompt, "--output-format", "json", "--add-dir", str(workdir), *("--add-dir", d for d in reference_dirs), "--print-timeout", f"{timeout_s}s", *(["--dangerously-skip-permissions"] if skip_permissions else []), *(["--model", model] if model else []), *(["--effort", effort] if effort else [])]` via `asyncio.create_subprocess_exec(..., cwd=workdir, stdout=PIPE, stderr=PIPE)`.
-3. Success ⇔ exit code `0` **and** `status == "SUCCESS"` **and** the output file exists **and** Pillow opens it.
-4. Error mapping:
+3. Locate the image by globbing `~/.gemini/antigravity-cli/brain/<conversation_id>/` using the envelope's `conversation_id`, then copy it into the asset store. Success ⇔ exit `0` **and** `status == "SUCCESS"` **and** exactly one image found **and** Pillow opens it.
+4. Error mapping. The timeout row **must** precede the missing-output row: agy's own print timeout presents as `SUCCESS` with no file, so the reverse order makes every long generation a permanent failure.
 
-    | Observation                                            | Exception                                                                            | Retryable |
-    | ------------------------------------------------------ | ------------------------------------------------------------------------------------ | --------- |
-    | `SUCCESS` but output file missing                      | `ProviderOutputMissingError` (message mentions `~/.gemini/antigravity-cli/scratch/`) | no        |
-    | `status ∈ {CANCELED, INTERRUPTED}`                     | `ProviderTransientError`                                                             | yes       |
-    | `ERROR` and `error` contains `authentication required` | `ProviderAuthError`                                                                  | no        |
-    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`  | `ProviderPermanentError`                                                             | no        |
-    | subprocess exceeds `timeout_s + 30`                    | `ProviderTimeoutError` (process killed)                                              | yes       |
-    | binary not found                                       | `ProviderPermanentError` with hint "install Antigravity CLI"                         | no        |
+    | Observation                                                       | Exception                                                            | Retryable |
+    | ----------------------------------------------------------------- | -------------------------------------------------------------------- | --------- |
+    | `SUCCESS`, empty `response`, `total_tokens == 0`, no output image | `ProviderTimeoutError` (agy's print timeout)                         | **yes**   |
+    | `SUCCESS` but no image in `brain/<conversation_id>/`              | `ProviderOutputMissingError` (message names the **brain** directory) | no        |
+    | `status ∈ {CANCELED, INTERRUPTED}`                                | `ProviderTransientError`                                             | yes       |
+    | `ERROR` and `error` contains `authentication required`            | `ProviderAuthError` (defensive; S6a unverified)                      | no        |
+    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`             | `ProviderPermanentError`                                             | no        |
+    | subprocess exceeds `timeout_s + 30`                               | `ProviderTimeoutError` (process killed)                              | yes       |
+    | binary not found                                                  | `ProviderPermanentError` with hint "install Antigravity CLI"         | no        |
 
 5. `usage` tokens and `duration_seconds` are written to `iteration.cost_json`; the whole envelope to `provider_response_json`; stdout/stderr to per-iteration log files.
 6. Never uses `--continue`/`--conversation`; every image is a fresh conversation.
-7. `providers.antigravity.skip_permissions` defaults to `true` (decision D4). The documented alternative is a `permissions.allow` rule for the image tool discovered in spike S1.
-8. Capabilities: reference=True (pending S4), seed=False, negative=True (prompt-only), aspect=True (prompt-only, pending S3), max_batch=1, max_concurrency=1, formats={"jpeg"}.
+7. `providers.antigravity.skip_permissions` defaults to **`false`** — S5 superseded decision D4 by measuring `generate_image` succeeding with neither the flag nor a `permissions.allow` rule. It stays configurable for more restrictive `settings.json` files.
+8. Capabilities, as measured: reference=**False** (S4: described, not conditioned on), seed=False, negative=True (prompt-only), aspect=True but influence-only (S3: ratio words steer the size, exact dimensions are never guaranteed), max_batch=1, max_concurrency=**2** (S7), formats={"jpeg"}.
+9. `provider check antigravity` reports `~/.gemini/config/plugins/`: every headless run inherits the developer's globally installed plugins, so output is not a pure function of thumbforge's inputs.
 
 ## 5. CLI command tree
 
@@ -377,11 +379,11 @@ Only `ProviderTransientError` and `ProviderTimeoutError` are retried, via `tenac
 
 ## 9. Risks
 
-| Risk                                                     | Impact                                        | Mitigation                                                                                                                             |
-| -------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Antigravity image tool is undocumented for headless mode | Provider may not work as designed             | Spikes S1–S8 run in Phase 3 before adapter code; FakeProvider keeps Phases 4–7 unblocked; ADR 0013 stays _Proposed_ until spikes close |
-| JPEG-only output, no seed                                | Reproducibility limited to prompt + reference | Record prompt, reference hash, model, envelope; overlay works on RGB                                                                   |
-| yt-dlp breakage on YouTube changes                       | `fetch` fails                                 | Pin version in `uv.lock`; recorded fixtures for unit tests; opt-in live tests                                                          |
-| Font availability on Windows/Linux                       | Overlay output differs across machines        | Bundle an OFL font (Inter) in `imaging/fonts/`; golden tests use only bundled fonts                                                    |
-| Unknown quota / cost                                     | Runaway spend                                 | `--max-images`, serialised concurrency, per-iteration cost capture, S7/S8 spikes                                                       |
-| Pre-1.0 tooling (zensical 0.0.x, graphify)               | Breaking changes                              | Exact pins in `uv.lock` / `uv tool install graphifyy==<ver>`; docs build is a CI gate so drift is visible                              |
+| Risk                                                     | Impact                                        | Mitigation                                                                                                                                                                                                                      |
+| -------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Antigravity image tool is undocumented for headless mode | Provider may not work as designed             | **Retired 2026-09-20**: spikes S1–S8 measured `generate_image` headlessly (`docs/spikes/antigravity.md`), ADR 0013 is `Accepted`. Residual risk is that output size is not specifiable (1376×768) and references are prose-only |
+| JPEG-only output, no seed                                | Reproducibility limited to prompt + reference | Record prompt, reference hash, model, envelope; overlay works on RGB                                                                                                                                                            |
+| yt-dlp breakage on YouTube changes                       | `fetch` fails                                 | Pin version in `uv.lock`; recorded fixtures for unit tests; opt-in live tests                                                                                                                                                   |
+| Font availability on Windows/Linux                       | Overlay output differs across machines        | Bundle an OFL font (Inter) in `imaging/fonts/`; golden tests use only bundled fonts                                                                                                                                             |
+| Unknown quota / cost                                     | Runaway spend                                 | `--max-images`, serialised concurrency, per-iteration cost capture, S7/S8 spikes                                                                                                                                                |
+| Pre-1.0 tooling (zensical 0.0.x, graphify)               | Breaking changes                              | Exact pins in `uv.lock` / `uv tool install graphifyy==<ver>`; docs build is a CI gate so drift is visible                                                                                                                       |
