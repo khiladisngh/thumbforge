@@ -19,19 +19,10 @@ from rich.panel import Panel
 from rich.table import Table
 
 from thumbforge.core.errors import SettingsError
+from thumbforge.core.json import JsonValue
 
 if TYPE_CHECKING:
     from thumbforge.settings import Settings
-
-type JsonValue = str | int | float | bool | Sequence[JsonValue] | Mapping[str, JsonValue] | None
-"""What a command may emit in ``--json`` mode.
-
-`Sequence`/`Mapping` rather than `list`/`dict` because the concrete types are invariant: an
-ordinary `dict[str, str]` payload would not satisfy `dict[str, JsonValue]`, forcing a cast at
-every call site. The looser protocols technically admit `bytes` and `range`, which `json.dumps`
-rejects; `emit` lets that rejection happen loudly at runtime rather than coercing, and
-`tests/unit/test_render.py` pins that behaviour.
-"""
 
 
 @dataclass(frozen=True, slots=True)

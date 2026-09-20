@@ -10,13 +10,13 @@ from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
 from thumbforge.cli._youtube import (
     EMPTY,
-    JsonPayload,
     channel_payload,
     duration,
     lookup_key,
     open_repositories,
     video_payload,
 )
+from thumbforge.core.json import JsonPayload
 
 app = typer.Typer(
     name="video",

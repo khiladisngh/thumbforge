@@ -11,7 +11,6 @@ from rich.console import Group
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, panel, table
 from thumbforge.cli._youtube import (
-    JsonPayload,
     build_source,
     channel_payload,
     item_payload,
@@ -22,6 +21,7 @@ from thumbforge.cli._youtube import (
 )
 from thumbforge.core.enums import ChannelSource, UrlKind
 from thumbforge.core.errors import NotFoundError
+from thumbforge.core.json import JsonPayload
 from thumbforge.core.services.fetch import FetchService
 
 if TYPE_CHECKING:

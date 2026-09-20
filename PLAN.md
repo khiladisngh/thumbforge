@@ -131,6 +131,16 @@ erDiagram
 
 ## 4. Provider interface
 
+The Protocol and the models below live in **`core/providers.py`**, and `JsonValue` in
+`core/json.py`. ADR 0010 says `providers/base.py`; that placement does not survive the
+layering rule, because `core.services` consumes these types (`HeroService` builds a
+`GenerationRequest`) and `core` may not import `providers`. `phase-1-skeleton.md`
+pre-authorised the move: _"the contract is the rule, the file placement bends."_ ADR 0010 is
+Accepted and so is left as written; `providers/` holds the registry and the adapters.
+
+`supports_aspect_ratio` means the requested ratio _influences_ the result, not that the exact
+width and height are honoured — spike S3 measured Antigravity returning 1376x768 regardless.
+
 ```python
 class ProviderCapabilities(BaseModel, frozen=True):
     supports_reference_image: bool
@@ -138,7 +148,7 @@ class ProviderCapabilities(BaseModel, frozen=True):
     supports_negative_prompt: bool
     supports_aspect_ratio: bool
     max_batch: int            # images per call; 1 for Antigravity
-    max_concurrency: int      # provider-side safe parallelism; 1 for Antigravity
+    max_concurrency: int      # provider-side safe parallelism; 2 for Antigravity (spike S7)
     output_formats: frozenset[str]   # {"jpeg"} for Antigravity
 
 class ImageProvider(Protocol):
@@ -174,10 +184,12 @@ class GenerationResult(BaseModel, frozen=True):
 
 ### 4.1 Registry and plugins
 
-- Builtin map `{"fake": FakeProvider, "antigravity": AntigravityProvider}` is merged with `importlib.metadata.entry_points(group="thumbforge.providers")`. The entry-point **name** is the provider key; the value is an `ImageProvider` class.
-- Duplicate key (builtin vs plugin, or two plugins) → `ProviderRegistryError` at load time.
-- Unknown key on the CLI → `NotFoundError` → exit `3`.
+- Builtin map `{"fake": FakeProvider, "antigravity": AntigravityProvider}` is merged with `importlib.metadata.entry_points(group="thumbforge.providers")`. The entry-point **name** is the provider key; the value is an `ImageProvider` class whose `__init__` takes its config mapping.
+- Duplicate key (builtin vs plugin, or two plugins) → `ProviderRegistryError` at discovery — an error rather than a precedence rule, because silently shadowing a provider makes `--provider x` mean different things per machine and surfaces as wrong images rather than a message.
+- A plugin that raises on import → `ProviderRegistryError` naming the entry-point value; skipping it would be indistinguishable from "never installed".
+- Unknown key on the CLI → `NotFoundError` → exit `3`, hinting the available keys.
 - Core code never imports a concrete provider; it asks the registry.
+- `registry.get(key, config: Mapping[str, JsonValue] | None = None)`. A provider receives **its own config mapping**, not `Settings`: `storage` and `sources` also take plain values, so no adapter depends on the whole configuration tree, and the registry cannot know which typed model a third-party provider wants.
 
 ### 4.2 FakeProvider (deterministic, offline)
 

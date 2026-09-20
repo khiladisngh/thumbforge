@@ -40,7 +40,7 @@ Spec: `docs/specs/phase-2-youtube-fetch.md`
 
 Spec: `docs/specs/phase-3-providers.md`
 
-- P3.1 Protocol, capabilities, registry, entry points — deps: P1.5 — AC: `providers/base.py` and `providers/registry.py` per PLAN.md §4; `thumbforge.providers` entry-point group; duplicate key raises `ProviderRegistryError`; unknown key exits `3`.
+- P3.1 Provider protocol + registry — deps: P1.5 — AC: `core/providers.py` `ImageProvider` Protocol and boundary models (placed in `core` because `core.services` consumes them); `providers/registry.py` merging builtins with the `thumbforge.providers` entry-point group; duplicate key → `ProviderRegistryError`, unknown key → exit `3`; discovery proven against a really-installed out-of-tree plugin.
 - P3.2 FakeProvider + contract tests — deps: P3.1 — AC: `providers/fake.py` deterministic behaviour per PLAN.md §4.2; `tests/contract/test_provider_contract.py` parametrised over the registry and passing for `fake`.
 - P3.3 Antigravity spikes S1–S8 — deps: none — AC: `docs/spikes/antigravity.md` records commands, raw outputs, and conclusions for each spike; ADR 0013 status updated.
 - P3.4 AntigravityProvider — deps: P3.2, P3.3 — AC: `providers/antigravity.py` + `antigravity_wrapper.j2` implementing PLAN.md §4.3 with any corrections from P3.3; unit tests with a fake `agy` script covering every row of the error-mapping table; `integration`-marked live test.

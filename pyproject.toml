@@ -43,7 +43,10 @@ Changelog = "https://github.com/khiladisngh/thumbforge/blob/main/CHANGELOG.md"
 thumbforge = "thumbforge.cli.app:main"
 
 [project.entry-points."thumbforge.providers"]
-# populated in Phase 3: fake = "thumbforge.providers.fake:FakeProvider"
+# The entry-point name is the provider key; the value must be an ImageProvider class whose
+# __init__ takes its config mapping. Third parties declare the same group to add a provider.
+# fake = "thumbforge.providers.fake:FakeProvider"                 # P3.2
+# antigravity = "thumbforge.providers.antigravity:AntigravityProvider"   # P3.4
 
 [dependency-groups]
 dev = [
@@ -107,8 +110,8 @@ root_package = "thumbforge"
 
 # Dependency rule (PLAN.md §2.2): cli may use every adapter; core stays pure; adapters know
 # only core; nothing imports cli. Extend the module lists — and the "adapters are independent"
-# contract — in the PRs that create providers/, templates/ and imaging/; import-linter errors
-# on a module that does not exist.
+# contract — in the PRs that create templates/ and imaging/; import-linter errors on a module
+# that does not exist.
 [[tool.importlinter.contracts]]
 name = "nothing imports cli"
 type = "forbidden"
@@ -116,6 +119,7 @@ source_modules = [
   "thumbforge.core",
   "thumbforge.storage",
   "thumbforge.sources",
+  "thumbforge.providers",
   "thumbforge.settings",
   "thumbforge.logging",
 ]
@@ -128,6 +132,7 @@ source_modules = ["thumbforge.core"]
 forbidden_modules = [
   "thumbforge.storage",
   "thumbforge.sources",
+  "thumbforge.providers",
   "thumbforge.cli",
   "thumbforge.settings",
   "thumbforge.logging",
@@ -136,7 +141,7 @@ forbidden_modules = [
 [[tool.importlinter.contracts]]
 name = "adapters are independent"
 type = "independence"
-modules = ["thumbforge.storage", "thumbforge.sources"]
+modules = ["thumbforge.storage", "thumbforge.sources", "thumbforge.providers"]
 
 # `core` is one layer, so its modules may import each other — `core.models` needs
 # `core.enums`, and the Phase 6 services need `core.models`. What must not happen is a
@@ -149,8 +154,10 @@ source_modules = [
   "thumbforge.core.enums",
   "thumbforge.core.errors",
   "thumbforge.core.ids",
+  "thumbforge.core.json",
 ]
 forbidden_modules = [
   "thumbforge.core.models",
+  "thumbforge.core.providers",
   "thumbforge.core.urls",
 ]

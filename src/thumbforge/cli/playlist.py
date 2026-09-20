@@ -11,7 +11,6 @@ from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
 from thumbforge.cli._youtube import (
     EMPTY,
-    JsonPayload,
     channel_payload,
     item_payload,
     item_rows,
@@ -19,6 +18,7 @@ from thumbforge.cli._youtube import (
     open_repositories,
     playlist_payload,
 )
+from thumbforge.core.json import JsonPayload
 
 app = typer.Typer(
     name="playlist",
