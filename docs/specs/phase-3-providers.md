@@ -12,7 +12,7 @@ Define the `ImageProvider` protocol, capabilities, registry with entry-point dis
 - **P3.2** `providers/fake.py` + `tests/contract/test_provider_contract.py`.
 - **P3.3** spikes S1–S8 executed; findings in `docs/spikes/antigravity.md`.
 - **P3.4** `providers/antigravity.py` (the wrapper prompt is a module constant in it, not a packaged `.j2`), marker-gated integration test — the contract suite's `antigravity` case.
-- **P3.5** `cli/provider.py` (`provider list|check|models|set-key`).
+- **P3.5** `cli/provider.py` (`provider list|check|models|set-key`) and `thumbforge/credentials.py` (env → keyring lookup, the only writer of a secret).
 
 ## Non-goals
 
@@ -146,27 +146,37 @@ Only `ProviderTransientError` and `ProviderTimeoutError` are retried, via `tenac
 
 ### Commands
 
-| Command                           | Key flags | Output                                        | Exit    |
-| --------------------------------- | --------- | --------------------------------------------- | ------- |
-| `thumbforge provider list`        |           | table `key, version, capabilities, auth`      | 0       |
-| `thumbforge provider check KEY`   |           | runs `healthcheck()`                          | 0, 3, 4 |
-| `thumbforge provider models KEY`  |           | lists model slugs (Antigravity: `agy models`) | 0, 3, 4 |
-| `thumbforge provider set-key KEY` |           | prompts for secret; stores in keyring         | 0, 3    |
+| Command                           | Key flags | Output                                            | Exit    |
+| --------------------------------- | --------- | ------------------------------------------------- | ------- |
+| `thumbforge provider list`        |           | table `key, name, version, auth, capabilities`    | 0       |
+| `thumbforge provider check KEY`   |           | runs `healthcheck()`, prints every check          | 0, 3, 4 |
+| `thumbforge provider models KEY`  |           | `HealthReport.models` (Antigravity: `agy models`) | 0, 3, 4 |
+| `thumbforge provider set-key KEY` |           | prompts for secret; stores in keyring             | 0, 3, 4 |
 
-Secrets (`PLAN.md` §8): lookup order environment variable `THUMBFORGE_PROVIDERS__<KEY>__API_KEY`, then `keyring` (service `thumbforge`, username `<provider_key>`). `provider set-key` is the only writer. Antigravity needs no key.
+Secrets (`PLAN.md` §8): lookup order environment variable `THUMBFORGE_PROVIDERS__<KEY>__API_KEY`, then `keyring` (service `thumbforge`, username `<provider_key>`). Implemented in `thumbforge/credentials.py` — named for the standard library's `secrets` module, which it must not shadow — and `provider set-key` is its only writer. A blank environment variable falls through to the keyring, because an exported-but-empty variable is how shells leave a value unset.
+
+The settings loader **drops** secret-looking variables from its environment source (`_SecretFreeEnvSource`, reusing `core.redaction`'s deny-list) instead of validating them. Measured in P3.5: `env_nested_delimiter` reads `THUMBFORGE_PROVIDERS__ANTIGRAVITY__API_KEY` as `providers.antigravity.api_key`, and `extra="forbid"` rejected it, so following ADR 0014's own convention made **every** command exit 2. Declaring the field would instead carry the secret inside the settings model, whose provider sections are dumped into provider config and snapshotted into `provider_profile.params_json`. Sections emptied by the removal are dropped as well: `providers.fake = {}` is still an extra input for a provider that has no settings section. ADR 0014 is Accepted and keeps its wording; the mechanism is recorded here and in `PLAN.md` §8.
+
+ADR 0014 also says `provider list` shows auth as `ok | missing | n/a`; the implemented `AuthState` (P3.1) uses **`unknown`** rather than `n/a`, for the reason in §68 — "cannot cheaply prove" is a different statement from "not applicable". Antigravity needs no key: it authenticates through the CLI's own cached login.
 
 ## Behaviour
 
 1. `generate` writes exactly one image into `workdir` and returns its path; the caller (Phase 6/7 services) moves it into the `AssetStore`. Providers never touch the DB.
 2. A provider raising anything other than a `ProviderError` subclass is a bug; the contract test fails on it.
 3. `provider check antigravity` exits `4` with `ProviderAuthError` when the envelope reports `authentication required`; exits `4` with the "install Antigravity CLI" hint when the binary is missing.
-4. `provider list` shows plugins discovered via entry points alongside builtins; a duplicate key aborts with `ProviderRegistryError` (exit `1`) naming both distributions.
+4. `provider list` shows plugins discovered via entry points alongside builtins; a duplicate key aborts with `ProviderRegistryError` (exit **`4`**) naming both distributions. Corrected from `1` in P3.5: `ProviderRegistryError` is a `ProviderError`, and a key claimed twice is an expected, diagnosable installation state rather than the internal bug exit `1` denotes. Pinned by `test_duplicate_key_is_refused`.
 5. `provider set-key fake` stores a value in keyring even though FakeProvider ignores it (used to test the path without a real provider).
 
 ## Acceptance criteria
 
-- `thumbforge provider list` prints rows for `fake` and `antigravity` with `auth` = `ok` for fake and `ok|missing` for antigravity depending on `agy` login state.
+- `thumbforge provider list` prints rows for `fake` and `antigravity`, with `auth` = `ok` for fake, `unknown` for an installed antigravity and `missing` when its binary cannot be found.
+
+    Corrected from "`ok|missing` … depending on `agy` login state". Proving the login state needs a network call (`agy models`, ~5 s), and §68 above already rules that "a provider that cannot cheaply prove its credentials must not be reported as unauthenticated". `list` is an inventory and stays cheap; `check` is the diagnosis and resolves auth properly via its `auth` check. Reporting `missing` from `list` would have told signed-in users to fix a login that works.
+
 - `thumbforge provider check fake` exits `0`; `thumbforge provider check nope` exits `3`.
+- `thumbforge provider check antigravity` names the inherited plugin directory (ADR 0013 item 9) and resolves `auth` from `agy models`, the cheapest call that needs real credentials. A failed check exits `4` **after** the full table is printed, so one failure never hides the others; a failed check named `auth` is reported as `provider_auth` and any other as `provider_permanent`, because both exit `4` but call for different actions.
+- `thumbforge provider models antigravity` lists slugs from `HealthReport.models`; `provider models fake` exits `0` saying the provider has no model selection. An unhealthy provider exits `4` rather than printing an empty list, because "no models" and "not signed in" are indistinguishable in output.
+- `thumbforge provider set-key KEY` prompts without echo and writes only to the keyring; an unknown key exits `3` _before_ prompting, a blank value exits `4`, and an unavailable keyring exits `4` naming the environment variable instead. Reading a key tolerates an unusable keyring; writing one does not.
 - `FakeProvider.generate` with the same `prompt` and `seed` twice yields byte-identical PNGs; different seeds yield different background colours.
 - Prompt containing `[[FAIL_TRANSIENT]]` raises `ProviderTransientError`; `[[FAIL_PERMANENT]]` raises `ProviderPermanentError`.
 - A test distribution registering `fake = tests.plugins:Dup` under `thumbforge.providers` makes `registry.keys()` raise `ProviderRegistryError`.

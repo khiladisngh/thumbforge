@@ -157,6 +157,10 @@ def test_duplicate_key_is_refused(entries: list[_Entry], monkeypatch: pytest.Mon
     assert "claimed twice" in str(caught.value)
     assert "builtin" in str(caught.value)
     assert caught.value.hint is not None
+    # Exit 4, not 1. The phase-3 spec said 1 (UNEXPECTED); a key claimed twice is an
+    # expected, diagnosable installation state with a `provider_registry` code, which is
+    # what exit 4 (PROVIDER) means. Pinned here so the corrected spec stays true.
+    assert caught.value.exit_code is ExitCode.PROVIDER
 
 
 def test_two_plugins_claiming_one_key_are_refused(entries: list[_Entry]) -> None:

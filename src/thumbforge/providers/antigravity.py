@@ -78,6 +78,10 @@ _KILL_GRACE_S: Final = 30
 #: `agy --version` is a local read, so a long wait means something is wrong, not slow.
 _VERSION_TIMEOUT_S: Final = 30
 
+#: `agy models` fetches the catalogue over the network, so it gets a longer budget than the
+#: purely local version read. Measured at ~5 s.
+_MODELS_TIMEOUT_S: Final = 60
+
 #: Markers the agent uses when it *relays* an upstream image-model failure in prose instead
 #: of failing the run. Measured live: a 429 arrived as `status: "SUCCESS"` with no image and
 #: "429 Too Many Requests: RESOURCE_EXHAUSTED - You have exhausted your capacity on the image
@@ -251,7 +255,21 @@ class AntigravityProvider:
             )
         )
 
-        return HealthReport(checks=tuple(checks))
+        # `agy models` is the cheapest call that needs real credentials, so it doubles as
+        # the auth probe `info()` deliberately will not make (see its docstring). A failure
+        # here is the only evidence this adapter can get that the CLI is not signed in.
+        models = await self._models() if binary_path else None
+        checks.append(
+            Check(
+                name="auth",
+                ok=models is not None,
+                detail=f"{len(models)} models available"
+                if models is not None
+                else "could not list models; the CLI may not be signed in",
+            )
+        )
+
+        return HealthReport(checks=tuple(checks), models=models or ())
 
     async def generate(self, request: GenerationRequest, *, workdir: Path) -> GenerationResult:
         """Run one generation and copy its output into `workdir`."""
@@ -386,30 +404,69 @@ class AntigravityProvider:
             )
         return candidates[-1]
 
-    async def _version(self) -> str | None:
-        """Read `agy --version`, or `None` when the binary is absent or unusable."""
-        if self._version_cache is not None:
-            return self._version_cache
-        if self._run is not None:
-            return "injected"
+    async def _capture(self, *args: str, timeout: float) -> str | None:
+        """Run a short `agy` subcommand and return its stdout, or `None` if it did not work.
+
+        Shared by `--version` and `models` so the create/wait/reap dance exists once. A
+        non-zero exit returns `None` rather than its output: `agy models` signals "not signed
+        in" that way, and treating a failed call's stdout as data would report zero models as
+        though the account genuinely had none.
+        """
         if shutil.which(self._binary) is None:
             return None
         process = None
         try:
             process = await asyncio.create_subprocess_exec(
                 self._binary,
-                "--version",
+                *args,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             # TimeoutError is an OSError subclass, so this catches the wait_for expiry too.
-            out, _ = await asyncio.wait_for(process.communicate(), timeout=_VERSION_TIMEOUT_S)
+            out, _ = await asyncio.wait_for(process.communicate(), timeout=timeout)
         except OSError:
             if process is not None:
                 await _reap(process)
             return None
-        self._version_cache = out.decode(errors="replace").strip() or None
+        if process.returncode:
+            return None
+        return out.decode(errors="replace")
+
+    async def _version(self) -> str | None:
+        """Read `agy --version`, or `None` when the binary is absent or unusable."""
+        if self._version_cache is not None:
+            return self._version_cache
+        if self._run is not None:
+            return "injected"
+        out = await self._capture("--version", timeout=_VERSION_TIMEOUT_S)
+        self._version_cache = (out or "").strip() or None
         return self._version_cache
+
+    async def _models(self) -> tuple[str, ...] | None:
+        """Model slugs from `agy models`, or `None` when the call failed.
+
+        `None` and `()` mean different things and both are reachable: the call failing is the
+        adapter's only evidence that the CLI is not signed in, while an empty list would mean
+        it answered and offered nothing.
+        """
+        if self._run is not None:
+            return ("injected",)
+        out = await self._capture("models", timeout=_MODELS_TIMEOUT_S)
+        return None if out is None else _parse_models(out)
+
+
+def _parse_models(text: str) -> tuple[str, ...]:
+    """Slugs from `agy models` output, which is `slug<TAB>display name` per line.
+
+    The tab is the discriminator rather than the banner text: the command prefixes its output
+    with "Fetching available models...", and keying off a tab means a reworded banner cannot
+    turn into a phantom model named after it.
+    """
+    return tuple(
+        line.split("\t", 1)[0].strip()
+        for line in text.splitlines()
+        if "\t" in line and line.split("\t", 1)[0].strip()
+    )
 
 
 async def _reap(process: asyncio.subprocess.Process) -> None:
