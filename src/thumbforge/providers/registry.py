@@ -21,18 +21,24 @@ from typing import TYPE_CHECKING, cast
 
 from thumbforge.core.errors import NotFoundError, ProviderRegistryError
 
+# Runtime import, not TYPE_CHECKING: `get` isinstance-checks the constructed provider
+# against this runtime-checkable Protocol.
+from thumbforge.core.providers import ImageProvider
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
     from thumbforge.core.json import JsonValue
-    from thumbforge.core.providers import ImageProvider
 
 #: The entry-point group third-party providers declare. The entry-point **name** is the
 #: provider key; its value must be a callable returning an `ImageProvider` — in practice the
 #: implementing class, whose `__init__` takes the config mapping.
 ENTRY_POINT_GROUP = "thumbforge.providers"
 
-type ProviderFactory = Callable[[Mapping[str, JsonValue]], ImageProvider]
+#: Returns `object`, not `ImageProvider`, deliberately: a plugin factory is untyped code
+#: this build never saw, so promising the Protocol here would be a static lie that `get`
+#: then cannot meaningfully check. `get` narrows it with `isinstance` instead.
+type ProviderFactory = Callable[[Mapping[str, JsonValue]], object]
 
 #: Providers shipped in this package. Populated by P3.2 (`fake`) and P3.4 (`antigravity`);
 #: empty until then, so the registry is exercised through entry points only.
@@ -72,8 +78,6 @@ def _discover() -> dict[str, ProviderFactory]:
                 msg, hint="the entry point must name an ImageProvider class"
             )
 
-        # `entry.load()` is untyped by construction — the plugin is not part of this build.
-        # The cast is the boundary; `get` instantiates and the caller meets the Protocol.
         found[entry.name] = cast("ProviderFactory", loaded)
         origin[entry.name] = entry.value
 
@@ -97,4 +101,19 @@ def get(key: str, config: Mapping[str, JsonValue] | None = None) -> ImageProvide
         available = ", ".join(sorted(found)) or "none installed"
         msg = f"provider {key!r}"
         raise NotFoundError(msg, hint=f"available: {available}")
-    return factory(config or {})
+
+    provider = factory(config or {})
+
+    # `callable()` at discovery only proved the entry point could be called; it says nothing
+    # about what came back. Both checks below guard a plugin this build never saw.
+    if not isinstance(provider, ImageProvider):
+        msg = (
+            f"provider {key!r} constructed {type(provider).__name__}, which is not an ImageProvider"
+        )
+        raise ProviderRegistryError(msg, hint="implement core.providers.ImageProvider")
+    if provider.key != key:
+        # Provenance is recorded from `provider.key` onto every run and iteration, so a
+        # mismatch would attribute images to a provider that did not make them.
+        msg = f"provider registered as {key!r} reports key {provider.key!r}"
+        raise ProviderRegistryError(msg, hint="make the class key match its entry-point name")
+    return provider

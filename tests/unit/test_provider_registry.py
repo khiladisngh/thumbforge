@@ -209,10 +209,38 @@ def test_unknown_key_with_nothing_installed_says_so(entries: list[_Entry]) -> No
     assert "none installed" in caught.value.hint
 
 
-def test_builtin_map_is_empty_until_p32_and_p34() -> None:
-    """`fake` (P3.2) and `antigravity` (P3.4) populate it; nothing else should.
+def test_constructed_object_must_satisfy_the_protocol(entries: list[_Entry]) -> None:
+    """`callable()` at discovery says nothing about what the factory returns.
 
-    Pinned because an accidental entry here would make the registry return a provider that
-    the entry-point group does not declare, which is how shadowing bugs start.
+    A plugin that constructs the wrong thing must fail here, not later inside `generate`
+    where the traceback names thumbforge rather than the plugin.
     """
-    assert registry.BUILTIN == {}
+
+    class NotAProvider:
+        def __init__(self, config: Mapping[str, JsonValue]) -> None: ...
+
+    entries.append(_Entry("rogue", "pkg:NotAProvider", NotAProvider))
+
+    with pytest.raises(ProviderRegistryError) as caught:
+        registry.get("rogue")
+
+    assert "not an ImageProvider" in str(caught.value)
+    assert "NotAProvider" in str(caught.value)
+
+
+def test_provider_key_must_match_its_registered_key(entries: list[_Entry]) -> None:
+    """Provenance is recorded from `provider.key` onto every run and iteration.
+
+    A mismatch would attribute generated images to a provider that did not make them, which
+    is unrecoverable after the fact — so it is refused at construction.
+    """
+
+    class Mislabelled(StubProvider):
+        key: ClassVar[str] = "something-else"
+
+    entries.append(_Entry("stub", "pkg:Mislabelled", Mislabelled))
+
+    with pytest.raises(ProviderRegistryError) as caught:
+        registry.get("stub")
+
+    assert "reports key 'something-else'" in str(caught.value)

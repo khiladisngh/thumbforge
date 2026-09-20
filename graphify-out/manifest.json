@@ -378,15 +378,15 @@
     "semantic_hash": "63095fa6c67d4373d3d3e071e6509876"
   },
   "src/thumbforge/providers/registry.py": {
-    "mtime": 1789900927.7764435,
-    "seen": 1789901034.0929806,
-    "ast_hash": "165f2d52a6f145c3a8af815fed323fe8",
-    "semantic_hash": "165f2d52a6f145c3a8af815fed323fe8"
+    "mtime": 1789901756.531451,
+    "seen": 1789901809.8906262,
+    "ast_hash": "ee41a396e3caabfe22bb5301abe4c93b",
+    "semantic_hash": "ee41a396e3caabfe22bb5301abe4c93b"
   },
   "tests/unit/test_provider_registry.py": {
-    "mtime": 1789900329.9844265,
-    "seen": 1789901034.0963454,
-    "ast_hash": "cd565812737e4edda73a9eb86d621b74",
-    "semantic_hash": "cd565812737e4edda73a9eb86d621b74"
+    "mtime": 1789901734.226248,
+    "seen": 1789901809.8935246,
+    "ast_hash": "83626b056537b4949623337861b17cbc",
+    "semantic_hash": "83626b056537b4949623337861b17cbc"
   }
 }
