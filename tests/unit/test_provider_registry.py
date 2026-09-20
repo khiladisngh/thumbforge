@@ -90,7 +90,14 @@ class _Entry:
 
 @pytest.fixture
 def entries(monkeypatch: pytest.MonkeyPatch) -> list[_Entry]:
-    """Replace the installed entry-point group with a list the test controls."""
+    """Replace the entry-point group *and* `BUILTIN` with ones the test controls.
+
+    `BUILTIN` is emptied so these tests describe discovery mechanics rather than whichever
+    providers this package happens to ship — otherwise adding one (P3.2 added `fake`, P3.4
+    adds `antigravity`) breaks tests that are not about it. The duplicate-key test puts a
+    builtin back deliberately.
+    """
+    monkeypatch.setattr(registry, "BUILTIN", {})
     group: list[_Entry] = []
 
     def fake_entry_points(*, group: str) -> list[_Entry]:

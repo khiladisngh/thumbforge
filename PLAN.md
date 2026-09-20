@@ -189,11 +189,15 @@ class GenerationResult(BaseModel, frozen=True):
 - A plugin that raises on import → `ProviderRegistryError` naming the entry-point value; skipping it would be indistinguishable from "never installed".
 - Unknown key on the CLI → `NotFoundError` → exit `3`, hinting the available keys.
 - Core code never imports a concrete provider; it asks the registry.
+- A provider shipped in this package goes in `BUILTIN` only, never also in the entry-point group: the two are merged, so declaring both makes a provider collide with itself.
 - `registry.get(key, config: Mapping[str, JsonValue] | None = None)`. A provider receives **its own config mapping**, not `Settings`: `storage` and `sources` also take plain values, so no adapter depends on the whole configuration tree, and the registry cannot know which typed model a third-party provider wants.
 
 ### 4.2 FakeProvider (deterministic, offline)
 
-- Renders a 1376×768 PNG. Background colour = first 3 bytes of `sha256(prompt + str(seed))`; draws the sha prefix as text; when reference images are given, pastes 96-px thumbnails of them into the corners.
+- Renders a PNG **at the requested `width`x`height`**, rather than the fixed 1376x768 an earlier draft specified. Honouring the request exactly is a property of _this_ provider, not of the interface: it is what lets a Phase 5 or 6 test ask for a known-size source image. Request 1376x768 explicitly to exercise Phase 5's upscale path offline.
+- `supports_aspect_ratio=True` still promises only **influence**, never exact dimensions, and **Phase 5 fits every result regardless of the flag**. Antigravity advertises the flag and cannot honour exact dimensions at all (spike S3), so the contract suite asserts the output ratio is within 5% of the request — which admits Antigravity's measured 1376x768 (0.8% off a 16:9 request) and rejects the 1024x1024 and 1264x848 that S3 measured when the ratio was omitted from the prompt. Exact sizing is asserted in the fake's own tests.
+- Background colour = first 3 bytes of `sha256(prompt + negative_prompt + seed + size)`; draws the digest prefix as text; when reference images are given, pastes 96-px thumbnails of them into the corners. `negative_prompt` and the size are in the digest because both are advertised as supported, and a flag that changes nothing is worse than a missing one.
+- Deterministic to the **byte** for an identical request, so a caller can assert on the image rather than merely on its existence. Nothing varies between runs is embedded in the PNG.
 - Sleeps `params.get("delay_ms", 0)` ms (lets progress-bar and concurrency tests be observable).
 - Raises `ProviderTransientError` when the prompt contains `[[FAIL_TRANSIENT]]` and `ProviderPermanentError` on `[[FAIL_PERMANENT]]` — used by contract, retry and resume tests.
 - Capabilities: reference=True, seed=True, negative=True, aspect=True, max_batch=8, max_concurrency=8, formats={"png"}.
