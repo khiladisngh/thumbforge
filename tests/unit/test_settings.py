@@ -181,3 +181,17 @@ def test_write_default_config_refuses_to_clobber(tmp_path: Path) -> None:
 
     write_default_config(config, force=True)
     assert "quality = 90" in config.read_text(encoding="utf-8")
+
+
+def test_skip_permissions_defaults_to_false(tmp_path: Path) -> None:
+    """Spike S5 superseded decision D4: the dangerous flag is not opted into by default.
+
+    Pinned in both places a user can meet it — the loaded settings and the config file
+    `config init` writes — because a `true` default silently adds
+    `--dangerously-skip-permissions` to every provider call.
+    """
+    assert (
+        load_settings(config_path=tmp_path / "missing.toml").providers.antigravity.skip_permissions
+        is False
+    )
+    assert "skip_permissions = false" in default_config_toml()

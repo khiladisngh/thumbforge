@@ -91,7 +91,11 @@ class AntigravitySettings(BaseModel):
     model: str | None = None
     effort: Literal["low", "medium", "high"] = "low"
     timeout_s: Annotated[int, Field(ge=1)] = 600
-    skip_permissions: bool = True
+    #: Spike S5 measured `generate_image` succeeding with neither this flag nor a
+    #: `permissions.allow` rule, and again with `trustedWorkspaces` removed, so the default
+    #: does not opt into `--dangerously-skip-permissions`. It stays configurable for users
+    #: whose `settings.json` is more restrictive. Supersedes decision D4.
+    skip_permissions: bool = False
 
 
 class ProviderSettings(BaseModel):

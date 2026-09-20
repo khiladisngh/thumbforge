@@ -1,8 +1,16 @@
 # Spike results — Antigravity CLI (`agy`)
 
 Run 2026-09-20 against **`agy 1.2.6`** on Windows 11 (ADR 0013 was written against 1.2.3).
-Every command below was executed; outputs are pasted verbatim. Seven images were generated
-in total, which cost 1% of the five-hour quota.
+Every command below was executed against the live CLI. Eight images were generated in
+total, which cost 1% of the five-hour quota.
+
+Two conventions apply to the captured output:
+
+- **`[…]` marks text this report omitted**, always because it was long and repetitive (a
+  full model list, a full generated prompt). Nothing omitted changes a conclusion, and no
+  `…` below was emitted by `agy` itself.
+- **`<USER>` replaces the local Windows profile name** in paths, so the report is portable
+  and does not publish machine-specific paths. Directory _structure_ is unchanged.
 
 **Headline: `generate_image` exists headlessly, so `AntigravityProvider` is viable — but
 three of ADR 0013's design points are wrong and one of them would have made every timeout a
@@ -57,9 +65,9 @@ The `generate_image` tool was invoked to generate the image.
 
 The tool does not accept a custom output path parameter and automatically saved the
 generated image to the agent's brain directory:
-`C:\Users\khila\.gemini\antigravity-cli\brain\7e1fba60-8239-4676-8d44-019aabf43362\red_circle_1789896899337.jpg`
+`C:\Users\<USER>\.gemini\antigravity-cli\brain\7e1fba60-8239-4676-8d44-019aabf43362\red_circle_1789896899337.jpg`
 
-As instructed, no shell commands were executed, so the image could not be copied…
+As instructed, no shell commands were executed, so the image could not be copied […]
 ```
 
 The requested `--add-dir` target stayed **empty**, and `scratch/` was **empty** too — the
@@ -126,8 +134,9 @@ Conclusions:
 - `1376 / 768 = 1.792`, not `1.778`, so the result is slightly wider than true 16:9 and
   needs a small crop regardless of target.
 - **1376 × 768 is smaller than the configured 1920 × 1080 default** (`OutputSettings`), so
-  reaching the default requires a **1.40× upscale**. This is a live question for decision
-  **D2** — see [Consequences](#consequences-for-adr-0013).
+  reaching the default requires a **1.40× upscale**. Decision **D2** already chose
+  1920 × 1080 "upscaling from the provider's native 16:9 when smaller" _pending this
+  measurement_, so this confirms D2 rather than reopening it.
 
 ## S4 — Reference images — **prose only; the bytes never reach the image model**
 
@@ -142,7 +151,7 @@ generate_image     {"ImageName": "purple_yellow_cat",
                     "Prompt": "A minimalist 2D flat graphic vector illustration of a cat,
                      matching the exact visual style, flat solid aesthetic, and strict
                      3-color palette of the reference image. The cat is rendered in the
-                     exact same vivid purpl…"}
+                     exact same vivid purpl[…]"}
 ```
 
 The agent **reads** the image and then **describes** it into the prompt. Since
@@ -179,9 +188,25 @@ response: 'I have generated the image of an orange star on a white background in
 No soft-deny notice, no permission prompt. **`skip_permissions` should default to `false`**
 (decision **D4**), and no `permissions.allow` rule is needed.
 
-Caveat worth stating: `settings.json` lists `trustedWorkspaces: ["C:\\Users\\khila"]`. The
-spike ran with `--add-dir` on `D:`, and image generation touches no workspace file, so the
-trust entry is unlikely to be what allowed it — but this was not isolated further.
+`trustedWorkspaces` was a plausible confound: `settings.json` listed
+`trustedWorkspaces: ["C:\\Users\\<USER>"]`, and the brain directory that receives the image
+sits _inside_ that path. So the entry was removed (backed up first) and the run repeated
+with no permission flag at all:
+
+```
+trustedWorkspaces removed; now: {"statusLine": {[…]}}
+
+$ agy -p "Use your image generation tool once to create a picture of a teal diamond on \
+white, 16:9 widescreen. Do not run any shell commands." --output-format json --print-timeout 5m
+exit=0
+stderr: []
+status: SUCCESS | error: None
+response: 'The teal diamond on a white background (16:9 widescreen) has been generated for you above.'
+```
+
+`settings.json` was then restored and verified. The result therefore holds **without** a
+trust entry and **without** the flag: `generate_image` is not permission-gated, so decision
+D4 is genuinely superseded rather than superseded-if-trusted.
 
 ## S6 — Exit codes and status matrix — **one dangerous case**
 
@@ -192,7 +217,7 @@ $ agy -p "say ok" --model does-not-exist --output-format json ; echo $?
 {"conversation_id":"","status":"ERROR","response":"",
  "error":"invalid model selection (--model \"does-not-exist\" --effort \"\"): model
   does-not-exist is not recognized as a known model or custom model in settings\n
-  Available models:\n  Gemini 3.8 Flash (High)\n  …"}
+  Available models:\n  Gemini 3.8 Flash (High)\n  […all 14 listed below]"}
 exit=1
 ```
 
@@ -208,8 +233,9 @@ GPT-OSS 120B (Medium)
 ### (c) `--print-timeout 1s` → **exit 0 and `SUCCESS`, with no image**
 
 ```
-$ agy -p "Use your image generation tool once …" --output-format json --print-timeout 1s ; echo $?
-{"conversation_id":"48518c63-…","status":"SUCCESS","response":"","duration_seconds":0,
+$ agy -p "Use your image generation tool once to create a picture of a purple hexagon, \
+  16:9 widescreen." --output-format json --print-timeout 1s ; echo $?
+{"conversation_id":"48518c63-[…]","status":"SUCCESS","response":"","duration_seconds":0,
  "num_turns":1,"usage":{"input_tokens":0,"output_tokens":0,"thinking_tokens":0,
  "cache_read_tokens":0,"total_tokens":0}}
 exit=0
@@ -281,7 +307,7 @@ percentages.
 The S4 run opened, unprompted:
 
 ```
-view_file  {"AbsolutePath": "C:\\Users\\khila\\.gemini\\config\\plugins\\superpowers\\skills\\using-superpowers\\SKILL.md"}
+view_file  {"AbsolutePath": "C:\\Users\\<USER>\\.gemini\\config\\plugins\\superpowers\\skills\\using-superpowers\\SKILL.md"}
 ```
 
 `~/.gemini/config/plugins/` contains `gemini-api`, `ponytail` and `superpowers`. Every
@@ -310,9 +336,8 @@ first; the first is a correctness bug, the rest are improvements.
    `reference=False`, `seed=False`, `aspect=True` (influence only, exact size never
    guaranteed), `formats={"jpeg"}`, `max_batch=1`.
 
-One question needs a human decision rather than a measurement:
-
-> **D2 revisited.** The provider's best output is `1376 × 768`, while `OutputSettings`
-> defaults to `1920 × 1080`. Either the pipeline upscales by 1.40× (softer thumbnails), or
-> the default output drops to `1280 × 720` (YouTube's recommended minimum), which needs only
-> a downscale and a small crop from `1376 × 768`.
+**Decision D2 is confirmed, not reopened.** It already specified 1920 × 1080 with
+`imaging/fit.py` "upscaling from the provider's native 16:9 when smaller", pending exactly
+this measurement. The native size is 1376 × 768, so Phase 5 upscales 1.40× and crops 1.792
+to 1.778. Dropping the default to 1280 × 720 would avoid the upscale and remains available
+to the maintainer, but it is not an open question and does not block P3.4.
