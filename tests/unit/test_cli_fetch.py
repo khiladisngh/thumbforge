@@ -332,3 +332,76 @@ def test_stored_video_count_matches_the_table_when_a_video_repeats(
     assert len(payload["videos"]) == 2
     assert payload["playlist"]["item_count"] == 2
     assert payload["stored"]["videos"] == 2
+
+
+def test_renumber_prints_before_and_after_and_show_reflects_it(
+    data_dir: Path, source: StubSource
+) -> None:
+    """The spec's acceptance criteria, through the CLI: skipped is `—`, rest are 0,1,…."""
+    runner.invoke(app, ["--data-dir", str(data_dir), "fetch", PLAYLIST_URL])
+
+    result = runner.invoke(
+        app,
+        [
+            "--json",
+            "--data-dir",
+            str(data_dir),
+            "playlist",
+            "renumber",
+            PLAYLIST,
+            "--start",
+            "0",
+            "--skip-ids",
+            "vid00000001",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    payload = json.loads(result.stdout)
+    assert [(item["before"], item["after"]) for item in payload["items"]] == [(1, None), (2, 0)]
+
+    shown = runner.invoke(
+        app, ["--json", "--data-dir", str(data_dir), "playlist", "show", PLAYLIST, "--videos"]
+    )
+    assert [item["part_number"] for item in json.loads(shown.stdout)["videos"]] == [None, 0]
+
+
+def test_renumber_table_marks_the_skipped_video(data_dir: Path, source: StubSource) -> None:
+    """Human output must show `—` rather than a blank or a zero for an unnumbered item."""
+    runner.invoke(app, ["--data-dir", str(data_dir), "fetch", PLAYLIST_URL])
+
+    result = runner.invoke(
+        app,
+        [
+            "--data-dir",
+            str(data_dir),
+            "playlist",
+            "renumber",
+            PLAYLIST,
+            "--skip-ids",
+            "vid00000001",
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert "Was" in result.stdout
+    assert "—" in result.stdout
+
+
+def test_renumber_unknown_playlist_exits_three(data_dir: Path) -> None:
+    """Consistent with `playlist show`."""
+    result = runner.invoke(app, ["--data-dir", str(data_dir), "playlist", "renumber", "PLnope"])
+
+    assert result.exit_code == 3
+
+
+def test_renumber_unknown_skip_id_exits_three(data_dir: Path, source: StubSource) -> None:
+    """Failing beats silently renumbering everything one step off."""
+    runner.invoke(app, ["--data-dir", str(data_dir), "fetch", PLAYLIST_URL])
+
+    result = runner.invoke(
+        app,
+        ["--data-dir", str(data_dir), "playlist", "renumber", PLAYLIST, "--skip-ids", "nope"],
+    )
+
+    assert result.exit_code == 3

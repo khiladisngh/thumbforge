@@ -14,6 +14,7 @@ hold everywhere:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
@@ -24,11 +25,26 @@ from thumbforge.core.services.fetch import StoredPlaylist
 from thumbforge.storage.models import Channel, Playlist, PlaylistItem, Video
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
 
     from sqlalchemy.orm import Session
 
     from thumbforge.core.models import ChannelMeta, PlaylistMeta, VideoMeta
+
+
+@dataclass(frozen=True, slots=True)
+class Renumbering:
+    """One item's `part_number` before and after a `playlist renumber`.
+
+    Captured per item because the before value is gone once the row is mutated, and the
+    command prints a before/after table (spec behaviour 5).
+    """
+
+    position: int
+    youtube_id: str
+    title: str
+    before: int | None
+    after: int | None
 
 
 def _iso(moment: datetime) -> str:
@@ -225,6 +241,53 @@ class PlaylistRepository:
             .where(PlaylistItem.playlist_id == playlist.id)
             .order_by(PlaylistItem.position)
         ).all()
+
+    def renumber(
+        self,
+        playlist: Playlist,
+        *,
+        start: int = 1,
+        skip_ids: Collection[str] = (),
+    ) -> list[Renumbering]:
+        """Reassign `part_number` sequentially from `start` in playlist order.
+
+        Videos whose YouTube id is in `skip_ids` get `part_number = NULL` and are not
+        counted, so the remaining parts stay consecutive — that is the point of skipping a
+        trailer or an outro rather than deleting it from the playlist.
+
+        An id in `skip_ids` that is not in this playlist raises `NotFoundError`. Ignoring it
+        would be worse than failing: a mistyped id silently renumbers everything one step
+        off, and the user would have no reason to look.
+
+        Returns one record per item so the caller can print the before/after table.
+        """
+        items = self.items(playlist)
+        skipped = set(skip_ids)
+        present = {item.video.youtube_id for item in items}
+        if unknown := sorted(skipped - present):
+            msg = f"not in playlist {playlist.youtube_id}: {', '.join(unknown)}"
+            raise NotFoundError(msg, hint="pass YouTube video ids from `playlist show --videos`")
+
+        changes: list[Renumbering] = []
+        next_part = start
+        for item in items:
+            before = item.part_number
+            if item.video.youtube_id in skipped:
+                item.part_number = None
+            else:
+                item.part_number = next_part
+                next_part += 1
+            changes.append(
+                Renumbering(
+                    position=item.position,
+                    youtube_id=item.video.youtube_id,
+                    title=item.video.title,
+                    before=before,
+                    after=item.part_number,
+                )
+            )
+        self._session.flush()
+        return changes
 
     def list(self, *, channel: str | None = None) -> Sequence[Playlist]:
         """Playlists, newest fetch first, optionally restricted to one channel."""

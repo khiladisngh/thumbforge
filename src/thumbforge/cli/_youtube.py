@@ -66,6 +66,21 @@ def open_repositories(db_path: Path) -> Generator[Repositories]:
         engine.dispose()
 
 
+def lookup_key(reference: str) -> str:
+    """Reduce a user-supplied reference to something a repository can look up.
+
+    `video show`, `playlist show` and `playlist renumber` all accept a ULID, a YouTube id
+    or a URL (spec behaviour 4), so pasting the same string that was fetched works. Only
+    something URL-shaped is classified; a bare ULID or YouTube id is passed through and the
+    repository decides which it is.
+    """
+    if "/" in reference or "." in reference:
+        from thumbforge.core.urls import classify_url
+
+        return classify_url(reference).youtube_id
+    return reference
+
+
 def item_rows(items: Sequence[PlaylistItem]) -> list[list[str]]:
     """`#`, `Part`, `Video ID`, `Title` rows for a playlist's items (`PLAN.md` §5.3)."""
     return [

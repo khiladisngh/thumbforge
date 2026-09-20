@@ -241,3 +241,55 @@ def test_list_limit_applies(repos: Repositories) -> None:
         repos.store_video(_video(suffix))
 
     assert len(repos.videos.list(limit=2)) == 2
+
+
+def test_renumber_assigns_consecutive_parts_from_start(repos: Repositories) -> None:
+    """`--start N` sets the first part; the rest follow in playlist order."""
+    repos.store_playlist(_playlist(_video("a"), _video("b"), _video("c")), _channel())
+    playlist = repos.playlists.resolve("PL" + "p" * 16)
+
+    changes = repos.playlists.renumber(playlist, start=3)
+
+    assert [change.after for change in changes] == [3, 4, 5]
+    assert [change.before for change in changes] == [1, 2, 3]
+    assert [item.part_number for item in repos.playlists.items(playlist)] == [3, 4, 5]
+
+
+def test_renumber_skips_without_leaving_gaps(repos: Repositories) -> None:
+    """A skipped video gets NULL and is not counted, so the rest stay consecutive.
+
+    Gaps would defeat the purpose: skipping a trailer is meant to keep "Part 1, Part 2"
+    contiguous, not to reserve a number for the video you excluded.
+    """
+    repos.store_playlist(_playlist(_video("a"), _video("b"), _video("c"), _video("d")), _channel())
+    playlist = repos.playlists.resolve("PL" + "p" * 16)
+
+    repos.playlists.renumber(playlist, start=0, skip_ids=["bzzzzzzzzzz"])
+
+    assert [item.part_number for item in repos.playlists.items(playlist)] == [0, None, 1, 2]
+
+
+def test_renumber_rejects_an_id_not_in_the_playlist(repos: Repositories) -> None:
+    """A mistyped skip id would silently renumber everything one step off."""
+    repos.store_playlist(_playlist(_video("a"), _video("b")), _channel())
+    playlist = repos.playlists.resolve("PL" + "p" * 16)
+
+    with pytest.raises(NotFoundError) as caught:
+        repos.playlists.renumber(playlist, skip_ids=["czzzzzzzzzz"])
+
+    assert caught.value.hint is not None
+    # Validation happens before any write, so a rejected renumber changes nothing.
+    assert [item.part_number for item in repos.playlists.items(playlist)] == [1, 2]
+
+
+def test_renumbered_parts_survive_a_refetch_end_to_end(repos: Repositories) -> None:
+    """The carry-across from P2.3 must hold for values `renumber` wrote, not just manual ones."""
+    meta = _playlist(_video("a"), _video("b"), _video("c"))
+    repos.store_playlist(meta, _channel())
+    playlist = repos.playlists.resolve(meta.youtube_id)
+    repos.playlists.renumber(playlist, start=10, skip_ids=["bzzzzzzzzzz"])
+
+    repos.store_playlist(meta, _channel())
+
+    items = repos.playlists.items(repos.playlists.resolve(meta.youtube_id))
+    assert [item.part_number for item in items] == [10, None, 11]
