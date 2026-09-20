@@ -37,9 +37,22 @@ graphify extract . --code-only && graphify cluster-only . --no-label
 ```
 
 CI runs an advisory drift check (`graphify drift (advisory)`, `continue-on-error`, not one of
-branch protection's required contexts) that re-extracts and compares node/edge **sets** — never a
-byte diff, since `graph.json` embeds `built_at_commit`. Reproduce it locally by diffing a copy of
-the committed graph against a fresh extract; keep scratch files under the ignored `.pytest_tmp/`:
+branch protection's required contexts) that re-extracts and compares the **declaration node set** —
+never a byte diff, since `graph.json` embeds `built_at_commit`. It answers one question: was a
+symbol added, removed or renamed without re-running the extract. A failure names the symbols.
+
+It deliberately ignores everything else in the graph, because everything else varies between
+machines without the source changing. Measured over five consecutive false alarms (issue #26): CI
+resolves imports less completely than a local run and invents placeholder nodes
+(`thumbforge_core_errors` where a local extract has `src_thumbforge_core_errors`); external symbol
+nodes depend on what is installed; `*_rationale_<line>` ids embed a line number, so moving a comment
+renames the node. Edges are dropped entirely — they have no environment-independent form, since CI
+can be _missing_ an edge between two fully resolved nodes when it resolved that import to a module
+placeholder instead. The cost is that a changed call edge between unchanged symbols goes unnoticed,
+which is acceptable given the check already cannot see the staleness class described below.
+
+Reproduce it locally by diffing a copy of the committed graph against a fresh extract; keep scratch
+files under the ignored `.pytest_tmp/`:
 
 ```
 mkdir -p .pytest_tmp
