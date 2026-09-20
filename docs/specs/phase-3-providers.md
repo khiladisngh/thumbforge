@@ -11,7 +11,7 @@ Define the `ImageProvider` protocol, capabilities, registry with entry-point dis
 - **P3.1** `core/providers.py` (Protocol and boundary models), `core/json.py` (`JsonValue`), `providers/registry.py`, `[project.entry-points."thumbforge.providers"]`.
 - **P3.2** `providers/fake.py` + `tests/contract/test_provider_contract.py`.
 - **P3.3** spikes S1–S8 executed; findings in `docs/spikes/antigravity.md`.
-- **P3.4** `providers/antigravity.py`, `providers/antigravity_wrapper.j2`, marker-gated integration test.
+- **P3.4** `providers/antigravity.py` (the wrapper prompt is a module constant in it, not a packaged `.j2`), marker-gated integration test — the contract suite's `antigravity` case.
 - **P3.5** `cli/provider.py` (`provider list|check|models|set-key`).
 
 ## Non-goals
@@ -116,20 +116,21 @@ version field — its measured keys are `conversation_id`, `status`, `response`,
 `unknown`. The value is cached per instance so a batch does not spawn `agy --version` per
 image.
 
-1. Build the prompt from `providers/antigravity_wrapper.j2`, which (a) instructs the agent to call `generate_image` exactly once, (b) states the aspect ratio in words ("16:9 widescreen") — S3 measured this as the only lever on output size, (c) lists reference image absolute paths for the agent to `view_file`, (d) forbids running shell commands or other tools. It states **no output path**: `generate_image` accepts only `ImageName` and `Prompt`.
+1. Build the prompt from the `_WRAPPER` module constant, which (a) instructs the agent to call `generate_image` exactly once, (b) states the aspect ratio in words ("16:9 widescreen") — S3 measured this as the only lever on output size, (c) lists reference image absolute paths for the agent to `view_file`, (d) forbids running shell commands or other tools. It states **no output path**: `generate_image` accepts only `ImageName` and `Prompt`.
 2. Run `[binary, "-p", prompt, "--output-format", "json", "--add-dir", str(workdir), *("--add-dir", d for d in reference_dirs), "--print-timeout", f"{timeout_s}s", *(["--dangerously-skip-permissions"] if skip_permissions else []), *(["--model", model] if model else []), *(["--effort", effort] if effort else [])]` via `asyncio.create_subprocess_exec(..., cwd=workdir, stdout=PIPE, stderr=PIPE)`.
 3. Locate the image by globbing `~/.gemini/antigravity-cli/brain/<conversation_id>/` using the envelope's `conversation_id`, then copy it into the asset store. Success ⇔ exit `0` **and** `status == "SUCCESS"` **and** exactly one image found **and** Pillow opens it.
-4. Error mapping. The timeout row **must** precede the missing-output row — agy's print timeout presents as `SUCCESS` with no file (S6c), so the reverse order makes every long generation a permanent failure:
+4. Error mapping. **Two** rows must precede the missing-output row, because `SUCCESS` twice means something other than success. agy's print timeout presents as `SUCCESS` with no file (S6c). And an upstream image-model refusal does too: measured live during P3.4, a 429 `RESOURCE_EXHAUSTED` on `gemini-3.1-flash-image` came back as `status: SUCCESS`, one turn, real token usage, no image, with the error relayed only as **prose** in `response`. Both are retryable; classified as missing output they become permanent, so a long generation or a quota reset two hours away abandons its batch item and misdiagnoses the cause. The prose check is consulted **only** when no image was produced, so a prompt that merely mentions quotas cannot trigger it.
 
-    | Observation                                                       | Exception                                                            | Retryable |
-    | ----------------------------------------------------------------- | -------------------------------------------------------------------- | --------- |
-    | `SUCCESS`, empty `response`, `total_tokens == 0`, no output image | `ProviderTimeoutError` (agy's print timeout)                         | **yes**   |
-    | `SUCCESS` but no image in `brain/<conversation_id>/`              | `ProviderOutputMissingError` (message names the **brain** directory) | no        |
-    | `status ∈ {CANCELED, INTERRUPTED}`                                | `ProviderTransientError`                                             | yes       |
-    | `ERROR` and `error` contains `authentication required`            | `ProviderAuthError`                                                  | no        |
-    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`             | `ProviderPermanentError`                                             | no        |
-    | subprocess exceeds `timeout_s + 30`                               | `ProviderTimeoutError` (process killed)                              | yes       |
-    | binary not found                                                  | `ProviderPermanentError` with hint "install Antigravity CLI"         | no        |
+    | Observation                                                                     | Exception                                                            | Retryable |
+    | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------- |
+    | `SUCCESS`, empty `response`, `total_tokens == 0`, no output image               | `ProviderTimeoutError` (agy's print timeout)                         | **yes**   |
+    | `SUCCESS`, no image, `response` relays a 429/`RESOURCE_EXHAUSTED`/quota refusal | `ProviderTransientError` (the image model is rate limited)           | **yes**   |
+    | `SUCCESS` but no image in `brain/<conversation_id>/`                            | `ProviderOutputMissingError` (message names the **brain** directory) | no        |
+    | `status ∈ {CANCELED, INTERRUPTED}`                                              | `ProviderTransientError`                                             | yes       |
+    | `ERROR` and `error` contains `authentication required`                          | `ProviderAuthError`                                                  | no        |
+    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`                           | `ProviderPermanentError`                                             | no        |
+    | subprocess exceeds `timeout_s + 30`                                             | `ProviderTimeoutError` (process killed)                              | yes       |
+    | binary not found                                                                | `ProviderPermanentError` with hint "install Antigravity CLI"         | no        |
 
 5. `usage` tokens and `duration_seconds` are written to `iteration.cost_json`; the whole envelope to `provider_response_json`; stdout/stderr to per-iteration log files.
 6. Never uses `--continue`/`--conversation`; every image is a fresh conversation.
@@ -169,9 +170,9 @@ Secrets (`PLAN.md` §8): lookup order environment variable `THUMBFORGE_PROVIDERS
 - `FakeProvider.generate` with the same `prompt` and `seed` twice yields byte-identical PNGs; different seeds yield different background colours.
 - Prompt containing `[[FAIL_TRANSIENT]]` raises `ProviderTransientError`; `[[FAIL_PERMANENT]]` raises `ProviderPermanentError`.
 - A test distribution registering `fake = tests.plugins:Dup` under `thumbforge.providers` makes `registry.keys()` raise `ProviderRegistryError`.
-- With a stubbed `agy` script that prints `{"status":"SUCCESS", ...}` but writes no file, `AntigravityProvider.generate` raises `ProviderOutputMissingError` whose message contains `~/.gemini/antigravity-cli/scratch/`.
+- With an injected runner that returns `{"status":"SUCCESS", ...}` but writes no file, `AntigravityProvider.generate` raises `ProviderOutputMissingError` whose message names the `brain/<conversation_id>/` directory it searched. S2 falsified `scratch/`: the image lands under `brain/<conversation_id>/`.
 - With a stubbed `agy` that sleeps past `timeout_s + 30`, `generate` raises `ProviderTimeoutError` and the child process is gone (`psutil`-free check: `proc.returncode is not None`).
-- `uv run pytest -m integration tests/providers/test_antigravity_live.py` produces a JPEG in `workdir` named `<idempotency_key>.jpg` (only after S1–S4 pass).
+- `uv run pytest -m integration tests/contract/` produces a JPEG in `workdir` named `<idempotency_key>.jpg` for the `antigravity` case. There is no separate live test file: `antigravity` is a parametrised case of the contract suite marked `integration`, which is stricter than a bespoke test because it holds the provider to the same contract as `FakeProvider`.
 
 ## Test plan
 

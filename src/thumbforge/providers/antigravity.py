@@ -14,6 +14,11 @@ the vendor docs. The four that shape the module:
   every slow generation becomes a permanent failure and its batch item is abandoned.
 - **`generate_image` needs no permission grant** (S5, confirmed twice — once with
   `trustedWorkspaces` removed), so `skip_permissions` defaults to `false`.
+- **An upstream image-model failure also looks like success.** Measured live: quota
+  exhaustion returned `status: "SUCCESS"`, one turn, real token usage and no image, with the
+  429 relayed only as *prose* in `response` ("`RESOURCE_EXHAUSTED` — You have exhausted your
+  capacity on the image model"). So "SUCCESS with no image" is not automatically permanent;
+  the response text has to be read before that call is made.
 """
 
 from __future__ import annotations
@@ -69,6 +74,22 @@ _IMAGE_SUFFIXES: Final = (".jpg", ".jpeg", ".png")
 #: Grace added to `--print-timeout` before the process is killed outright. The CLI is
 #: expected to return its own timeout envelope first; this is the backstop for a hung child.
 _KILL_GRACE_S: Final = 30
+
+#: `agy --version` is a local read, so a long wait means something is wrong, not slow.
+_VERSION_TIMEOUT_S: Final = 30
+
+#: Markers the agent uses when it *relays* an upstream image-model failure in prose instead
+#: of failing the run. Measured live: a 429 arrived as `status: "SUCCESS"` with no image and
+#: "429 Too Many Requests: RESOURCE_EXHAUSTED - You have exhausted your capacity on the image
+#: model (gemini-3.1-flash-image). Quota resets in approximately 2 hours". Matched only when
+#: no image was produced, so a prompt that merely mentions quotas cannot trigger it.
+_EXHAUSTION_MARKERS: Final = (
+    "resource_exhausted",
+    "429",
+    "quota",
+    "rate limit",
+    "too many requests",
+)
 
 _CAPABILITIES: Final = ProviderCapabilities(
     # S4: the agent reads a reference with `view_file` and *describes* it into the prompt.
@@ -202,7 +223,7 @@ class AntigravityProvider:
 
     async def healthcheck(self) -> HealthReport:
         """Report every check, so one failure does not hide the others."""
-        binary_path = shutil.which(self._binary)
+        binary_path = await asyncio.to_thread(shutil.which, self._binary)
         checks = [
             Check(
                 name="binary",
@@ -219,9 +240,7 @@ class AntigravityProvider:
         # S4: every headless run inherits these, so generation is not a pure function of
         # thumbforge's inputs. Reported as a passing check with detail rather than a failure
         # — plugins are not broken, but they make a cross-machine difference diagnosable.
-        plugins = (
-            sorted(entry.name for entry in PLUGINS_DIR.iterdir()) if PLUGINS_DIR.is_dir() else []
-        )
+        plugins = await asyncio.to_thread(_installed_plugins)
         checks.append(
             Check(
                 name="plugins",
@@ -237,20 +256,23 @@ class AntigravityProvider:
     async def generate(self, request: GenerationRequest, *, workdir: Path) -> GenerationResult:
         """Run one generation and copy its output into `workdir`."""
         started = time.perf_counter()
-        workdir.mkdir(parents=True, exist_ok=True)
+        await asyncio.to_thread(workdir.mkdir, parents=True, exist_ok=True)
 
         argv = self._argv(_wrap(request), workdir, request.reference_images)
         stdout, stderr, returncode = await self._invoke(argv, workdir)
-        _write_logs(workdir, request.idempotency_key, stdout, stderr)
+        await asyncio.to_thread(_write_logs, workdir, request.idempotency_key, stdout, stderr)
 
         envelope = _parse_envelope(stdout, stderr, returncode)
         _raise_for_envelope(envelope, stderr)
 
         conversation_id = _as_str(envelope.get("conversation_id"), "")
-        produced = self._locate_output(conversation_id, stderr)
+        response = _as_str(envelope.get("response"), "")
+        produced = self._locate_output(conversation_id, stderr, response)
         destination = workdir / f"{request.idempotency_key}.jpg"
-        shutil.copyfile(produced, destination)
-        _verify_image(destination)
+        # Off the loop: with max_concurrency=2 a copy plus a Pillow decode would otherwise
+        # stall the sibling generation. FakeProvider.generate uses the same pattern.
+        await asyncio.to_thread(shutil.copyfile, produced, destination)
+        await asyncio.to_thread(_verify_image, destination)
 
         usage = envelope.get("usage")
         return GenerationResult(
@@ -323,7 +345,7 @@ class AntigravityProvider:
 
         return out.decode(errors="replace"), err.decode(errors="replace"), process.returncode or 0
 
-    def _locate_output(self, conversation_id: str, stderr: str) -> Path:
+    def _locate_output(self, conversation_id: str, stderr: str, response: str = "") -> Path:
         """Find the image `generate_image` wrote, in the conversation's brain directory.
 
         S2: the tool takes no output path, so the file cannot be predicted by name — only
@@ -340,9 +362,15 @@ class AntigravityProvider:
         )
 
         if not candidates:
-            # No timeout check here: `_raise_for_envelope` already classified that case, so
-            # reaching this point means the CLI reported real work and still produced
-            # nothing — which is permanent, not worth retrying.
+            # `_raise_for_envelope` already handled the print timeout, so the CLI thinks it
+            # did real work. Before calling that permanent, read the response: the agent
+            # relays an upstream 429 as prose inside a SUCCESS envelope, and treating a
+            # quota reset as a permanent defect abandons the batch item and misdiagnoses it.
+            relayed = _relayed_exhaustion(response)
+            if relayed is not None:
+                raise ProviderTransientError(
+                    relayed, hint="the image model is rate limited; retry after the reset"
+                )
             msg = f"no image in {directory or self._brain_dir}"
             raise ProviderOutputMissingError(
                 msg,
@@ -368,6 +396,7 @@ class AntigravityProvider:
             return "injected"
         if shutil.which(self._binary) is None:
             return None
+        process = None
         try:
             process = await asyncio.create_subprocess_exec(
                 self._binary,
@@ -375,11 +404,36 @@ class AntigravityProvider:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            out, _ = await asyncio.wait_for(process.communicate(), timeout=30)
-        except OSError, TimeoutError:
+            # TimeoutError is an OSError subclass, so this catches the wait_for expiry too.
+            out, _ = await asyncio.wait_for(process.communicate(), timeout=_VERSION_TIMEOUT_S)
+        except OSError:
+            if process is not None:
+                # Same reaping as _invoke: a hung `agy --version` must not outlive the call.
+                process.kill()
+                with contextlib.suppress(ProcessLookupError):
+                    await process.wait()
             return None
         self._version_cache = out.decode(errors="replace").strip() or None
         return self._version_cache
+
+
+def _relayed_exhaustion(response: str) -> str | None:
+    """The agent's prose report of an upstream quota or rate-limit failure, if that is what it is.
+
+    Only consulted when no image was produced, so this cannot misfire on a prompt that
+    happens to discuss quotas.
+    """
+    lowered = response.lower()
+    if not any(marker in lowered for marker in _EXHAUSTION_MARKERS):
+        return None
+    return f"the image model refused the request: {' '.join(response.split())[:300]}"
+
+
+def _installed_plugins() -> list[str]:
+    """Plugin directory names, or empty when the directory does not exist."""
+    if not PLUGINS_DIR.is_dir():
+        return []
+    return sorted(entry.name for entry in PLUGINS_DIR.iterdir())
 
 
 def _parse_envelope(stdout: str, stderr: str, returncode: int) -> JsonPayload:

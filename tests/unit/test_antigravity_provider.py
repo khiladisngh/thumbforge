@@ -2,7 +2,7 @@
 
 The subprocess is injected so every branch is reachable without the binary, credentials or
 quota — including the one that matters most, where a timeout reports success. Live behaviour
-is covered separately by `tests/integration/test_antigravity_live.py`.
+is covered by the contract suite's `antigravity` case under `-m integration`.
 
 Every envelope below is the shape spike S6 actually measured, not an invented one.
 """
@@ -82,12 +82,16 @@ def _provider(tmp_path: Path, runner: Runner, **config: object) -> AntigravityPr
     return AntigravityProvider({"brain_dir": str(brain), **config}, run=runner)  # type: ignore[arg-type]
 
 
-def _plant_image(tmp_path: Path, name: str = "lighthouse_1789896899337.jpg") -> Path:
+def _plant_image(
+    tmp_path: Path,
+    name: str = "lighthouse_1789896899337.jpg",
+    colour: tuple[int, int, int] = (40, 60, 90),
+) -> Path:
     """Put an image where `generate_image` would have written it (S2)."""
     directory = tmp_path / "brain" / CONVERSATION
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / name
-    Image.new("RGB", (1376, 768), (40, 60, 90)).save(path)
+    Image.new("RGB", (1376, 768), colour).save(path)
     return path
 
 
@@ -106,6 +110,36 @@ async def test_success_copies_the_image_out_of_the_brain_directory(tmp_path: Pat
     assert result.cost is not None
     assert (result.cost.tokens_in, result.cost.tokens_out) == (62753, 4953)
     assert result.cost.credits is None, "S8 measured no monetary field"
+
+
+async def test_a_relayed_quota_error_is_retryable(tmp_path: Path) -> None:
+    """The second "SUCCESS is not success" trap, found by a live run rather than a spike.
+
+    The image model returned 429 `RESOURCE_EXHAUSTED`; the agent relayed it as prose inside a
+    `SUCCESS` envelope with one turn, real token usage and no image. Classified as missing
+    output it would be permanent, so a quota reset two hours away would abandon the batch
+    item and blame the user's setup. The response text below is the one actually measured.
+    """
+    runner = Runner(
+        json.dumps(
+            _envelope(
+                response=(
+                    "The image generation request was sent with the specified prompt and 16:9 "
+                    "aspect ratio, but the service returned a quota exhaustion error:\n\n"
+                    "> **429 Too Many Requests**: `RESOURCE_EXHAUSTED` \u2014 You have "
+                    "exhausted your capacity on the image model (`gemini-3.1-flash-image`). "
+                    "Quota resets in approximately 2 hours and 20 minutes."
+                ),
+                num_turns=1,
+            )
+        )
+    )
+
+    with pytest.raises(ProviderTransientError) as caught:
+        await _provider(tmp_path, runner).generate(_request(), workdir=tmp_path / "work")
+
+    assert "RESOURCE_EXHAUSTED" in str(caught.value)
+    assert caught.value.retryable is True
 
 
 async def test_a_timeout_reporting_success_is_retryable(tmp_path: Path) -> None:
@@ -230,17 +264,17 @@ async def test_a_non_image_file_is_not_accepted(tmp_path: Path) -> None:
 async def test_the_newest_image_wins_when_the_agent_generates_twice(tmp_path: Path) -> None:
     """The prompt forbids it, but the agent can still do it, and the run must not fail."""
     import os
-    import time
 
     first = _plant_image(tmp_path, "first_1.jpg")
-    time.sleep(0.01)
-    second = _plant_image(tmp_path, "second_2.jpg")
+    second = _plant_image(tmp_path, "second_2.jpg", colour=(3, 4, 5))
     os.utime(second, (first.stat().st_atime + 10, first.stat().st_mtime + 10))
     runner = Runner(json.dumps(_envelope()))
 
     result = await _provider(tmp_path, runner).generate(_request(), workdir=tmp_path / "work")
 
-    assert result.image_path.exists()
+    # Not merely "a file exists": a reversed sort would pass that. These bytes are `second`.
+    assert result.image_path.read_bytes() == second.read_bytes()
+    assert result.image_path.read_bytes() != first.read_bytes()
 
 
 async def test_logs_are_written_next_to_the_image(tmp_path: Path) -> None:

@@ -36,8 +36,8 @@ src/thumbforge/
     base.py              # ImageProvider Protocol, ProviderCapabilities, ProviderInfo
     registry.py          # entry-point discovery (group "thumbforge.providers") + builtin map
     fake.py              # FakeProvider
-    antigravity.py       # AntigravityProvider (subprocess adapter)
-    antigravity_wrapper.j2
+    antigravity.py       # AntigravityProvider (subprocess adapter; wrapper prompt is a
+                         # module constant, not a packaged .j2 — no template engine needed)
   sources/
     base.py              # MetadataSource Protocol
     ytdlp.py             # YtDlpSource
@@ -220,17 +220,18 @@ Adapter design:
 1. Build the prompt from a module constant in `providers/antigravity.py` (ADR 0013 named `antigravity_wrapper.j2`; the text is provider-internal, needs no template engine, and a constant cannot go missing from a wheel), which (a) instructs the agent to call `generate_image` exactly once, (b) states the aspect ratio in words ("16:9 widescreen") — the only measured lever on output size, (c) lists reference image absolute paths for the agent to `view_file`, (d) forbids running shell commands or other tools. It states **no output path**: `generate_image` has no path parameter, so the instruction cannot be honoured.
 2. Run `[binary, "-p", prompt, "--output-format", "json", "--add-dir", str(workdir), *("--add-dir", d for d in reference_dirs), "--print-timeout", f"{timeout_s}s", *(["--dangerously-skip-permissions"] if skip_permissions else []), *(["--model", model] if model else []), *(["--effort", effort] if effort else [])]` via `asyncio.create_subprocess_exec(..., cwd=workdir, stdout=PIPE, stderr=PIPE)`.
 3. Locate the image by globbing `~/.gemini/antigravity-cli/brain/<conversation_id>/` using the envelope's `conversation_id`, then copy it into the asset store. Success ⇔ exit `0` **and** `status == "SUCCESS"` **and** exactly one image found **and** Pillow opens it.
-4. Error mapping. The timeout row **must** precede the missing-output row: agy's own print timeout presents as `SUCCESS` with no file, so the reverse order makes every long generation a permanent failure.
+4. Error mapping. The timeout row and the relayed-refusal row **must** precede the missing-output row: agy's own print timeout presents as `SUCCESS` with no file, so the reverse order makes every long generation a permanent failure.
 
-    | Observation                                                       | Exception                                                            | Retryable |
-    | ----------------------------------------------------------------- | -------------------------------------------------------------------- | --------- |
-    | `SUCCESS`, empty `response`, `total_tokens == 0`, no output image | `ProviderTimeoutError` (agy's print timeout)                         | **yes**   |
-    | `SUCCESS` but no image in `brain/<conversation_id>/`              | `ProviderOutputMissingError` (message names the **brain** directory) | no        |
-    | `status ∈ {CANCELED, INTERRUPTED}`                                | `ProviderTransientError`                                             | yes       |
-    | `ERROR` and `error` contains `authentication required`            | `ProviderAuthError` (defensive; S6a unverified)                      | no        |
-    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`             | `ProviderPermanentError`                                             | no        |
-    | subprocess exceeds `timeout_s + 30`                               | `ProviderTimeoutError` (process killed)                              | yes       |
-    | binary not found                                                  | `ProviderPermanentError` with hint "install Antigravity CLI"         | no        |
+    | Observation                                                                     | Exception                                                            | Retryable |
+    | ------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------- |
+    | `SUCCESS`, empty `response`, `total_tokens == 0`, no output image               | `ProviderTimeoutError` (agy's print timeout)                         | **yes**   |
+    | `SUCCESS`, no image, `response` relays a 429/`RESOURCE_EXHAUSTED`/quota refusal | `ProviderTransientError` (the image model is rate limited)           | **yes**   |
+    | `SUCCESS` but no image in `brain/<conversation_id>/`                            | `ProviderOutputMissingError` (message names the **brain** directory) | no        |
+    | `status ∈ {CANCELED, INTERRUPTED}`                                              | `ProviderTransientError`                                             | yes       |
+    | `ERROR` and `error` contains `authentication required`                          | `ProviderAuthError` (defensive; S6a unverified)                      | no        |
+    | `ERROR` otherwise / `INVALID` / `WAITING` / `RUNNING`                           | `ProviderPermanentError`                                             | no        |
+    | subprocess exceeds `timeout_s + 30`                                             | `ProviderTimeoutError` (process killed)                              | yes       |
+    | binary not found                                                                | `ProviderPermanentError` with hint "install Antigravity CLI"         | no        |
 
 5. `provider_version` comes from `agy --version`, cached per instance — the envelope has no version field. `usage` tokens and `duration_seconds` are written to `iteration.cost_json`; the whole envelope to `provider_response_json`; stdout/stderr to per-iteration log files.
 6. Never uses `--continue`/`--conversation`; every image is a fresh conversation.
