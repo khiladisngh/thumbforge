@@ -298,3 +298,38 @@ async def test_unexpected_metadata_shape_is_a_source_error(label: str, entries: 
         await source.fetch_playlist("PL0000000000000000")
     assert caught.value.exit_code is ExitCode.UNEXPECTED
     assert caught.value.hint is not None
+
+
+@pytest.mark.parametrize(
+    ("label", "timestamp"),
+    [
+        ("beyond time_t", 1e20),
+        ("negative and huge", -1e20),
+        ("infinite", float("inf")),
+        ("not a number", float("nan")),
+        ("year 10000", 253402300800),
+    ],
+)
+async def test_out_of_range_timestamp_is_a_source_error(label: str, timestamp: float) -> None:
+    """`datetime.fromtimestamp` rejects these, and not all of them as `ValueError`.
+
+    Measured: out-of-range raises `OverflowError` or `OSError` (errno 22); only NaN raises
+    `ValueError`. Two of the three would otherwise escape `handle_errors` as a traceback.
+    """
+    info = {"id": "PL0", "title": "t", "entries": [{"id": "x" * 11, "timestamp": timestamp}]}
+    with pytest.raises(SourceError) as caught:
+        await YtDlpSource(_Recorder(info)).fetch_playlist("PL0000000000000000")
+    assert caught.value.exit_code is ExitCode.UNEXPECTED
+
+
+async def test_empty_entry_is_an_error_not_a_silent_drop() -> None:
+    """Only `None` is the documented "could not fetch" sentinel.
+
+    An empty dict is an unknown shape. Dropping it on truthiness would hide it *and*
+    renumber every later position, so it has to surface instead.
+    """
+    info = _fixture("playlist")
+    info["entries"] = [info["entries"][0], {}, info["entries"][1]]
+
+    with pytest.raises(SourceError):
+        await YtDlpSource(_Recorder(info)).fetch_playlist("PL0000000000000000")

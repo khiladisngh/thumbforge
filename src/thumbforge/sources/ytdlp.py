@@ -167,12 +167,16 @@ def _shape_errors(url: str) -> Generator[None]:
     release, and would reject shapes that are merely unfamiliar rather than actually
     unusable. The fields that matter are already validated by the `core.models` they flow
     into.
+
+    `OSError` and `OverflowError` are in the list because of `datetime.fromtimestamp`: an
+    out-of-range `timestamp` raises one of those rather than `ValueError` (only NaN raises
+    `ValueError`), and neither is an obvious member of a "bad shape" family.
     """
     try:
         yield
     except ThumbforgeError:
         raise
-    except (AttributeError, LookupError, TypeError, ValueError) as exc:
+    except (AttributeError, LookupError, OSError, OverflowError, TypeError, ValueError) as exc:
         msg = f"unexpected metadata shape from {url}: {exc}"
         raise SourceError(msg, hint="yt-dlp may need upgrading for a YouTube change") from exc
 
@@ -288,7 +292,11 @@ class YtDlpSource:
         url = _PLAYLIST_URL.format(youtube_id)
         info = await self._info(url, flat=True)
         with _shape_errors(url):
-            entries = [entry for entry in info.get("entries") or () if entry]
+            # `is not None` rather than truthiness: `None` is the documented sentinel for an
+            # entry yt-dlp could not fetch, but an empty dict is an unknown shape and must
+            # surface as an error instead of being silently dropped — which would also
+            # renumber every later position.
+            entries = [entry for entry in info.get("entries") or () if entry is not None]
             items = tuple(
                 PlaylistItemMeta(video=_video_meta(entry), position=position)
                 for position, entry in enumerate(entries, start=1)
