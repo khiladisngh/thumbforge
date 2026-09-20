@@ -12,6 +12,14 @@ class ChannelSource(StrEnum):
     API = "api"
 
 
+class UrlKind(StrEnum):
+    """What a YouTube URL or bare identifier refers to."""
+
+    VIDEO = "video"
+    PLAYLIST = "playlist"
+    CHANNEL = "channel"
+
+
 class RunKind(StrEnum):
     """Lifecycle classification of a thumbnail generation run."""
 

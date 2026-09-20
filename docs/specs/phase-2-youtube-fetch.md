@@ -8,7 +8,7 @@ ADRs: `docs/adr/0005-ytdlp-metadata-source.md`, `docs/adr/0004-sqlite-sqlalchemy
 
 Fetch channel, playlist and video metadata from YouTube via `yt-dlp` (no API key), persist it, and expose it through `fetch`, `video` and `playlist` commands. Establishes the `MetadataSource` protocol that Phase 8's Data API source also implements.
 
-- **P2.1** `sources/base.py` (`MetadataSource` Protocol), `core/models.py` (`ChannelMeta`, `PlaylistMeta`, `VideoMeta`, `PlaylistItemMeta`).
+- **P2.1** `sources/base.py` (`MetadataSource` Protocol), `core/enums.py` (`UrlKind`), `core/models.py` (`ChannelMeta`, `PlaylistMeta`, `VideoMeta`, `PlaylistItemMeta`, `ResolvedUrl`), `core/urls.py` (URL classifier).
 - **P2.2** `sources/ytdlp.py` (`YtDlpSource`) + recorded fixtures under `tests/fixtures/ytdlp/*.json`.
 - **P2.3** `storage/repositories.py` (`ChannelRepository`, `PlaylistRepository`, `VideoRepository`), `cli/fetch.py`, `cli/video.py`, `cli/playlist.py`.
 - **P2.4** `playlist renumber`.
@@ -23,14 +23,29 @@ Fetch channel, playlist and video metadata from YouTube via `yt-dlp` (no API key
 
 ```python
 class MetadataSource(Protocol):
-    key: ClassVar[str]                                   # "ytdlp", "api"
-    async def resolve(self, url: str) -> UrlKind         # UrlKind = StrEnum("video", "playlist", "channel")
-    async def fetch_video(self, url_or_id: str) -> VideoMeta
-    async def fetch_playlist(self, url_or_id: str) -> PlaylistMeta   # includes items: list[PlaylistItemMeta]
-    async def fetch_channel(self, url_or_id: str) -> ChannelMeta
+    key: ClassVar[str]                                       # "ytdlp", "api"
+    async def resolve(self, url: str) -> ResolvedUrl         # kind: UrlKind + youtube_id
+    async def fetch_video(self, youtube_id: str) -> VideoMeta
+    async def fetch_playlist(self, youtube_id: str) -> PlaylistMeta   # includes ordered items
+    async def fetch_channel(self, youtube_id: str) -> ChannelMeta
 ```
 
-`VideoMeta`, `PlaylistMeta`, `ChannelMeta` are Pydantic v2 frozen models mirroring the `video`, `playlist`, `channel` columns in `PLAN.md` §3 (`youtube_id`, `title`, `description`, `duration_s`, `published_at`, `url`, `source_thumbnail_url`, …) plus `source: str` and `fetched_at: datetime`. `PlaylistItemMeta(video: VideoMeta, position: int)`.
+`resolve` returns `ResolvedUrl(kind, youtube_id)` rather than a bare `UrlKind`: an earlier
+draft of this spec returned only the kind, but every caller immediately needs the id too, and
+ADR 0005 — which is Accepted and therefore authoritative — already specified the richer shape.
+The `fetch_*` methods correspondingly take a `youtube_id`, not a URL.
+
+`VideoMeta`, `PlaylistMeta`, `ChannelMeta` are Pydantic v2 frozen models mirroring the `video`, `playlist`, `channel` columns in `PLAN.md` §3 (`youtube_id`, `title`, `description`, `duration_s`, `published_at`, `url`, `source_thumbnail_url`, …) plus `source: ChannelSource` and `fetched_at: datetime`. `PlaylistItemMeta(video: VideoMeta, position: int)`; `PlaylistMeta.item_count` is derived from `items`. All use `extra="forbid"`, so a renamed yt-dlp field fails at the boundary instead of silently arriving empty, and `fetched_at` must be timezone-aware (it is persisted as ISO-8601 UTC).
+
+URL classification is a pure function in `core/urls.py` (`classify_url`, `classify_id`), not a
+method body, so both this source and the Phase 8 Data API source resolve input identically and
+the rules are testable without network. Recognised: `watch?v=`, `youtu.be/<id>`, `/shorts/`,
+`/embed/`, `/live/`, `/v/`, `/playlist?list=`, `/channel/<UC…>`, `/@handle`, `/c/<name>`,
+`/user/<name>`, and bare ids discriminated by shape (11-char video, `UC…` channel, `PL|UU|LL|FL|OL|RD…` playlist).
+A `watch` URL carrying **both** `v=` and `list=` resolves to the **video**: it names one video
+being watched in a playlist's context, and fetching the whole playlist would pull in videos the
+user did not ask for. Unrecognised input raises `UrlError` (code `url`, exit `2`) — a validation
+failure, not a `SourceError`.
 
 `YtDlpSource` wraps `yt_dlp.YoutubeDL` with `quiet=True, skip_download=True, extract_flat="in_playlist"` for playlists and a full extract for single videos; called through `asyncio.to_thread`. Network errors (`yt_dlp.utils.DownloadError` with a network cause) are retried per `PLAN.md` §7.2; anything else becomes `SourceError` (exit `1`). An id that YouTube reports as unavailable becomes `NotFoundError` (exit `3`).
 
