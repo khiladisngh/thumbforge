@@ -50,7 +50,7 @@ Spec: `docs/specs/phase-3-providers.md`
 
 Spec: `docs/specs/phase-4-templates.md`
 
-- P4.1 Layout spec schema — deps: P1.5 — AC: Pydantic model for the TOML layout spec (canvas, title box, part badge, font, colours, safe margins); `template validate PATH` reports schema errors with exit `2`.
+- P4.1 Layout spec schema — deps: P1.5 — AC: Pydantic `LayoutSpec` in `core/layout.py` (canvas, title box, part badge, font, colours, safe margins; in `core` because `imaging` and `core.services` consume it) and TOML loading in `templates/schema.py`; `template validate PATH` reports schema errors with exit `2`.
 - P4.2 Prompt rendering — deps: P4.1 — AC: Jinja2 environment with `StrictUndefined`, `autoescape=False`; context = video/playlist/part/vars; missing variable → `TemplateError`; `template render NAME --video <id> [--part N]` prints the prompt.
 - P4.3 Builtin templates — deps: P4.2 — AC: `bold-title`, `minimal`, `series-parts` shipped under `templates/builtin/`; loaded as `is_builtin=1` version 1 on `db init`.
 - P4.4 Template commands + versioning — deps: P4.3, P1.3 — AC: `template list|show|new|import`; importing a changed spec creates version+1; `spec_hash` stable for identical content.
@@ -61,14 +61,14 @@ Spec: `docs/specs/phase-5-imaging.md`
 
 - P5.1 Fit/crop — deps: P1.5 — AC: `imaging/fit.py` resizes/crops any input to the configured 16:9 target (default 1920×1080) with centre crop; unit tests on synthetic images.
 - P5.2 Text overlay + golden tests — deps: P4.1, P5.1 — AC: `imaging/overlay.py` renders title and "Part N" badge from the layout spec with the bundled OFL font; `golden`-marked snapshot tests compare against `tests/golden/*.png` with a pixel tolerance.
-- P5.3 Compliance check — deps: P5.1 — AC: `imaging/compliance.py` enforces 16:9 ±1 px, width ≥ 1280, JPEG/PNG, ≤ 2 MB default (`--max-bytes` up to 50 MB), sRGB; returns a report stored in `asset.compliance_report_json`; failing asset raises `ComplianceError` (exit `5`).
+- P5.3 Compliance check + final render — deps: P5.2 — AC: `imaging/compliance.py` `check` enforces 16:9 ±1 px, width ≥ 1280, JPEG/PNG, ≤ 2 MB default (`--max-bytes` up to 50 MB), sRGB and returns a `ComplianceReport` (`core/models.py`); `imaging/finalize.py` `render_final` runs fit → overlay → encode, lowering JPEG quality (floor 60) until within `max_bytes`, and returns the bytes with the report. Storing the report in `asset.compliance_report_json` and raising `ComplianceError` (exit `5`) belong to P6.1.
 - P5.4 Rich preview — deps: P5.1, spike S10 — AC: `cli/_render.py` grid preview via `rich-pixels`; degrades to a table when the terminal cannot render.
 
 ## Phase 6 — Hero thumbnail + iterations
 
 Spec: `docs/specs/phase-6-hero.md`
 
-- P6.1 HeroService + `thumb generate` — deps: P2.3, P3.2, P4.4, P5.3 — AC: creates hero run + N iterations, runs provider under a semaphore, overlays, checks compliance, stores raw and final assets; exit `6` when some iterations fail; works end-to-end with `fake`.
+- P6.1 HeroService + `thumb generate` — deps: P2.3, P3.2, P4.4, P5.3 — AC: creates hero run + N iterations, runs provider under a semaphore, finalizes through the injected `render_final`, stores raw and final assets with `compliant` and `compliance_report_json` (non-compliant finals stored, iteration `failed`; exit `5` when every failure is a compliance failure); exit `6` when some iterations fail; works end-to-end with `fake`.
 - P6.2 `thumb pick|show|export` — deps: P6.1 — AC: exactly one picked iteration per run; `show` grid; `export --to PATH [--raw]`.
 - P6.3 `thumb iterate` — deps: P6.2 — AC: child run with `parent_run_id`, reference = picked (or given) iteration's raw asset, `--prompt-append` and `--var` applied; `runs show` displays lineage.
 

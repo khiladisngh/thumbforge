@@ -8,17 +8,17 @@ Every task in `docs/ROADMAP.md` links to a spec section. A spec must exist and b
 
 ## Index
 
-| File                       | Phase                 | Status                               |
-| -------------------------- | --------------------- | ------------------------------------ |
-| `phase-0-infra.md`         | 0 — Infra             | Proposed                             |
-| `phase-1-skeleton.md`      | 1 — Skeleton          | Proposed                             |
-| `phase-2-youtube-fetch.md` | 2 — YouTube fetch     | Proposed                             |
-| `phase-3-providers.md`     | 3 — Providers         | Proposed (blocked on S1–S8 for P3.4) |
-| `phase-4-templates.md`     | 4 — Templates         | Proposed                             |
-| `phase-5-imaging.md`       | 5 — Imaging           | Proposed                             |
-| `phase-6-hero.md`          | 6 — Hero + iterations | Proposed                             |
-| `phase-7-batch.md`         | 7 — Batch             | Proposed                             |
-| `phase-8-polish.md`        | 8 — Polish            | Proposed                             |
+| File                       | Phase                 | Status      |
+| -------------------------- | --------------------- | ----------- |
+| `phase-0-infra.md`         | 0 — Infra             | Implemented |
+| `phase-1-skeleton.md`      | 1 — Skeleton          | Implemented |
+| `phase-2-youtube-fetch.md` | 2 — YouTube fetch     | Implemented |
+| `phase-3-providers.md`     | 3 — Providers         | Implemented |
+| `phase-4-templates.md`     | 4 — Templates         | Proposed    |
+| `phase-5-imaging.md`       | 5 — Imaging           | Proposed    |
+| `phase-6-hero.md`          | 6 — Hero + iterations | Proposed    |
+| `phase-7-batch.md`         | 7 — Batch             | Proposed    |
+| `phase-8-polish.md`        | 8 — Polish            | Proposed    |
 
 ## Template
 

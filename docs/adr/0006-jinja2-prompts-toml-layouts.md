@@ -2,7 +2,9 @@
 
 ## Status
 
-`Accepted` — 2026-09-19
+`Superseded by [ADR 0018](0018-shared-models-live-in-core.md)` — 2026-09-25
+
+Only the placement of the layout-spec model (`templates/schema.py`) was revised; it now lives in `core/layout.py`. Every other decision below stands. See ADR 0018.
 
 ## Context
 
