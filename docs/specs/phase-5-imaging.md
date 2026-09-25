@@ -25,8 +25,8 @@ Turn raw provider art into a final, YouTube-compliant thumbnail: fit/crop to the
 
 ```python
 # imaging/fit.py
-def fit_to(img: Image.Image, width: int, height: int, *, anchor: Anchor = "center") -> Image.Image
-    # scale so the target is fully covered, then centre-crop (or anchor-crop) to exactly width×height; converts to RGB
+def fit_to(img: Image.Image, width: int, height: int) -> Image.Image
+    # scale so the target is fully covered, then centre-crop to exactly width×height; converts to RGB
 
 # imaging/fonts.py
 def resolve_font(name: str, size_px: int) -> ImageFont.FreeTypeFont

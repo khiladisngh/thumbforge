@@ -124,6 +124,7 @@ source_modules = [
   "thumbforge.settings",
   "thumbforge.logging",
   "thumbforge.credentials",
+  "thumbforge.imaging",
 ]
 forbidden_modules = ["thumbforge.cli"]
 
@@ -139,12 +140,13 @@ forbidden_modules = [
   "thumbforge.settings",
   "thumbforge.logging",
   "thumbforge.credentials",
+  "thumbforge.imaging",
 ]
 
 [[tool.importlinter.contracts]]
 name = "adapters are independent"
 type = "independence"
-modules = ["thumbforge.storage", "thumbforge.sources", "thumbforge.providers"]
+modules = ["thumbforge.storage", "thumbforge.sources", "thumbforge.providers", "thumbforge.imaging"]
 
 # `core` is one layer, so its modules may import each other — `core.models` needs
 # `core.enums`, and the Phase 6 services need `core.models`. What must not happen is a
