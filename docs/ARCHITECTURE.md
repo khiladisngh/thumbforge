@@ -63,3 +63,4 @@ Nine tables: `channel`, `playlist`, `video`, `playlist_item`, `template`, `provi
 | Secrets                            | [0014](adr/0014-secrets-env-keyring.md)            |
 | structlog                          | [0015](adr/0015-structlog-logging.md)              |
 | zensical docs                      | [0016](adr/0016-zensical-docs-site.md)             |
+| Shared models live in `core`       | [0018](adr/0018-shared-models-live-in-core.md)     |

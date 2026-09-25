@@ -2,7 +2,7 @@
 
 Status: Proposed
 ROADMAP tasks: P5.1, P5.2, P5.3, P5.4
-ADRs: `docs/adr/0007-pillow-imaging.md`, `docs/adr/0008-deterministic-text-overlay.md`, `docs/adr/0002-typer-rich-cli.md`
+ADRs: `docs/adr/0007-pillow-imaging.md`, `docs/adr/0008-deterministic-text-overlay.md`, `docs/adr/0002-typer-rich-cli.md`, `docs/adr/0018-shared-models-live-in-core.md`
 
 ## Scope
 

@@ -2,7 +2,7 @@
 
 Status: Proposed
 ROADMAP tasks: P4.1, P4.2, P4.3, P4.4
-ADRs: `docs/adr/0006-jinja2-prompts-toml-layouts.md`, `docs/adr/0008-deterministic-text-overlay.md`
+ADRs: `docs/adr/0006-jinja2-prompts-toml-layouts.md`, `docs/adr/0008-deterministic-text-overlay.md`, `docs/adr/0018-shared-models-live-in-core.md`
 
 ## Scope
 

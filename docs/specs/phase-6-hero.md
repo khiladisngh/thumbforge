@@ -2,7 +2,7 @@
 
 Status: Proposed
 ROADMAP tasks: P6.1, P6.2, P6.3
-ADRs: `docs/adr/0012-idempotency-and-resumable-runs.md`, `docs/adr/0011-content-addressed-assets.md`, `docs/adr/0010-provider-plugin-architecture.md`
+ADRs: `docs/adr/0012-idempotency-and-resumable-runs.md`, `docs/adr/0011-content-addressed-assets.md`, `docs/adr/0010-provider-plugin-architecture.md`, `docs/adr/0018-shared-models-live-in-core.md`
 
 ## Scope
 
