@@ -1,6 +1,6 @@
 # Phase 2 — YouTube fetch
 
-Status: Proposed
+Status: Implemented (P2.1–P2.4)
 ROADMAP tasks: P2.1, P2.2, P2.3, P2.4
 ADRs: `docs/adr/0005-ytdlp-metadata-source.md`, `docs/adr/0004-sqlite-sqlalchemy-alembic.md`
 

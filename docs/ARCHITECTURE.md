@@ -7,12 +7,12 @@ The authoritative, detailed description lives in `PLAN.md` at the repository roo
 ```
 src/thumbforge/
   cli/        Typer apps only; Rich rendering (cli/_render.py); error→exit mapping (cli/_errors.py)
-  core/       Pydantic domain models, error hierarchy, id/hash helpers, adapter Protocols (sources.py), services (fetch, hero, iterate, batch, compliance)
+  core/       Pydantic domain models, error hierarchy, id/hash helpers, adapter Protocols (sources.py, providers.py), layout spec model (layout.py), services (fetch, hero, iterate, batch)
   providers/  ImageProvider protocol, capabilities, registry + entry points, fake.py, antigravity.py
   sources/    MetadataSource implementations; ytdlp.py (default); youtube_api.py (optional extra)
   storage/    SQLAlchemy 2.0 models, repositories, Alembic migrations, content-addressed AssetStore
-  templates/  layout spec schema (TOML), Jinja2 prompt rendering, builtin templates
-  imaging/    Pillow fit/crop, text overlay, YouTube compliance check, bundled font
+  templates/  TOML loading into core.layout.LayoutSpec, Jinja2 prompt rendering, builtin templates
+  imaging/    Pillow fit/crop, text overlay, YouTube compliance check, final render (finalize.py), bundled font
   settings.py pydantic-settings (TOML + THUMBFORGE_* env), platformdirs paths
   logging.py  structlog configuration
 ```

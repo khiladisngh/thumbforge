@@ -19,9 +19,11 @@ Generate a hero thumbnail for one video as N iterations, show them, pick one, ex
 
 ## Interfaces
 
+Collaborators arrive as Protocols declared beside the service, as `FetchService` does (`core` imports no other package); the names in the signatures are the adapters the CLI passes in. `finalize` is `imaging.finalize.render_final` with `output` bound from `[output]`.
+
 ```python
 class HeroService:
-    def __init__(self, repos: Repositories, registry: ProviderRegistry, renderer: TemplateRenderer, store: AssetStore, settings: Settings) -> None: ...
+    def __init__(self, repos: Repositories, registry: ProviderRegistry, renderer: TemplateRenderer, store: AssetStore, finalize: Finalize, settings: Settings) -> None: ...
     async def generate(self, spec: RunSpec, *, progress: ProgressSink) -> RunResult
         # RunSpec(video_id, template_ref, provider_key, n, concurrency, seed, vars, out_dir)
         # RunResult(run: Run, iterations: list[Iteration], exit_code: int)
@@ -48,7 +50,7 @@ Commands (`PLAN.md` §5.2):
 ## Behaviour
 
 1. `thumb generate V` resolves the video (Phase 2 repos; exit `3` if unknown), template (`[general] default_template` unless `--template`), provider (`[general] default_provider` unless `--provider`); creates or reuses a `provider_profile` snapshot (`name = "<key>@<version>:<params sha>"`); renders the prompt once; creates `run(kind='hero', status='running', video_id=V)` and N `pending` iterations with distinct keys; binds `run_id` in structlog contextvars.
-2. Iterations run under `asyncio.Semaphore(min(--concurrency, capabilities.max_concurrency))` with the Phase 3 retry policy; each success goes through Phase 5 `finalize` → `raw_asset_id`, `final_asset_id`, `compliant`. Provider stdout/stderr land in `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
+2. Iterations run under `asyncio.Semaphore(min(--concurrency, capabilities.max_concurrency))` with the Phase 3 retry policy; each success is stored as the `raw` asset, passed through `finalize` (Phase 5 `render_final`), and the returned bytes are stored as the `final` asset with `compliant` and `compliance_report_json` set from the report — stored even when non-compliant, so the user can inspect it → `raw_asset_id`, `final_asset_id`, `compliant`. Provider stdout/stderr land in `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
 3. Run status at the end: all completed → `completed`, exit `0`; some failed → `failed`, exit `6` and the message from `PLAN.md` §5.3; all failed → `failed`, exit `4`. A compliance failure on an otherwise successful iteration marks that iteration `failed` with `error_text` from the report and contributes to exit `5` only when every failure is a compliance failure.
 4. `--out DIR` additionally copies every final asset to `DIR/<youtube_id>-<ordinal>.<ext>`.
 5. `thumb pick R 2` sets `picked = 1` on ordinal 2 and `0` on siblings; picking a `failed` iteration exits `2`.

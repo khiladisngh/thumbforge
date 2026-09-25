@@ -8,7 +8,7 @@ ADRs: `docs/adr/0006-jinja2-prompts-toml-layouts.md`, `docs/adr/0008-determinist
 
 A template pairs a Jinja2 **prompt** (what the provider is asked to paint) with a TOML **layout spec** (how Pillow overlays text in Phase 5). Templates are versioned, immutable rows in the `template` table; builtins ship in the package.
 
-- **P4.1** `templates/schema.py` — Pydantic layout spec, TOML loading.
+- **P4.1** `core/layout.py` — Pydantic `LayoutSpec`; `templates/schema.py` — TOML loading into it. The model lives in `core` because `imaging` (Phase 5) and `core.services` (Phase 6) consume it, and neither may import `templates`.
 - **P4.2** `templates/render.py` — Jinja2 environment (`StrictUndefined`, `autoescape=False`), render context.
 - **P4.3** `templates/builtin/{bold-title,minimal,series-parts}.{toml,j2}`.
 - **P4.4** `templates/loader.py`, `cli/template.py`, versioning in `TemplateRepository`.

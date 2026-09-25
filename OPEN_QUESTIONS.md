@@ -42,7 +42,7 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 ### S8 — Cost / usage fields — **closed**, see `docs/spikes/antigravity.md`
 
 - Verify: compare `usage` for a text-only run against an image run; look for a credit field.
-- Result: **tokens only.** Five keys, no credit/price/currency. `total_tokens = input + output`; `cache_read_tokens` is excluded from the total. An image run costs ~3.5× a trivial text run (67,706 vs 19,246 total tokens). `Cost` can record tokens and `duration_seconds` only, so the P8.3 report is limited to tokens plus the `/usage` percentages.
+- Result: **tokens only.** Five keys, no credit/price/currency. `total_tokens = input + output`; `cache_read_tokens` is excluded from the total. An image run costs ~3.5× a trivial text run (67,706 vs 19,246 total tokens). `Cost` can record tokens and `duration_seconds` only, so the P8.4 report is limited to tokens plus the `/usage` percentages.
 
 ### S9 — graphify on Windows with uv — **closed**, see `docs/spikes/graphify.md`
 

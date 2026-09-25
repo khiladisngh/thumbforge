@@ -330,7 +330,7 @@ equals `input + output`; `cache_read_tokens` is reported separately and excluded
 total. An image run costs roughly 3.5× the tokens of a trivial text run.
 
 So `Cost` can record tokens and `duration_seconds` only. A monetary figure is not available
-from the CLI, which constrains the **P8.3** cost report to tokens plus the `/usage`
+from the CLI, which constrains the **P8.4** cost report to tokens plus the `/usage`
 percentages.
 
 ## Also observed: `agy` injects the developer's global plugins

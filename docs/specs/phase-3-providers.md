@@ -1,6 +1,6 @@
 # Phase 3 — Providers
 
-Status: Proposed (P3.4 blocked on spikes S1–S8)
+Status: Implemented (P3.1–P3.5)
 ROADMAP tasks: P3.1, P3.2, P3.3, P3.4, P3.5
 ADRs: `docs/adr/0010-provider-plugin-architecture.md`, `docs/adr/0013-antigravity-cli-adapter.md`, `docs/adr/0014-secrets-env-keyring.md`
 

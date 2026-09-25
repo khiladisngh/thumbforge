@@ -1,6 +1,6 @@
 # Phase 0 — Infrastructure
 
-Status: Proposed
+Status: Implemented (P0.1–P0.7)
 ROADMAP tasks: P0.1, P0.2, P0.3, P0.4, P0.5, P0.6, P0.7
 ADRs: `docs/adr/0001-python-and-uv.md`, `docs/adr/0009-quality-tooling.md`, `docs/adr/0016-zensical-docs-site.md`
 
