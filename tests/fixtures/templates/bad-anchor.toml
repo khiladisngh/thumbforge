@@ -1,0 +1,32 @@
+[template]
+name = "bold-title"
+description = "Large title bottom-left, optional Part badge top-right"
+
+[canvas]
+width = 1920
+height = 1080
+safe_margin_px = 64
+
+[title]
+enabled = true
+font = "Inter-Bold"
+max_lines = 3
+size_px = 120
+min_size_px = 72
+color = "#FFFFFF"
+stroke_px = 6
+stroke_color = "#000000"
+anchor = "middle-center"
+box = { x = 64, y = 640, w = 1400, h = 376 }
+case = "upper"
+
+[part]
+enabled = true
+format = "PART {n}"
+font = "Inter-Bold"
+size_px = 72
+anchor = "top-right"
+badge = { fill = "#E53935", padding_px = 24, radius_px = 16 }
+
+[negative_space]
+hint = "leave the lower-left third uncluttered"
