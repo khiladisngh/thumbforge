@@ -22,6 +22,7 @@ from thumbforge.cli import db as db_cli
 from thumbforge.cli import fetch as fetch_cli
 from thumbforge.cli import playlist as playlist_cli
 from thumbforge.cli import provider as provider_cli
+from thumbforge.cli import template as template_cli
 from thumbforge.cli import video as video_cli
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext
@@ -136,6 +137,7 @@ app.add_typer(config_cli.app)
 app.add_typer(db_cli.app)
 app.add_typer(playlist_cli.app)
 app.add_typer(provider_cli.app)
+app.add_typer(template_cli.app)
 app.add_typer(video_cli.app)
 
 # `fetch` is a bare top-level command (`thumbforge fetch <url>`), not a sub-app, so it is

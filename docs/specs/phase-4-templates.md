@@ -103,7 +103,7 @@ Builtin prompts state the size and the negative-space hint and must not ask the 
 1. On first use, `loader.sync_builtins()` inserts each builtin template at `version = 1` with `is_builtin = 1`; a changed builtin in a new package release inserts `version + 1` (old versions stay for reproducibility).
 2. `template import PATH` reads `PATH.toml` + sibling `PATH.j2` (or a directory holding both), validates, computes `spec_hash`; if a row with the same `name` and `spec_hash` exists, prints it and exits `0` without inserting; otherwise inserts `max(version) + 1`.
 3. `NAME` without `@VERSION` resolves to the highest version; `NAME@2` resolves exactly; unknown → exit `3`.
-4. `template validate` reports every schema error at once (Pydantic error list) and Jinja syntax errors with line numbers; exit `2` on any.
+4. `template validate` reports every schema error at once (Pydantic error list) and, once P4.2 adds Jinja2, Jinja syntax errors with line numbers; exit `2` on any.
 5. `template render bold-title --video dQw4w9WgXcQ --part 3` prints the prompt to stdout; with `--json` prints `{"template": "bold-title@1", "prompt": "..."}`.
 6. `template new NAME --from minimal` copies both builtin files to `<config_dir>/templates/`; refuses to overwrite (exit `2`).
 
