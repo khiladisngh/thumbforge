@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Annotated
 
 import typer
+from rich.markup import escape
 
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context
@@ -22,15 +23,7 @@ app = typer.Typer(
 @handle_errors
 def validate(
     ctx: typer.Context,
-    path: Annotated[
-        Path,
-        typer.Argument(
-            help="Path to the layout spec TOML file to validate.",
-            exists=True,
-            dir_okay=False,
-            readable=True,
-        ),
-    ],
+    path: Annotated[Path, typer.Argument(help="Path to the layout spec TOML file to validate.")],
 ) -> None:
     """Validate a template layout spec against the schema."""
     app_ctx = get_app_context(ctx)
@@ -42,5 +35,7 @@ def validate(
             "path": str(path),
             "template": layout.template.name,
         },
-        render=lambda: f"[green]ok[/] {path} ([cyan]{layout.template.name}[/])",
+        render=lambda: (
+            f"[green]ok[/] {escape(str(path))} ([cyan]{escape(layout.template.name)}[/])"
+        ),
     )

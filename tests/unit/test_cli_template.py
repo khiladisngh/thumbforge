@@ -48,6 +48,17 @@ def test_template_validate_json_mode_bad_anchor() -> None:
     assert "title.anchor" in payload["message"]
 
 
-def test_template_validate_nonexistent_file(tmp_path: Path) -> None:
-    result = runner.invoke(app, ["template", "validate", str(tmp_path / "missing.toml")])
+def test_a_missing_file_keeps_the_json_error_contract(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["--json", "template", "validate", str(tmp_path / "missing.toml")])
     assert result.exit_code == ExitCode.USAGE
+    payload = json.loads(result.stderr)
+    assert (payload["error"], payload["exit_code"]) == ("template", 2)
+
+
+def test_markup_in_the_template_name_is_printed_literally(tmp_path: Path) -> None:
+    layout = tmp_path / "markup.toml"
+    valid = (FIXTURES_DIR / "valid.toml").read_text(encoding="utf-8")
+    layout.write_text(valid.replace('name = "bold-title"', 'name = "foo[/]"'), encoding="utf-8")
+    result = runner.invoke(app, ["template", "validate", str(layout)])
+    assert result.exit_code == ExitCode.OK, result.output
+    assert "foo[/]" in result.stdout

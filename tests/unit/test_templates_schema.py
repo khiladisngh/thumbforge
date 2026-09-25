@@ -40,6 +40,19 @@ def test_load_layout_nonexistent_file(tmp_path: Path) -> None:
     assert "nonexistent.toml" in err.message
 
 
+def test_a_directory_is_a_template_error(tmp_path: Path) -> None:
+    with pytest.raises(TemplateError):
+        load_layout(tmp_path)
+
+
+def test_a_non_utf8_file_is_a_template_error(tmp_path: Path) -> None:
+    latin1 = tmp_path / "latin1.toml"
+    latin1.write_bytes('[template]\nname = "café"\n'.encode("latin-1"))
+    with pytest.raises(TemplateError) as exc_info:
+        load_layout(latin1)
+    assert "latin1.toml" in exc_info.value.message
+
+
 def test_load_layout_malformed_toml(tmp_path: Path) -> None:
     bad_toml = tmp_path / "syntax_error.toml"
     bad_toml.write_text("[template\nname = unclosed string", encoding="utf-8")

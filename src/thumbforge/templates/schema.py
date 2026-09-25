@@ -23,7 +23,7 @@ def load_layout(path: Path) -> LayoutSpec:
     """
     try:
         data = tomllib.loads(path.read_text(encoding="utf-8"))
-    except (OSError, tomllib.TOMLDecodeError) as err:
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as err:
         msg = f"Cannot read layout spec {path}: {err}"
         raise TemplateError(msg) from err
 
