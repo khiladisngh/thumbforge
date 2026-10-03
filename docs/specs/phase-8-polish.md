@@ -44,11 +44,14 @@ class YouTubeDataApiSource:  # implements MetadataSource from phase-2-youtube-fe
 ### Cost report
 
 ```python
-def cost_report(run: Run) -> CostReport
-    # CostReport(run_id, iterations: int, tokens_in: int, tokens_out: int, credits: Decimal | None, currency: str | None, duration_ms: int)
+RunRepository.cost_report(run_id: str) -> CostReport
+    # CostReport(run_id, iterations: int, with_cost_data: int, tokens_in: int, tokens_out: int,
+    #            credits: Decimal | None, currency: str | None, duration_ms: int); .no_cost_data
 ```
 
-`thumbforge runs cost <run>` prints the report (JSON with `--json`). Values aggregate `iteration.cost_json`; iterations with `cost_json NULL` count as zero and are reported in a `no_cost_data` count. Whether Antigravity populates credits is spike S8.
+`thumbforge runs cost <run>` prints the report (JSON `{"cost": {...}}` with `--json`; `credits` is a decimal string). Values aggregate `iteration.cost_json`; an iteration with `cost_json NULL` (failed, unfinished, or a provider with no usage figures) adds nothing to the sums and is counted in `no_cost_data`. A run with no cost data at all prints a sentence saying so instead of zeros; its JSON keeps the zero totals beside `with_cost_data: 0`. A run's cost is its own iterations only: child runs (a batch built on a hero, a refinement) are not folded in. `credits` stays null unless a provider reports it: S8 measured Antigravity's `usage` as tokens only.
+
+`runs show` gains a `Cost` column (`1200 in / 80 out`, plus credits when reported, `—` when nothing was reported), and each iteration in its JSON gains `cost` (`tokens_in`, `tokens_out`, `credits`, `currency`, or null).
 
 ### Completion
 
@@ -57,7 +60,7 @@ def cost_report(run: Run) -> CostReport
 ## Behaviour
 
 1. `fetch --source api` produces rows indistinguishable from `--source ytdlp` except `source`; re-fetching with a different source updates `source` and `fetched_at`.
-2. `runs cost` on a FakeProvider run reports zero tokens and `no_cost_data = <n>`; on an Antigravity run reports the summed `usage` fields from the envelopes.
+2. `runs cost` on a FakeProvider run says it has no cost data (JSON: zero tokens, `with_cost_data = 0`, `no_cost_data = <n>`); on an Antigravity run reports the summed `usage` fields from the envelopes.
 3. `README.md` covers: install, `fetch` → `thumb generate` → `thumb pick` → `batch` in five commands, provider setup (Antigravity login, `skip_permissions` note from decision D4), config path, docs link.
 4. `git-cliff` generates `CHANGELOG.md` from Conventional Commits at tag time; the `v0.1.0` tag triggers `release.yml`. PyPI publishing happens only if decision D5 says yes; otherwise the `publish` job is removed before tagging.
 
@@ -66,14 +69,14 @@ def cost_report(run: Run) -> CostReport
 - `uv sync --locked --extra api` then `thumbforge fetch <playlist> --source api` with a valid key (integration marker) stores the same 12 videos as the ytdlp fixture with `source = api`.
   - Note (P8.1): the ytdlp fixture keeps only the first 12 items of a playlist that is much longer live (183 in spike S11) and changes over time, so `tests/integration/test_youtube_api_live.py` asserts at least 12 items with contiguous positions rather than the fixture's exact ids; the fixture-level "same 12 videos" check is `tests/contract/test_source_contract.py`. Only the `channel` table has a `source` column, so `source = api` is persisted on the channel row; `VideoMeta`/`PlaylistMeta` carry it in memory.
 - Without the extra, `thumbforge fetch <url> --source api` exits `1` and prints the install hint; with the extra but no key, exits `1` with the `set-key` hint.
-- `thumbforge runs cost <fake run>` prints `tokens_in 0`, `no_cost_data 4` for a 4-iteration hero run.
+- `thumbforge runs cost <fake run>` says the run has no cost data for a 4-iteration hero run; with `--json` it reports `tokens_in` 0 and `no_cost_data` 4.
 - `thumbforge --install-completion`, run from PowerShell, appends to the PowerShell profile and `thumbforge th<TAB>` completes to `thumb` in a fresh shell; the same holds for bash and zsh with their own rc files (manual check, recorded in the commit message).
 - `uv tool install .` from a checkout puts `thumbforge` on PATH and `thumbforge --version` prints `thumbforge 0.1.0`.
 - Tagging `v0.1.0` runs `release.yml` to a green `build` job with `dist/thumbforge-0.1.0-py3-none-any.whl` attached to the GitHub release.
 
 ## Test plan
 
-- Unit: `YouTubeDataApiSource` against recorded API JSON in `tests/fixtures/youtube_api/*.json` with a stubbed `build()`; quota error mapping; pagination; extra-missing and key-missing hints via `CliRunner`; `cost_report` aggregation.
+- Unit: `YouTubeDataApiSource` against recorded API JSON in `tests/fixtures/youtube_api/*.json` with a stubbed `build()`; quota error mapping; pagination; extra-missing and key-missing hints via `CliRunner`; `runs cost` aggregation (`tests/unit/test_cli_runs.py`).
 - Integration (`-m integration`): one live Data API playlist fetch when `THUMBFORGE_PROVIDERS__API__API_KEY` is set.
 - Contract: `MetadataSource` contract test parametrised over `{ytdlp, api}` (added here; `tests/contract/test_source_contract.py`).
 - Golden: none.

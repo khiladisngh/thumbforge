@@ -1,8 +1,8 @@
-"""``thumbforge runs`` — list, inspect, continue, cancel and delete generation runs (ROADMAP P7.4).
+"""``thumbforge runs`` — list, inspect, cost, continue, cancel and delete runs (P7.4, P8.4).
 
-`show` (P6.1) and `list` read stored rows; `resume` and `cancel` wrap `BatchService`, with the
-same progress display and Ctrl-C handling as `batch`; `delete` is the repository's, which also
-decides what a delete may not touch.
+`show` (P6.1), `list` and `cost` (P8.4) read stored rows; `resume` and `cancel` wrap
+`BatchService`, with the same progress display and Ctrl-C handling as `batch`; `delete` is the
+repository's, which also decides what a delete may not touch.
 """
 
 from __future__ import annotations
@@ -18,6 +18,7 @@ from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context
 from thumbforge.cli._runs import (
     batch_service,
+    cost_view,
     open_run_store,
     run_payload,
     run_view,
@@ -34,7 +35,7 @@ if TYPE_CHECKING:
 
 app = typer.Typer(
     name="runs",
-    help="List, inspect, continue, cancel and delete generation runs.",
+    help="List, inspect, cost, continue, cancel and delete generation runs.",
     no_args_is_help=True,
 )
 
@@ -70,6 +71,20 @@ def show(
     settings = app_ctx.require_settings()
     with open_run_store(settings) as store:
         payload, renderable = run_view(store.runs.get(run), settings.general.data_dir)
+    emit(app_ctx, payload, render=lambda: renderable)
+
+
+@app.command("cost")
+@handle_errors
+def cost(
+    ctx: typer.Context,
+    run: Annotated[str, _RUN_ARGUMENT],
+) -> None:
+    """Total the tokens and credits a run's iterations used, as its provider reported them."""
+    app_ctx = get_app_context(ctx)
+    settings = app_ctx.require_settings()
+    with open_run_store(settings) as store:
+        payload, renderable = cost_view(store.runs.cost_report(run))
     emit(app_ctx, payload, render=lambda: renderable)
 
 

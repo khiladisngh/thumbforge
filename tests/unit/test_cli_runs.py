@@ -1,9 +1,9 @@
-"""`thumbforge runs list|show|resume|cancel|delete` end to end with the real fake provider.
+"""`thumbforge runs list|show|cost|resume|cancel|delete` end to end with the real fake provider.
 
 Every test starts from a migrated database holding the built-in templates, one stored hero video
 and a five-video playlist, drives the real Typer app through `CliRunner`, and reads back what the
 command prints, which exit status it returns and what it left in the database and on disk
-(ROADMAP P7.4, phase-7 spec Behaviour 5-7). The service underneath is covered by
+(ROADMAP P7.4, phase-7 spec Behaviour 5-7; P8.4 adds `cost`). The service underneath is covered by
 `test_batch_service.py`; what is defended here is the commands' contract: arguments, output, exit
 codes, the interrupt, and which rows and files a delete may touch.
 """
@@ -16,6 +16,7 @@ import re
 import signal
 import sqlite3
 from contextlib import closing
+from decimal import Decimal
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -27,6 +28,7 @@ from thumbforge.cli._youtube import open_repositories
 from thumbforge.cli.app import app
 from thumbforge.core.errors import ExitCode
 from thumbforge.core.models import ChannelMeta, PlaylistItemMeta, PlaylistMeta, VideoMeta
+from thumbforge.core.providers import Cost
 from thumbforge.core.services import hero
 from thumbforge.providers import registry
 from thumbforge.providers.fake import FAIL_PERMANENT, FakeProvider
@@ -63,6 +65,28 @@ class _Twin(_Recording):
     key: ClassVar[str] = "twin"
 
 
+class _Priced(_Recording):
+    """The real fake, reporting a cost per image like a metered provider.
+
+    The tokens follow from the request's idempotency key, so a test can work out what each
+    iteration was billed without depending on the order the iterations ran in.
+    """
+
+    key: ClassVar[str] = "priced"
+    credits: ClassVar[Decimal | None] = None
+
+    async def generate(self, request: GenerationRequest, *, workdir: Path) -> GenerationResult:
+        result = await super().generate(request, workdir=workdir)
+        tokens_in, tokens_out = _tokens(request.idempotency_key)
+        cost = Cost(
+            tokens_in=tokens_in,
+            tokens_out=tokens_out,
+            credits=self.credits,
+            currency=None if self.credits is None else "USD",
+        )
+        return result.model_copy(update={"cost": cost})
+
+
 class _InterruptAfter(_Recording):
     """The real fake, but call number `allowed + 1` raises a real SIGINT and never returns."""
 
@@ -83,6 +107,8 @@ class _InterruptAfter(_Recording):
 def providers(monkeypatch: pytest.MonkeyPatch) -> type[_Recording]:
     monkeypatch.setitem(registry.BUILTIN, "recording", _Recording)
     monkeypatch.setitem(registry.BUILTIN, "twin", _Twin)
+    monkeypatch.setitem(registry.BUILTIN, "priced", _Priced)
+    monkeypatch.setattr(_Priced, "credits", None)
     monkeypatch.setitem(registry.BUILTIN, "interrupt-after", _InterruptAfter)
     monkeypatch.setattr(_Recording, "requests", [])
     monkeypatch.setattr(_InterruptAfter, "allowed", 2)
@@ -164,7 +190,7 @@ def _flaky_template(data_dir: Path, tmp_path: Path, part: int) -> str:
     return _template(data_dir, tmp_path, f"series-flaky-{part}", prompt)
 
 
-def _hero(data_dir: Path, *, pick: bool = True) -> dict[str, Any]:
+def _hero(data_dir: Path, *, pick: bool = True, provider: str = "recording") -> dict[str, Any]:
     """A completed two-iteration hero run, the first iteration picked."""
     result = _run(
         data_dir,
@@ -172,7 +198,7 @@ def _hero(data_dir: Path, *, pick: bool = True) -> dict[str, Any]:
         "generate",
         HERO_VIDEO,
         "--provider",
-        "recording",
+        provider,
         "--n",
         "2",
         json_mode=True,
@@ -728,3 +754,196 @@ def test_delete_of_an_unknown_run_exits_3(data_dir: Path) -> None:
 
     assert result.exit_code == ExitCode.NOT_FOUND
     assert "not_found" in result.stderr
+
+
+# --- runs cost and the cost column of runs show ----------------------------------------------
+
+
+def _tokens(key: str) -> tuple[int, int]:
+    """The tokens `_Priced` reports for the request with this idempotency key."""
+    seed = int(key[:4], 16)
+    return seed + 1, seed % 97 + 1
+
+
+def _expected_tokens(data_dir: Path, run_id: str) -> tuple[int, int]:
+    """The tokens a run's completed iterations were billed, worked out from their keys."""
+    keys = [
+        item["idempotency_key"]
+        for item in _show(data_dir, run_id)["iterations"]
+        if item["status"] == "completed"
+    ]
+    pairs = [_tokens(key) for key in keys]
+    return sum(tokens_in for tokens_in, _ in pairs), sum(tokens_out for _, tokens_out in pairs)
+
+
+def _cost(data_dir: Path, run_id: str, *, json_mode: bool = False) -> Result:
+    return _run(data_dir, "runs", "cost", run_id, json_mode=json_mode)
+
+
+def _cost_ok(data_dir: Path, run_id: str) -> dict[str, Any]:
+    result = _cost(data_dir, run_id, json_mode=True)
+    assert result.exit_code == ExitCode.OK, result.output
+    cost: dict[str, Any] = _json(result)["cost"]
+    return cost
+
+
+def _plain(result: Result) -> str:
+    """What a command printed, without the colour codes Rich adds on a CI runner."""
+    assert result.exit_code == ExitCode.OK, result.output
+    return ANSI.sub("", result.stdout)
+
+
+def test_cost_adds_up_tokens_across_a_runs_iterations(data_dir: Path) -> None:
+    run_id = _hero(data_dir, provider="priced")["run"]["id"]
+    tokens_in, tokens_out = _expected_tokens(data_dir, run_id)
+    duration = _rows(data_dir, f"SELECT SUM(duration_ms) FROM iteration WHERE run_id = '{run_id}'")
+
+    result = _cost(data_dir, run_id, json_mode=True)
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert _json(result) == {
+        "cost": {
+            "run": run_id,
+            "iterations": 2,
+            "with_cost_data": 2,
+            "no_cost_data": 0,
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+            "credits": None,
+            "currency": None,
+            "duration_ms": duration[0][0],
+        }
+    }
+    assert tokens_in > 0
+    assert tokens_out > 0
+
+
+def test_cost_prints_the_totals_for_a_person(data_dir: Path) -> None:
+    run_id = _hero(data_dir, provider="priced")["run"]["id"]
+    tokens_in, tokens_out = _expected_tokens(data_dir, run_id)
+
+    plain = _plain(_cost(data_dir, run_id))
+
+    assert run_id in plain
+    assert re.search(rf"Tokens in\s+{tokens_in}\b", plain)
+    assert re.search(rf"Tokens out\s+{tokens_out}\b", plain)
+    assert re.search(r"No cost data\s+0\b", plain)
+
+
+def test_cost_sums_credits_and_keeps_their_currency(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(_Priced, "credits", Decimal("0.25"))
+    run_id = _hero(data_dir, provider="priced")["run"]["id"]
+
+    cost = _cost_ok(data_dir, run_id)
+
+    assert (cost["credits"], cost["currency"]) == ("0.50", "USD")
+    assert "0.50 USD" in _plain(_cost(data_dir, run_id))
+
+
+def test_cost_counts_the_iterations_that_reported_nothing(data_dir: Path, tmp_path: Path) -> None:
+    flaky = _flaky_template(data_dir, tmp_path, 3)
+    partial = _json(_batch(data_dir, _hero(data_dir), template=flaky, provider="priced"))
+    run_id = partial["run"]["id"]
+    assert partial["summary"] == {"total": 5, "completed": 4, "failed": 1, "pending": 0}
+    tokens_in, tokens_out = _expected_tokens(data_dir, run_id)
+
+    cost = _cost_ok(data_dir, run_id)
+    plain = _plain(_cost(data_dir, run_id))
+
+    assert (cost["iterations"], cost["with_cost_data"], cost["no_cost_data"]) == (5, 4, 1)
+    assert (cost["tokens_in"], cost["tokens_out"]) == (tokens_in, tokens_out)
+    assert re.search(r"With cost data\s+4\b", plain)
+    assert re.search(r"No cost data\s+1\b", plain)
+    assert re.search(rf"Tokens in\s+{tokens_in}\b", plain)
+
+
+def test_cost_of_a_run_that_reported_none_says_so_instead_of_printing_zeros(
+    data_dir: Path,
+) -> None:
+    run_id = _hero(data_dir)["run"]["id"]
+
+    plain = _plain(_cost(data_dir, run_id))
+    cost = _cost_ok(data_dir, run_id)
+
+    assert "no cost data" in plain.lower()
+    assert "Tokens in" not in plain
+    assert "Credits" not in plain
+    assert (cost["iterations"], cost["with_cost_data"], cost["no_cost_data"]) == (2, 0, 2)
+    assert (cost["tokens_in"], cost["tokens_out"], cost["credits"]) == (0, 0, None)
+
+
+def test_cost_counts_a_runs_own_iterations_and_not_its_batches(data_dir: Path) -> None:
+    hero_payload = _hero(data_dir, provider="priced")
+    hero_id = hero_payload["run"]["id"]
+    batch_id = _batch_ok(data_dir, hero_payload, provider="priced")["run"]["id"]
+
+    hero_cost = _cost_ok(data_dir, hero_id)
+    batch_cost = _cost_ok(data_dir, batch_id)
+
+    assert hero_cost["iterations"] == 2
+    assert batch_cost["iterations"] == EPISODES
+    assert (hero_cost["tokens_in"], hero_cost["tokens_out"]) == _expected_tokens(data_dir, hero_id)
+    assert (batch_cost["tokens_in"], batch_cost["tokens_out"]) == _expected_tokens(
+        data_dir, batch_id
+    )
+
+
+def test_cost_of_an_unknown_run_exits_3(data_dir: Path) -> None:
+    result = _cost(data_dir, "01ARZ3NDEKTSV4RRFFQ69G5FAV")
+
+    assert result.exit_code == ExitCode.NOT_FOUND
+    assert "not_found" in result.stderr
+    assert _cost(data_dir, "01ARZ3NDEKTSV4RRFFQ69G5FAV", json_mode=True).exit_code == 3
+
+
+def test_show_gives_each_iteration_its_cost_and_none_where_nothing_was_reported(
+    data_dir: Path, tmp_path: Path
+) -> None:
+    flaky = _flaky_template(data_dir, tmp_path, 3)
+    partial = _json(_batch(data_dir, _hero(data_dir), template=flaky, provider="priced"))
+    run_id = partial["run"]["id"]
+
+    shown = _show(data_dir, run_id)
+    plain = _plain(_run(data_dir, "runs", "show", run_id))
+
+    completed = [item for item in shown["iterations"] if item["status"] == "completed"]
+    failed = [item for item in shown["iterations"] if item["status"] == "failed"]
+    assert (len(completed), len(failed)) == (4, 1)
+    assert failed[0]["cost"] is None
+    assert "Cost" in plain
+    for item in completed:
+        tokens_in, tokens_out = _tokens(item["idempotency_key"])
+        assert item["cost"] == {
+            "tokens_in": tokens_in,
+            "tokens_out": tokens_out,
+            "credits": None,
+            "currency": None,
+        }
+        assert f"{tokens_in} in / {tokens_out} out" in plain
+
+
+def test_show_prints_the_credits_beside_the_tokens(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(_Priced, "credits", Decimal("0.25"))
+    run_id = _hero(data_dir, provider="priced")["run"]["id"]
+
+    shown = _show(data_dir, run_id)
+    plain = _plain(_run(data_dir, "runs", "show", run_id))
+
+    costs = {(item["cost"]["credits"], item["cost"]["currency"]) for item in shown["iterations"]}
+    assert costs == {("0.25", "USD")}
+    assert plain.count("0.25 USD") == 2
+
+
+def test_show_leaves_the_cost_column_empty_for_a_run_that_reported_none(data_dir: Path) -> None:
+    run_id = _hero(data_dir)["run"]["id"]
+
+    shown = _show(data_dir, run_id)
+    plain = _plain(_run(data_dir, "runs", "show", run_id))
+
+    assert [item["cost"] for item in shown["iterations"]] == [None, None]
+    assert "Cost" in plain
+    assert " in / " not in plain

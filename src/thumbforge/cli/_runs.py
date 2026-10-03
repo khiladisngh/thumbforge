@@ -1,7 +1,8 @@
 """Wiring and the shared run view for `thumb generate` and `runs show` (ROADMAP P6.1).
 
 `batch` (P7.3) shares the progress sink, the final-render binding and the run object; the
-`runs` commands (P7.4) share the batch service wiring and the list view.
+`runs` commands (P7.4) share the batch service wiring and the list view, and `runs cost`
+(P8.4) adds the cost view and the cost cell of the iteration table.
 
 `core.services.hero` declares Protocols; the concrete store is chosen here, which is the
 injection point `PLAN.md` §2.2 describes. The view reads the **stored** rows, never what the
@@ -25,6 +26,7 @@ from thumbforge.cli._render import kv, table
 from thumbforge.core.enums import RunKind, RunStatus
 from thumbforge.core.errors import TemplateError
 from thumbforge.core.json import JsonPayload, JsonValue
+from thumbforge.core.providers import Cost
 from thumbforge.core.services.batch import BatchService
 from thumbforge.imaging.finalize import render_final
 from thumbforge.logging import get_logger
@@ -32,11 +34,12 @@ from thumbforge.providers import registry
 from thumbforge.storage.assets import AssetStore
 from thumbforge.storage.db import get_engine, session_factory, session_scope
 from thumbforge.storage.repositories import Repositories
-from thumbforge.storage.runs import RunRepository
+from thumbforge.storage.runs import CostReport, RunRepository
 from thumbforge.templates.loader import PromptRenderer
 
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping, Sequence
+    from decimal import Decimal
     from pathlib import Path
 
     from rich.console import RenderableType
@@ -216,7 +219,7 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
     renderable = Group(
         kv(header, title=f"Run {run.id}"),
         table(
-            ["#", "Status", "Size", "Compliant", "Key", "Asset / Error"],
+            ["#", "Status", "Size", "Compliant", "Key", "Cost", "Asset / Error"],
             [_iteration_row(item) for item in iterations],
         ),
     )
@@ -256,6 +259,44 @@ def runs_view(runs: Sequence[Run]) -> tuple[JsonPayload, RenderableType]:
         )
     payload: JsonPayload = {"runs": entries}
     return payload, table(["Run", "Kind", "Status", "Template", "Provider", "Done", "Failed"], rows)
+
+
+def cost_view(report: CostReport) -> tuple[JsonPayload, RenderableType]:
+    """The JSON payload and the Rich renderable for `runs cost`.
+
+    A run whose provider reported nothing prints a sentence rather than a column of zeros;
+    the JSON keeps the totals at zero beside `with_cost_data`, which says they are not data.
+    """
+    payload: JsonPayload = {
+        "cost": {
+            "run": report.run_id,
+            "iterations": report.iterations,
+            "with_cost_data": report.with_cost_data,
+            "no_cost_data": report.no_cost_data,
+            "tokens_in": report.tokens_in,
+            "tokens_out": report.tokens_out,
+            "credits": None if report.credits is None else str(report.credits),
+            "currency": report.currency,
+            "duration_ms": report.duration_ms,
+        }
+    }
+    if report.with_cost_data == 0:
+        noun = "iteration" if report.iterations == 1 else "iterations"
+        line = (
+            f"Run {report.run_id} has no cost data: "
+            f"its provider reported none for its {report.iterations} {noun}."
+        )
+        return payload, line
+    rows: dict[str, object] = {
+        "Iterations": report.iterations,
+        "With cost data": report.with_cost_data,
+        "No cost data": report.no_cost_data,
+        "Tokens in": report.tokens_in,
+        "Tokens out": report.tokens_out,
+        "Credits": EMPTY if report.credits is None else _money(report.credits, report.currency),
+        "Duration": f"{report.duration_ms} ms",
+    }
+    return payload, kv(rows, title=f"Cost of run {report.run_id}")
 
 
 def iteration_counts(run: Run) -> JsonPayload:
@@ -317,6 +358,23 @@ def compliance_cell(final: Asset | None) -> str:
     return "✔" if final.compliant else "✘"
 
 
+def _cost_of(item: Iteration) -> Cost | None:
+    """What the provider reported for one iteration, or `None` when it reported nothing."""
+    return None if item.cost_json is None else Cost.model_validate_json(item.cost_json)
+
+
+def _money(credits: Decimal, currency: str | None) -> str:
+    return str(credits) if currency is None else f"{credits} {currency}"
+
+
+def cost_cell(cost: Cost | None) -> str:
+    """`1200 in / 80 out`, with the credits when there are any, or the placeholder."""
+    if cost is None:
+        return EMPTY
+    tokens = f"{cost.tokens_in} in / {cost.tokens_out} out"
+    return tokens if cost.credits is None else f"{tokens}, {_money(cost.credits, cost.currency)}"
+
+
 def _iteration_row(item: Iteration) -> list[str]:
     final = item.final_asset
     if item.error_text:
@@ -330,6 +388,7 @@ def _iteration_row(item: Iteration) -> list[str]:
         size_cell(final),
         compliance_cell(final),
         item.idempotency_key[:12],
+        cost_cell(_cost_of(item)),
         detail,
     ]
 
@@ -339,6 +398,7 @@ def _iteration_payload(item: Iteration, data_dir: Path) -> JsonPayload:
     report: JsonValue = None
     if final is not None and final.compliance_report_json:
         report = cast("JsonValue", json.loads(final.compliance_report_json))
+    cost = _cost_of(item)
     return {
         "id": item.id,
         "ordinal": item.ordinal,
@@ -350,6 +410,7 @@ def _iteration_payload(item: Iteration, data_dir: Path) -> JsonPayload:
         "final_asset": _asset_payload(final, data_dir),
         "compliant": None if final is None else final.compliant,
         "compliance_report": report,
+        "cost": None if cost is None else cost.model_dump(mode="json"),
         "error": item.error_text,
     }
 

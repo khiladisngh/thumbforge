@@ -17,12 +17,14 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING, cast
 
 from sqlalchemy import or_, select, update
 
 from thumbforge.core.enums import AssetKind, RunKind, RunStatus
 from thumbforge.core.errors import AssetError, NotFoundError, UsageError
+from thumbforge.core.providers import Cost
 from thumbforge.core.services.batch import (
     BatchItem,
     BatchPlaylist,
@@ -61,6 +63,34 @@ class RunDeletion:
     iterations: int
     #: The image files unlinked; empty unless the caller asked for assets to go.
     assets: tuple[Path, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class CostReport:
+    """What a run's own iterations consumed, as far as their provider said (ROADMAP P8.4).
+
+    An iteration whose provider reported nothing (`cost_json` is null: a failed or unfinished
+    one, or a provider with no usage figures) adds nothing to the sums and is counted in
+    `no_cost_data`, so a total is never padded with zeros that nobody reported.
+    """
+
+    run_id: str
+    iterations: int
+    #: Iterations with a reported cost; the rest are `no_cost_data`.
+    with_cost_data: int
+    tokens_in: int
+    tokens_out: int
+    #: `None` when no iteration reported any: a provider may report tokens only.
+    credits: Decimal | None
+    #: The currency of `credits`; `None` when there are none or the iterations disagree.
+    currency: str | None
+    #: Provider time over the run's iterations, from the iteration column, not from `cost_json`.
+    duration_ms: int
+
+    @property
+    def no_cost_data(self) -> int:
+        """Iterations the provider reported no cost for."""
+        return self.iterations - self.with_cost_data
 
 
 def _attempts(response_json: str) -> int:
@@ -269,6 +299,31 @@ class RunRepository:
         if status is not None:
             query = query.where(Run.status == status)
         return list(self._session.scalars(query))
+
+    def cost_report(self, run_id: str) -> CostReport:
+        """What the run's own iterations consumed; `NotFoundError` for an unknown run.
+
+        Child runs (the batches built on a hero, the refinements of a pick) are runs of their
+        own and are not folded in: read each one's report.
+        """
+        run = self.get(run_id)
+        costs = [
+            Cost.model_validate_json(item.cost_json)
+            for item in run.iterations
+            if item.cost_json is not None
+        ]
+        credits = [cost.credits for cost in costs if cost.credits is not None]
+        currencies = {cost.currency for cost in costs if cost.currency is not None}
+        return CostReport(
+            run_id=run.id,
+            iterations=len(run.iterations),
+            with_cost_data=len(costs),
+            tokens_in=sum(cost.tokens_in for cost in costs),
+            tokens_out=sum(cost.tokens_out for cost in costs),
+            credits=sum(credits, Decimal(0)) if credits else None,
+            currency=currencies.pop() if len(currencies) == 1 else None,
+            duration_ms=sum(item.duration_ms or 0 for item in run.iterations),
+        )
 
     def delete_run(self, run_id: str, *, assets: bool) -> RunDeletion:
         """Delete a run and its iterations; with `assets`, the images nothing else uses too.

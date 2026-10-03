@@ -31,11 +31,12 @@ marks the run `cancelled`, and every iteration of it that was still `pending` or
 ```
 thumbforge runs list [--kind batch] [--status failed] [--limit 20]
 thumbforge runs show <run-id>
+thumbforge runs cost <run-id>
 thumbforge runs delete <run-id> [--assets]
 thumbforge config path
 thumbforge db status
 ```
 
-`runs list` prints the newest runs first: id, kind, status, template, provider, how many iterations are done and how many failed. `runs show` lists a run's iterations; for a batch run it also shows the playlist and the item counts. `config path` shows where the database and logs live; `db status` confirms the database is at the current schema revision.
+`runs list` prints the newest runs first: id, kind, status, template, provider, how many iterations are done and how many failed. `runs show` lists a run's iterations, with the tokens each one used when its provider reported them; for a batch run it also shows the playlist and the item counts. `runs cost` totals the tokens in and out, the credits and the provider time of the run's own iterations (not those of a batch built on it), and says how many iterations the provider reported no cost for. A run whose provider reported none, like the built-in `fake` one, prints `has no cost data` rather than zeros. `--json` works on both commands. `config path` shows where the database and logs live; `db status` confirms the database is at the current schema revision.
 
 `runs delete` removes a run and its iterations. The image files stay unless you pass `--assets`, which also deletes the files that no other run, iteration or reference image still uses (identical images made by two runs are one shared file, so it goes only with the last of them). A run that other runs build on is refused with exit `2` and the ids of those runs: a hero that a batch took as its reference, or the parent of a refinement made with `thumb iterate`. Delete the batch or the refinement first.
