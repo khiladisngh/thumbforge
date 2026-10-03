@@ -1364,7 +1364,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "rich", specifier = ">=15.0.0" },
     { name = "rich-pixels", specifier = ">=3.0.1" },
-    { name = "sqlalchemy", specifier = ">=2.0" },
+    { name = "sqlalchemy", specifier = ">=2.0,<2.1" },
     { name = "structlog", specifier = ">=26.1.0" },
     { name = "tenacity", specifier = ">=9.0" },
     { name = "tomli-w", specifier = ">=1.2.0" },
