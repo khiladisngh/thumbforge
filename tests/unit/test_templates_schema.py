@@ -8,7 +8,8 @@ import pytest
 
 from thumbforge.core.errors import ExitCode, TemplateError
 from thumbforge.core.layout import LayoutSpec
-from thumbforge.templates.schema import load_layout
+from thumbforge.templates.builtins import BUILTIN_NAMES, builtin_files
+from thumbforge.templates.schema import dump_layout, load_layout
 
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "templates"
 
@@ -107,3 +108,18 @@ hint = ""
     assert "title.color" in msg
     assert "title.anchor" in msg
     assert "title.case" in msg
+
+
+@pytest.mark.parametrize("name", BUILTIN_NAMES)
+def test_dump_layout_round_trips_through_load_layout(name: str, tmp_path: Path) -> None:
+    original = load_layout(builtin_files(name)[0])
+    emitted = tmp_path / "emitted.toml"
+    emitted.write_text(dump_layout(original), encoding="utf-8")
+    assert load_layout(emitted) == original
+
+
+def test_dump_layout_omits_unset_optional_blocks() -> None:
+    """TOML has no null: an absent badge must be left out, not written as an empty value."""
+    layout = load_layout(builtin_files("minimal")[0])
+    assert layout.part.badge is None
+    assert "badge" not in dump_layout(layout)

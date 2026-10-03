@@ -8,6 +8,7 @@ import typer
 
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv
+from thumbforge.cli._youtube import open_repositories
 from thumbforge.storage.db import (
     ORPHAN_GRACE_SECONDS,
     get_db_status,
@@ -15,6 +16,7 @@ from thumbforge.storage.db import (
     upgrade_db,
     vacuum_db,
 )
+from thumbforge.templates.loader import sync_builtins
 
 app = typer.Typer(
     name="db",
@@ -29,12 +31,16 @@ _context = get_app_context
 @app.command("init")
 @handle_errors
 def init_(ctx: typer.Context) -> None:
-    """Create the database file and upgrade schema to Alembic head."""
+    """Create the database file, upgrade schema to Alembic head, and store the built-ins."""
     app_ctx = _context(ctx)
     settings = app_ctx.require_settings()
     db_path = settings.db_path
 
     head_rev, already_at_head = init_db(db_path)
+    # Always, not only on a fresh database: a package upgrade may ship a changed built-in,
+    # which becomes its next version. Unchanged built-ins store nothing.
+    with open_repositories(db_path) as repos:
+        sync_builtins(repos.templates)
     emit(
         app_ctx,
         {

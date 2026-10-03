@@ -11,7 +11,7 @@ src/thumbforge/
   providers/    ImageProvider protocol, capabilities, registry (entry points "thumbforge.providers"), fake.py, antigravity.py
   sources/      MetadataSource implementations; ytdlp.py (default); youtube_api.py (optional extra). The Protocol itself lives in core/sources.py, because core.services consumes it
   storage/      SQLAlchemy 2.0 models, repositories, Alembic migrations, content-addressed AssetStore
-  templates/    TOML loading into core.layout.LayoutSpec, Jinja2 prompt rendering, builtin templates
+  templates/    TOML loading into core.layout.LayoutSpec, Jinja2 prompt rendering, builtin templates, versioning + builtin sync (loader.py)
   imaging/      Pillow fit/crop, text overlay, YouTube compliance check, final render (finalize.py), bundled font
   settings.py   pydantic-settings (TOML + env THUMBFORGE_*), platformdirs paths
   credentials.py provider API keys: env THUMBFORGE_PROVIDERS__<KEY>__API_KEY, then keyring. Only writer of a secret

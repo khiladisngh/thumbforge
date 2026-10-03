@@ -9,6 +9,7 @@ A leaf module — it imports nothing from `thumbforge`.
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping, Sequence
 
 type JsonValue = str | int | float | bool | Sequence[JsonValue] | Mapping[str, JsonValue] | None
@@ -23,3 +24,14 @@ than coercing, and `tests/unit/test_render.py` pins that behaviour.
 
 #: A mutable JSON object under construction, for code that builds a payload key by key.
 type JsonPayload = dict[str, JsonValue]
+
+
+def canonical_json(value: JsonValue) -> str:
+    """Serialise ``value`` to the one text form every platform agrees on.
+
+    Sorted keys and fixed separators make the output independent of insertion order, so a
+    hash over it (``core.layout.spec_hash``) is stable across TOML key order and machines.
+    """
+    return json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False
+    )

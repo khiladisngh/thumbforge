@@ -1,4 +1,4 @@
-"""Upsert and lookup for fetched YouTube metadata (ROADMAP P2.3, ADR 0004).
+"""Upsert and lookup for fetched YouTube metadata and stored templates (ROADMAP P2.3, P4.4).
 
 Repositories take `core.models` snapshots and reconcile them with ORM rows. Three rules
 hold everywhere:
@@ -21,8 +21,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 
 from thumbforge.core.errors import NotFoundError
+from thumbforge.core.layout import LayoutSpec, Template, layout_json
 from thumbforge.core.services.fetch import StoredPlaylist
 from thumbforge.storage.models import Channel, Playlist, PlaylistItem, Video
+from thumbforge.storage.models import Template as TemplateRow
 
 if TYPE_CHECKING:
     from collections.abc import Collection, Sequence
@@ -297,15 +299,89 @@ class PlaylistRepository:
         return self._session.scalars(statement).all()
 
 
+class TemplateRepository:
+    """Template rows, keyed by `(name, version)`; exchanged as `core.layout.Template` values.
+
+    Rows are immutable: there is an insert and no update, because a run records the exact
+    template version it used. The versioning rule itself lives in `templates.loader`, which
+    reaches this class only through its `TemplateStore` Protocol.
+    """
+
+    def __init__(self, session: Session) -> None:
+        """Bind to the caller's session; the command owns the transaction."""
+        self._session = session
+
+    def versions(self, name: str) -> Sequence[int]:
+        """Every stored version of `name`, ascending; empty when the name is unknown."""
+        statement = (
+            select(TemplateRow.version)
+            .where(TemplateRow.name == name)
+            .order_by(TemplateRow.version)
+        )
+        return self._session.scalars(statement).all()
+
+    def get(self, name: str, version: int) -> Template | None:
+        """The template at exactly `name@version`, or `None`."""
+        row = self._session.scalars(
+            select(TemplateRow).where(TemplateRow.name == name, TemplateRow.version == version)
+        ).one_or_none()
+        return None if row is None else _template(row)
+
+    def find(self, name: str, spec_hash: str) -> Template | None:
+        """The oldest version of `name` whose content hashes to `spec_hash`, or `None`."""
+        row = self._session.scalars(
+            select(TemplateRow)
+            .where(TemplateRow.name == name, TemplateRow.spec_hash == spec_hash)
+            .order_by(TemplateRow.version)
+            .limit(1)
+        ).one_or_none()
+        return None if row is None else _template(row)
+
+    def add(self, template: Template) -> Template:
+        """Insert `template` as a new row; `UNIQUE(name, version)` rejects a duplicate."""
+        self._session.add(
+            TemplateRow(
+                name=template.name,
+                version=template.version,
+                prompt_template=template.prompt_template,
+                layout_spec_json=layout_json(template.layout),
+                spec_hash=template.spec_hash,
+                is_builtin=template.is_builtin,
+            )
+        )
+        self._session.flush()
+        return template
+
+    def list(self) -> Sequence[Template]:
+        """Every stored version of every template, by name then version."""
+        rows = self._session.scalars(
+            select(TemplateRow).order_by(TemplateRow.name, TemplateRow.version)
+        )
+        return [_template(row) for row in rows]
+
+
+def _template(row: TemplateRow) -> Template:
+    """The value object for a stored row; the layout is re-validated from its JSON."""
+    return Template(
+        name=row.name,
+        version=row.version,
+        prompt_template=row.prompt_template,
+        layout=LayoutSpec.model_validate_json(row.layout_spec_json),
+        spec_hash=row.spec_hash,
+        is_builtin=row.is_builtin,
+    )
+
+
 class Repositories:
     """The repository bundle services receive (`docs/specs/phase-6-hero.md`)."""
 
     def __init__(self, session: Session) -> None:
-        """Build the three repositories over one session, so they share a transaction."""
+        """Build the repositories over one session, so they share a transaction."""
         self.session = session
         self.channels = ChannelRepository(session)
         self.playlists = PlaylistRepository(session)
         self.videos = VideoRepository(session)
+        self.templates = TemplateRepository(session)
 
     def store_video(self, meta: VideoMeta, channel: ChannelMeta | None = None) -> Video:
         """Persist one video and, when known, its channel.

@@ -1,4 +1,4 @@
-"""Prompt rendering: the Jinja environment and ``thumbforge template render`` (ROADMAP P4.2)."""
+"""Prompt rendering: the Jinja environment and ``template render`` (ROADMAP P4.2, P4.4)."""
 
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from thumbforge.core.models import (
     VideoMeta,
 )
 from thumbforge.core.urls import classify_url
+from thumbforge.storage.db import init_db
 from thumbforge.templates.render import RenderContext, render_prompt
 
 if TYPE_CHECKING:
@@ -160,15 +161,24 @@ def data_dir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return directory
 
 
+def _import(data_dir: Path, source: Path, name: str, prompt: str) -> None:
+    """Store the valid fixture layout, renamed to ``name``, with ``prompt``: `template import`."""
+    source.mkdir(parents=True, exist_ok=True)
+    layout = (FIXTURES / "valid.toml").read_text(encoding="utf-8")
+    toml_path = source / f"{name}.toml"
+    toml_path.write_text(layout.replace('"bold-title"', f'"{name}"'), encoding="utf-8")
+    shutil.copy(FIXTURES / prompt, source / f"{name}.j2")
+    imported = runner.invoke(
+        app, ["--data-dir", str(data_dir), "template", "import", str(toml_path)]
+    )
+    assert imported.exit_code == 0, imported.output
+
+
 @pytest.fixture
-def templates_dir(isolate_user_environment: Path) -> Path:
-    """The config-dir folder `template render` reads, holding two fixture templates."""
-    directory = isolate_user_environment / "config" / "templates"
-    directory.mkdir(parents=True)
+def templates(data_dir: Path, tmp_path: Path) -> None:
+    """Two fixture templates stored at version 1 through `template import`."""
     for name, prompt in (("demo", "demo.j2"), ("needs-tone", "needs-tone.j2")):
-        shutil.copy(FIXTURES / "valid.toml", directory / f"{name}.toml")
-        shutil.copy(FIXTURES / prompt, directory / f"{name}.j2")
-    return directory
+        _import(data_dir, tmp_path / "src" / name, name, prompt)
 
 
 def _render(data_dir: Path, *args: str, json_mode: bool = False) -> Result:
@@ -178,7 +188,7 @@ def _render(data_dir: Path, *args: str, json_mode: bool = False) -> Result:
     return runner.invoke(app, [*command, "template", "render", *args])
 
 
-def test_cli_prints_the_rendered_prompt(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_prints_the_rendered_prompt(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--part", "3", "--var", "mood=calm")
     assert result.exit_code == 0, result.output
     out = result.stdout
@@ -189,61 +199,90 @@ def test_cli_prints_the_rendered_prompt(data_dir: Path, templates_dir: Path) -> 
     assert "{{" not in out
 
 
-def test_cli_omits_the_part_when_none_is_given(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_omits_the_part_when_none_is_given(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--var", "mood=calm")
     assert result.exit_code == 0, result.output
     assert "Series instalment" not in result.stdout
 
 
-def test_cli_json_mode_emits_name_and_prompt(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_json_mode_emits_the_resolved_version_and_prompt(
+    data_dir: Path, templates: None
+) -> None:
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--var", "mood=", json_mode=True)
     assert result.exit_code == 0, result.output
     payload = json.loads(result.stdout)
-    assert payload["template"] == "demo"
+    assert payload["template"] == "demo@1"
     assert payload["prompt"].endswith("Mood: .")
 
 
 def test_cli_missing_variable_exits_2_naming_variable_and_template(
-    data_dir: Path, templates_dir: Path
+    data_dir: Path, templates: None
 ) -> None:
     result = _render(data_dir, "needs-tone", "--video", VIDEO_ID, "--var", "mood=")
     assert result.exit_code == ExitCode.USAGE
-    assert "vars.tone" in result.stderr
-    assert "needs-tone" in result.stderr
+    assert "undefined variable 'vars.tone' in needs-tone@1" in result.stderr
 
 
-def test_cli_supplying_the_variable_fixes_it(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_the_error_names_the_resolved_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The spec's example: a `bold-title` that reads `vars.tone`, stored as version 1."""
+    monkeypatch.setattr(fetch_cli, "build_source", lambda _source: _StubSource())
+    directory = tmp_path / "bare"
+    init_db(directory / "thumbforge.sqlite3")
+    _fetch(directory, f"https://youtu.be/{VIDEO_ID}")
+    _import(directory, tmp_path / "src", "bold-title", "needs-tone.j2")
+    result = _render(directory, "bold-title", "--video", VIDEO_ID, "--var", "mood=")
+    assert result.exit_code == ExitCode.USAGE
+    assert "template: undefined variable 'vars.tone' in bold-title@1" in result.stderr
+
+
+def test_cli_supplying_the_variable_fixes_it(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "needs-tone", "--video", VIDEO_ID, "--var", "tone=warm")
     assert result.exit_code == 0, result.output
     assert "Tone: warm." in result.stdout
 
 
-def test_cli_prints_brackets_literally(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_prints_brackets_literally(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--var", "mood=[red]hot[/red]")
     assert result.exit_code == 0, result.output
     assert "Mood: [red]hot[/red]." in result.stdout
 
 
-def test_cli_unknown_template_exits_3(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_unknown_template_exits_3(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "nope", "--video", VIDEO_ID)
     assert result.exit_code == ExitCode.NOT_FOUND
 
 
-def test_cli_unknown_video_exits_3(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_unknown_version_exits_3(data_dir: Path, templates: None) -> None:
+    result = _render(data_dir, "demo@2", "--video", VIDEO_ID, "--var", "mood=x")
+    assert result.exit_code == ExitCode.NOT_FOUND
+
+
+def test_cli_unknown_video_exits_3(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "demo", "--video", "aaaaaaaaaaa", "--var", "mood=x")
     assert result.exit_code == ExitCode.NOT_FOUND
 
 
-def test_cli_a_var_without_equals_exits_2(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_a_var_without_equals_exits_2(data_dir: Path, templates: None) -> None:
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--var", "mood")
     assert result.exit_code == ExitCode.USAGE
 
 
-def test_cli_a_template_name_cannot_escape_the_templates_dir(
-    data_dir: Path, templates_dir: Path
-) -> None:
-    result = _render(data_dir, "../demo", "--video", VIDEO_ID)
+@pytest.mark.parametrize("ref", ["../demo", "demo@x", "demo@0"])
+def test_cli_a_malformed_reference_exits_2(data_dir: Path, templates: None, ref: str) -> None:
+    result = _render(data_dir, ref, "--video", VIDEO_ID)
     assert result.exit_code == ExitCode.USAGE
+
+
+def test_cli_renders_the_builtin_stored_by_db_init(data_dir: Path) -> None:
+    result = _render(data_dir, "series-parts", "--video", VIDEO_ID, "--part", "7")
+    assert result.exit_code == 0, result.output
+    out = result.stdout
+    assert "Me at the zoo" in out
+    assert "Part 7" in out
+    assert "top-right corner clear for the Part badge" in out
+    assert "{{" not in out
 
 
 def _fetch(data_dir: Path, url: str) -> None:
@@ -251,21 +290,21 @@ def _fetch(data_dir: Path, url: str) -> None:
     assert fetched.exit_code == 0, fetched.output
 
 
-def test_cli_a_video_in_one_playlist_supplies_its_part(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_a_video_in_one_playlist_supplies_its_part(data_dir: Path, templates: None) -> None:
     _fetch(data_dir, PLAYLISTS[0])
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--var", "mood=calm")
     assert result.exit_code == 0, result.output
     assert "Series instalment 1." in result.stdout
 
 
-def test_cli_the_part_flag_overrides_the_playlist_part(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_the_part_flag_overrides_the_playlist_part(data_dir: Path, templates: None) -> None:
     _fetch(data_dir, PLAYLISTS[0])
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--part", "5", "--var", "mood=calm")
     assert result.exit_code == 0, result.output
     assert "Series instalment 5." in result.stdout
 
 
-def test_cli_a_video_in_two_playlists_supplies_no_part(data_dir: Path, templates_dir: Path) -> None:
+def test_cli_a_video_in_two_playlists_supplies_no_part(data_dir: Path, templates: None) -> None:
     for url in PLAYLISTS:
         _fetch(data_dir, url)
     result = _render(data_dir, "demo", "--video", VIDEO_ID, "--var", "mood=calm")

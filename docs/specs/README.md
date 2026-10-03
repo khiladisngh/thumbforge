@@ -14,7 +14,7 @@ Every task in `docs/ROADMAP.md` links to a spec section. A spec must exist and b
 | `phase-1-skeleton.md`      | 1 — Skeleton          | Implemented |
 | `phase-2-youtube-fetch.md` | 2 — YouTube fetch     | Implemented |
 | `phase-3-providers.md`     | 3 — Providers         | Implemented |
-| `phase-4-templates.md`     | 4 — Templates         | Proposed    |
+| `phase-4-templates.md`     | 4 — Templates         | Implemented |
 | `phase-5-imaging.md`       | 5 — Imaging           | Proposed    |
 | `phase-6-hero.md`          | 6 — Hero + iterations | Proposed    |
 | `phase-7-batch.md`         | 7 — Batch             | Proposed    |

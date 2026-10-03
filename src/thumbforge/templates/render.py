@@ -92,11 +92,26 @@ def render_prompt(prompt_template: str, ctx: RenderContext, *, name: str) -> str
             height=ctx.height,
         )
     except TemplateSyntaxError as err:
-        msg = f"syntax error in {name}, line {err.lineno}: {err.message}"
-        raise TemplateError(msg) from err
+        raise TemplateError(_syntax_message(err, name)) from err
     except UndefinedError as err:
         msg = f"{err.message} in {name}"
         raise TemplateError(msg) from err
     except (JinjaTemplateError, ArithmeticError, TypeError) as err:
         msg = f"cannot render {name}: {err}"
         raise TemplateError(msg) from err
+
+
+def check_syntax(prompt_template: str, *, name: str) -> None:
+    """Raise :class:`~thumbforge.core.errors.TemplateError` if ``prompt_template`` cannot compile.
+
+    Compiles with the same environment :func:`render_prompt` uses, so a prompt that passes
+    fails later only for a missing variable or a runtime error, never for its syntax.
+    """
+    try:
+        _ENV.from_string(prompt_template)
+    except TemplateSyntaxError as err:
+        raise TemplateError(_syntax_message(err, name)) from err
+
+
+def _syntax_message(err: TemplateSyntaxError, name: str) -> str:
+    return f"syntax error in {name}, line {err.lineno}: {err.message}"

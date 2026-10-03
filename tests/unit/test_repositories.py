@@ -8,9 +8,12 @@ from typing import TYPE_CHECKING
 import pytest
 
 from thumbforge.core.errors import NotFoundError
+from thumbforge.core.layout import Template, spec_hash
 from thumbforge.core.models import ChannelMeta, PlaylistItemMeta, PlaylistMeta, VideoMeta
 from thumbforge.storage.db import get_engine, init_db, session_factory, session_scope
 from thumbforge.storage.repositories import Repositories
+from thumbforge.templates.builtins import builtin_files
+from thumbforge.templates.schema import load_layout
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -293,3 +296,37 @@ def test_renumbered_parts_survive_a_refetch_end_to_end(repos: Repositories) -> N
 
     items = repos.playlists.items(repos.playlists.resolve(meta.youtube_id))
     assert [item.part_number for item in items] == [10, None, 11]
+
+
+def _template(name: str, version: int, prompt: str = "prompt") -> Template:
+    """A template value over the `series-parts` layout, which sets every optional block."""
+    layout = load_layout(builtin_files("series-parts")[0])
+    return Template(
+        name=name,
+        version=version,
+        prompt_template=prompt,
+        layout=layout,
+        spec_hash=spec_hash(prompt, layout),
+        is_builtin=False,
+    )
+
+
+def test_a_stored_template_reads_back_equal(repos: Repositories) -> None:
+    stored = repos.templates.add(_template("demo", 1))
+    assert repos.templates.get("demo", 1) == stored == _template("demo", 1)
+    assert repos.templates.find("demo", stored.spec_hash) == stored
+    assert repos.templates.get("demo", 2) is None
+    assert repos.templates.find("other", stored.spec_hash) is None
+
+
+def test_templates_list_by_name_then_version(repos: Repositories) -> None:
+    for name, version in (("b", 2), ("a", 1), ("b", 1), ("a", 3)):
+        repos.templates.add(_template(name, version, prompt=f"{name}{version}"))
+    assert [(t.name, t.version) for t in repos.templates.list()] == [
+        ("a", 1),
+        ("a", 3),
+        ("b", 1),
+        ("b", 2),
+    ]
+    assert list(repos.templates.versions("a")) == [1, 3]
+    assert list(repos.templates.versions("missing")) == []

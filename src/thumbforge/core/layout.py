@@ -1,7 +1,9 @@
 """Layout specification schema for deterministic text overlays (ROADMAP P4.1, ADR 0006).
 
-Defines the Pydantic models that parse and validate a template's TOML layout file.
-Lives in ``core`` because both ``imaging`` (Phase 5) and ``core.services`` consume it.
+Defines the Pydantic models that parse and validate a template's TOML layout file, and the
+stored :class:`Template` that pairs a layout with its prompt (P4.4).
+Lives in ``core`` because ``imaging`` (Phase 5), ``storage``, ``templates`` and
+``core.services`` all consume it (ADR 0018).
 """
 
 from __future__ import annotations
@@ -10,6 +12,9 @@ from enum import StrEnum
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, field_validator, model_validator
+
+from thumbforge.core.ids import sha256_bytes
+from thumbforge.core.json import canonical_json
 
 _HEX_COLOR_PATTERN = r"^#[0-9a-fA-F]{6}$"
 
@@ -145,3 +150,39 @@ class LayoutSpec(BaseModel):
             )
             raise ValueError(msg)
         return self
+
+
+def layout_json(layout: LayoutSpec) -> str:
+    """The canonical JSON form of ``layout``: what ``template.layout_spec_json`` stores.
+
+    Dumped from the validated model, so defaults are filled in and a TOML that spells out a
+    default serialises the same as one that omits it.
+    """
+    return canonical_json(layout.model_dump(mode="json"))
+
+
+def spec_hash(prompt_template: str, layout: LayoutSpec) -> str:
+    """``sha256(prompt_template + canonical_json(layout))``: the identity of a template's content.
+
+    The prompt is hashed as given; callers read it with newlines normalised to ``\\n`` so the
+    same file checked out on Windows and Linux hashes the same.
+    """
+    return sha256_bytes((prompt_template + layout_json(layout)).encode("utf-8"))
+
+
+class Template(BaseModel):
+    """One immutable, versioned template row: a Jinja prompt plus its layout spec."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    name: str = Field(min_length=1)
+    version: int = Field(ge=1)
+    prompt_template: str
+    layout: LayoutSpec
+    spec_hash: str
+    is_builtin: bool = False
+
+    @property
+    def ref(self) -> str:
+        """``NAME@VERSION``, the exact reference that resolves back to this row."""
+        return f"{self.name}@{self.version}"

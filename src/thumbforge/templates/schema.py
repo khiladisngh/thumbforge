@@ -1,10 +1,11 @@
-"""TOML layout specification loading and validation (ROADMAP P4.1, ADR 0006)."""
+"""TOML layout specification loading, validation and writing (ROADMAP P4.1, P4.4, ADR 0006)."""
 
 from __future__ import annotations
 
 import tomllib
 from typing import TYPE_CHECKING
 
+import tomli_w
 from pydantic import ValidationError
 
 from thumbforge.core.errors import TemplateError
@@ -37,3 +38,12 @@ def load_layout(path: Path) -> LayoutSpec:
         formatted = "\n".join(messages)
         msg = f"Invalid layout spec in {path}:\n{formatted}"
         raise TemplateError(msg) from err
+
+
+def dump_layout(layout: LayoutSpec) -> str:
+    """Render ``layout`` as TOML that :func:`load_layout` reads back to an equal model.
+
+    ``None`` values are omitted because TOML has no null; every optional field defaults to
+    ``None`` when absent, so leaving it out round-trips.
+    """
+    return tomli_w.dumps(layout.model_dump(mode="json", exclude_none=True))
