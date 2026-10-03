@@ -31,10 +31,19 @@ thumbforge thumb export <iteration-id> --to out/
 
 A run exports every completed candidate as `out/<video-id>-<number>.jpg`; an iteration id exports just that one. `--raw` copies the images exactly as the provider returned them (`.png` for the fake provider) instead of the finals. The folder is created if needed and the originals stay in the store.
 
-!!! note "Coming in v0.1.0"
+## Refine
 
-    Refining a pick with `thumbforge thumb iterate` is roadmap task P6.3, defined in the [Phase 6 spec](../../specs/phase-6-hero.md#behaviour). Until then you can preview how a refinement would change the prompt:
+```
+thumbforge thumb iterate <run> --n 4 --prompt-append "warmer colours"
+thumbforge thumb iterate <run> --var mood=moody
+thumbforge thumb iterate <iteration-id>
+thumbforge thumb iterate <run> --from-picked
+```
 
-    ```
-    thumbforge template render my-series --video <video-id> --var mood=moody
-    ```
+This starts a new run, linked to the one you refined, that uses the raw image of your pick as its reference. It keeps the same template and provider; `--n` sets how many candidates you get (4 by default). With a run id it refines that run's pick, so pick first; with an iteration id it refines exactly that iteration and ignores any pick. If the run you name has no pick of its own, `--from-picked` borrows the nearest one from the runs it was refined from.
+
+`--prompt-append` adds your words after the rendered prompt. `--var key=value` fills the template's variables; they are not carried over from the earlier run, so pass again any the template needs. To preview the prompt first, use `thumbforge template render my-series --video <video-id> --var mood=moody`.
+
+The new run prints like `thumb generate` does, so pick from it and refine again. `thumbforge runs show <run>` lists the lineage: a refinement shows its `Parent run`, and the run it came from shows its `Child runs`.
+
+A provider that cannot take a reference image (the Antigravity provider is one) still refines, from the prompt alone, and warns you that the reference was not used.

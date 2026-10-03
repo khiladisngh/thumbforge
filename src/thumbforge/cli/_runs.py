@@ -124,8 +124,13 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
         "Provider": escape(run.provider_profile.name),
         "Video": EMPTY if run.video is None else escape(run.video.youtube_id),
     }
+    children = sorted(child.id for child in run.child_runs)
     if run.parent_run_id is not None:
         header["Parent run"] = run.parent_run_id
+    if run.reference_asset is not None:
+        header["Reference"] = run.reference_asset.sha256[:12]
+    if children:
+        header["Child runs"] = ", ".join(children)
     header["Started"] = run.started_at or EMPTY
     header["Finished"] = run.finished_at or EMPTY
     if run.error_text:
@@ -140,6 +145,8 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
             "provider": run.provider_profile.name,
             "video": None if run.video is None else run.video.youtube_id,
             "parent_run_id": run.parent_run_id,
+            "child_run_ids": children,
+            "reference_asset": _asset_payload(run.reference_asset, data_dir),
             "started_at": run.started_at,
             "finished_at": run.finished_at,
             "error": run.error_text,

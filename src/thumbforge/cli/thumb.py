@@ -1,7 +1,6 @@
 """``thumbforge thumb`` — generate hero thumbnails for one video, then pick and export one.
 
-`generate` is ROADMAP P6.1, `pick`, `show` and `export` are P6.2; `iterate` (P6.3) joins this
-app in its own task.
+`generate` is ROADMAP P6.1, `pick`, `show` and `export` are P6.2, `iterate` is P6.3.
 """
 
 from __future__ import annotations
@@ -26,6 +25,7 @@ from thumbforge.cli._runs import (
 )
 from thumbforge.cli._youtube import lookup_key
 from thumbforge.core.services.hero import HeroService, RunSpec
+from thumbforge.core.services.iterate import IterateService
 from thumbforge.imaging.finalize import render_final
 from thumbforge.logging import get_logger
 from thumbforge.providers import registry
@@ -33,12 +33,16 @@ from thumbforge.storage.models import Iteration
 from thumbforge.templates.loader import PromptRenderer
 
 if TYPE_CHECKING:
+    from rich.console import RenderableType
+
+    from thumbforge.cli._render import AppContext
+    from thumbforge.cli._runs import RunStore
     from thumbforge.core.enums import RunStatus
     from thumbforge.core.json import JsonPayload
     from thumbforge.core.layout import LayoutSpec
     from thumbforge.core.models import ComplianceReport
-    from thumbforge.core.services.hero import Finalize
-    from thumbforge.settings import OutputSettings
+    from thumbforge.core.services.hero import Finalize, RunResult
+    from thumbforge.settings import OutputSettings, Settings
 
 log = get_logger(__name__)
 
@@ -79,6 +83,52 @@ def _finalizer(output: OutputSettings) -> Finalize:
         )
 
     return finalize
+
+
+def _hero_service(store: RunStore, settings: Settings) -> HeroService:
+    """The hero machinery, wired to this command's store, as `generate` and `iterate` share it."""
+    return HeroService(
+        store.runs,
+        registry,
+        PromptRenderer(store.repos.templates),
+        _finalizer(settings.output),
+        logs_dir=settings.state_dir / "logs" / "runs",
+    )
+
+
+def _run_report(
+    store: RunStore, settings: Settings, result: RunResult
+) -> tuple[JsonPayload, RenderableType, list[Path]]:
+    """The stored view of the run just finished: payload, table and the finals to preview."""
+    run = store.runs.get(result.run_id)
+    payload, renderable = run_view(run, settings.general.data_dir)
+    return payload, renderable, final_paths(run, settings.general.data_dir)
+
+
+def _print_run(
+    app_ctx: AppContext,
+    result: RunResult,
+    view: tuple[JsonPayload, RenderableType, list[Path]],
+) -> None:
+    """Print a finished run, then raise the error its outcome calls for."""
+    payload, renderable, images = view
+    if result.reference_ignored:
+        log.warning("provider takes no reference image; refining from the prompt alone")
+    emit(
+        app_ctx,
+        {**payload, "exit_code": int(result.exit_code)},
+        render=lambda: renderable,
+    )
+    if not app_ctx.json_mode:
+        preview(app_ctx, images, columns=2)
+        if result.completed:
+            app_ctx.console.print(
+                f"Pick one with: thumbforge thumb pick {result.run_id} <ordinal>",
+                soft_wrap=True,
+            )
+    # After the output, so the table is on screen when the diagnostic and exit code arrive.
+    if (error := result.error()) is not None:
+        raise error
 
 
 @app.command("generate")
@@ -127,34 +177,59 @@ def generate(
     )
 
     with open_run_store(settings) as store:
-        service = HeroService(
-            store.runs,
-            registry,
-            PromptRenderer(store.repos.templates),
-            _finalizer(settings.output),
-            logs_dir=settings.state_dir / "logs" / "runs",
-        )
+        service = _hero_service(store, settings)
         # One `asyncio.run` per invocation: the CLI is the only sync/async boundary.
         result = asyncio.run(service.generate(spec, progress=_LogProgress()))
-        run = store.runs.get(result.run_id)
-        payload, renderable = run_view(run, settings.general.data_dir)
-        images = final_paths(run, settings.general.data_dir)
+        view = _run_report(store, settings, result)
 
-    emit(
-        app_ctx,
-        {**payload, "exit_code": int(result.exit_code)},
-        render=lambda: renderable,
-    )
-    if not app_ctx.json_mode:
-        preview(app_ctx, images, columns=2)
-        if result.completed:
-            app_ctx.console.print(
-                f"Pick one with: thumbforge thumb pick {result.run_id} <ordinal>",
-                soft_wrap=True,
+    _print_run(app_ctx, result, view)
+
+
+@app.command("iterate")
+@handle_errors
+def iterate(
+    ctx: typer.Context,
+    target: Annotated[
+        str,
+        typer.Argument(
+            help="Run id (refines its picked iteration) or iteration id (refines that one)."
+        ),
+    ],
+    n: Annotated[int, typer.Option("--n", min=1, help="Iterations to generate.")] = 4,
+    prompt_append: Annotated[
+        str | None,
+        typer.Option("--prompt-append", help="Text added after the rendered prompt."),
+    ] = None,
+    var: Annotated[
+        list[str] | None,
+        typer.Option("--var", help="key=value for {{ vars.key }}; repeatable, not inherited."),
+    ] = None,
+    from_picked: Annotated[
+        bool,
+        typer.Option(
+            "--from-picked", help="With a run id and no pick of its own, use its ancestors' pick."
+        ),
+    ] = False,
+) -> None:
+    """Refine a picked (or given) iteration: a child run with it as the reference image."""
+    app_ctx = get_app_context(ctx)
+    settings = app_ctx.require_settings()
+    with open_run_store(settings) as store:
+        service = IterateService(store.runs, _hero_service(store, settings))
+        result = asyncio.run(
+            service.iterate(
+                target,
+                n=n,
+                concurrency=settings.batch.concurrency,
+                prompt_append=prompt_append,
+                vars=parse_vars(var or []),
+                from_picked=from_picked,
+                progress=_LogProgress(),
             )
-    # After the output, so the table is on screen when the diagnostic and exit code arrive.
-    if (error := result.error()) is not None:
-        raise error
+        )
+        view = _run_report(store, settings, result)
+
+    _print_run(app_ctx, result, view)
 
 
 @app.command("pick")

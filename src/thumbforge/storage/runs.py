@@ -1,6 +1,7 @@
 """Runs, iterations and provider profiles, as `HeroService` reads and writes them (ROADMAP P6.1).
 
-`RunRepository` satisfies the `HeroStore` Protocol declared beside the service. It exchanges
+`RunRepository` satisfies the `HeroStore` Protocol declared beside the service, and
+`IterateStore` (P6.3) for the refinements that start from a stored run. It exchanges
 the core value types (`HeroTarget`, `AssetInfo`, ...) rather than ORM rows, which `core` may
 not name; `get` returns the row because the CLI renders from it, as `fetch` does.
 
@@ -13,13 +14,15 @@ reason; waiting out `busy_timeout` would only end in "database is locked".
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import json
+from typing import TYPE_CHECKING, cast
 
 from sqlalchemy import select, update
 
 from thumbforge.core.enums import AssetKind, RunKind, RunStatus
 from thumbforge.core.errors import NotFoundError, UsageError
 from thumbforge.core.services.hero import AssetInfo, HeroTarget, copy_assets
+from thumbforge.core.services.iterate import IterateSource
 from thumbforge.storage.models import Asset, Iteration, ProviderProfile, Run, utcnow_iso
 from thumbforge.storage.models import Template as TemplateRow
 from thumbforge.storage.repositories import VideoRepository, channel_meta, video_meta
@@ -30,6 +33,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
+    from thumbforge.core.json import JsonValue
     from thumbforge.core.layout import Template
     from thumbforge.core.models import ComplianceReport
     from thumbforge.core.services.hero import IterationDraft, IterationOutcome
@@ -78,6 +82,8 @@ class RunRepository:
         video_id: str,
         params_json: str,
         iterations: Sequence[IterationDraft],
+        parent_run_id: str | None = None,
+        reference_asset_id: str | None = None,
     ) -> list[str]:
         """Insert a `running` run and its `pending` iterations; return the iteration ids."""
         template_id = self._session.scalars(
@@ -97,6 +103,8 @@ class RunRepository:
                 template_id=template_id,
                 provider_profile_id=profile_id,
                 video_id=video_id,
+                parent_run_id=parent_run_id,
+                reference_asset_id=reference_asset_id,
                 params_json=params_json,
                 started_at=utcnow_iso(),
             )
@@ -209,6 +217,47 @@ class RunRepository:
         self._session.refresh(chosen)
         return chosen
 
+    def resolve_source(self, ref: str, *, from_picked: bool) -> IterateSource:
+        """What `thumb iterate REF` refines: a run's pick, or the iteration `REF` names.
+
+        An iteration id names its iteration outright, picked or not; it must be completed,
+        like a pick, because only a completed iteration has a usable raw asset. A run id
+        yields the run's picked iteration, or with `from_picked` the nearest pick walking up
+        its parent chain. The child attaches to the run named (the iteration's own run for an
+        iteration id), whichever run the reference came from.
+        """
+        found = self.resolve_target(ref)
+        if isinstance(found, Iteration):
+            run, chosen = found.run, found
+        else:
+            run, chosen = found, self._picked(found, walk=from_picked)
+        listing = f"`thumbforge runs show {run.id}` lists the run's iterations"
+        if chosen is None:
+            where = "or any run it came from " if from_picked else ""
+            msg = f"run {run.id} has no picked iteration {where}to refine"
+            raise UsageError(
+                msg,
+                hint=(
+                    f"pick one with `thumbforge thumb pick {run.id} <ordinal>`, "
+                    "or name an iteration id"
+                ),
+            )
+        if chosen.status is not RunStatus.COMPLETED or chosen.raw_asset is None:
+            msg = f"iteration {chosen.ordinal} of run {chosen.run_id} is {chosen.status.value}"
+            raise UsageError(msg, hint=f"refine a completed iteration; {listing}")
+        if run.video_id is None:  # pragma: no cover - hero runs always carry their video
+            msg = f"run {run.id} has no video to refine"
+            raise UsageError(msg, hint=listing)
+        profile = run.provider_profile
+        return IterateSource(
+            parent_run_id=run.id,
+            video_id=run.video_id,
+            template_ref=f"{run.template.name}@{run.template.version}",
+            provider_key=profile.provider_key,
+            provider_params=cast("dict[str, JsonValue]", json.loads(profile.params_json)),
+            reference=self._info(chosen.raw_asset),
+        )
+
     def resolve_target(self, ref: str) -> Run | Iteration:
         """The run or the iteration `ref` is the id of; `NotFoundError` if it is neither."""
         found = self._session.get(Run, ref) or self._session.get(Iteration, ref)
@@ -245,6 +294,17 @@ class RunRepository:
             raise UsageError(msg, hint=f"`thumbforge runs show {run.id}` lists each outcome")
         stem = run.id if run.video is None else run.video.youtube_id
         return copy_assets(to, stem, files)
+
+    @staticmethod
+    def _picked(run: Run, *, walk: bool) -> Iteration | None:
+        """The run's picked iteration; with `walk`, the nearest one up the parent chain."""
+        current: Run | None = run
+        while current is not None:
+            picked = next((row for row in current.iterations if row.picked), None)
+            if picked is not None or not walk:
+                return picked
+            current = current.parent_run
+        return None
 
     def _iteration(self, iteration_id: str) -> Iteration:
         row = self._session.get(Iteration, iteration_id)

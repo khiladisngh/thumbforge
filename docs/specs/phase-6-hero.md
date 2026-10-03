@@ -25,12 +25,17 @@ Collaborators arrive as Protocols declared beside the service, as `FetchService`
 class HeroService:
     def __init__(self, store: HeroStore, registry: ProviderRegistry, renderer: TemplateRenderer, finalize: Finalize, *, logs_dir: Path) -> None: ...
     async def generate(self, spec: RunSpec, *, progress: ProgressSink) -> RunResult
-        # RunSpec(video_id, template_ref, provider_key, n, concurrency, seed, vars, out_dir, provider_params)
-        # RunResult(run_id, status, iteration_ids, completed, failed, compliance_failed)
+        # RunSpec(video_id, template_ref, provider_key, n, concurrency, seed, vars, out_dir, provider_params,
+        #         kind, parent_run_id, reference, prompt_append)   # the last four are set by IterateService
+        # RunResult(run_id, status, iteration_ids, completed, failed, compliance_failed, reference_ignored)
         #   .exit_code -> ExitCode, .error() -> the ThumbforgeError the CLI raises after printing
 
 class IterateService:
-    async def iterate(self, parent: Run | Iteration, *, n: int, prompt_append: str | None, vars: dict[str, str], from_picked: bool, progress: ProgressSink) -> RunResult
+    def __init__(self, store: IterateStore, hero: HeroService) -> None: ...
+    async def iterate(self, ref: str, *, n: int, concurrency: int, prompt_append: str | None, vars: Mapping[str, str], from_picked: bool, progress: ProgressSink) -> RunResult
+        # `ref` is a run id or an iteration id; `IterateStore.resolve_source` (a `RunRepository` method) turns it into
+        # IterateSource(parent_run_id, video_id, template_ref, provider_key, provider_params, reference: AssetInfo).
+        # The child is built as a `RunSpec` with `kind`, `parent_run_id`, `reference` and `prompt_append` set, and run by `HeroService.generate`.
 
 # storage.runs.RunRepository, over ORM rows, so `core` does not name them
 def pick(run_id: str, target: int | str) -> Iteration          # ordinal or iteration id
@@ -45,12 +50,12 @@ Commands (`PLAN.md` §5.2):
 | Command                                               | Key flags                                                                                                                          | Output                                                                                                                   | Exit          |
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------- |
 | `thumbforge thumb generate <video>`                   | `--template NAME[@VERSION]`, `--provider KEY`, `--n 4`, `--concurrency 1`, `--seed N`, `--var key=value` (repeatable), `--out DIR` | creates hero `run` + N iterations; preview grid; prints run id                                                           | 0, 3, 4, 5, 6 |
-| `thumbforge thumb iterate <run\|iteration>`           | `--n 4`, `--prompt-append TEXT`, `--var …`, `--from-picked`                                                                        | child run (`kind='iterate'`, `parent_run_id`), same template/provider; reference = picked or given iteration's raw asset | 0, 3, 4, 6    |
+| `thumbforge thumb iterate <run\|iteration>`           | `--n 4`, `--prompt-append TEXT`, `--var …`, `--from-picked`                                                                        | child run (`kind='iterate'`, `parent_run_id`), same template/provider; reference = picked or given iteration's raw asset | 0, 2, 3, 4, 6 |
 | `thumbforge thumb pick <run> <ordinal\|iteration-id>` |                                                                                                                                    | marks picked; un-picks siblings                                                                                          | 0, 2, 3       |
 | `thumbforge thumb show <run>`                         | `--columns 2`                                                                                                                      | preview grid with ordinals, picked marker, compliance status                                                             | 0, 3          |
 | `thumbforge thumb export <run\|iteration>`            | `--to DIR`, `--raw`                                                                                                                | copies the final (or raw) asset of every completed iteration of a run, or of one iteration, into DIR                     | 0, 2, 3       |
 
-`thumbforge runs show <run>` (minimal, P6.1; P7.4 adds `list|resume|cancel|delete`) prints the run header and the iteration table of a stored run, or the same as `--json` with each iteration's full idempotency key, assets and compliance report; exit `3` for an unknown run.
+`thumbforge runs show <run>` (minimal, P6.1; P7.4 adds `list|resume|cancel|delete`) prints the run header and the iteration table of a stored run, or the same as `--json` with each iteration's full idempotency key, assets and compliance report; exit `3` for an unknown run. The header shows the run's lineage: `Parent run` and `Reference` (the first 12 characters of the reference asset's hash) on a child, `Child runs` on a parent; `--json` carries `run.parent_run_id`, `run.child_run_ids` (oldest first) and `run.reference_asset` (an asset object, or `null`).
 
 ## Behaviour
 
@@ -59,7 +64,7 @@ Commands (`PLAN.md` §5.2):
 3. Run status at the end: all completed → `completed`, exit `0`; some failed → `failed`, exit `6` and the message from `PLAN.md` §5.3; all failed → `failed`, exit `4`. A compliance failure on an otherwise successful iteration marks that iteration `failed` with `error_text` from the report. When every failure is a compliance failure, exit `5` replaces both `6` and `4`.
 4. `--out DIR` additionally copies the final asset of every completed iteration to `DIR/<youtube_id>-<ordinal>.<ext>`; a non-compliant final stays inspectable in the store but is not copied.
 5. `thumb pick R 2` sets `picked = 1` on ordinal 2 and `0` on siblings in one statement, so a run never has two picks; the argument is an ordinal or the id of one of that run's iterations. Picking again moves the pick; picking the picked iteration changes nothing. An unknown run, ordinal or iteration id exits `3`. An iteration that is not `completed` exits `2` with a hint to pick a completed one: a `failed` iteration (compliance failures included) has no usable final. `--json` prints `{run_id, picked: {id, ordinal}}`.
-6. `thumb iterate R --n 4 --prompt-append "warmer colours"` creates `run(kind='iterate', parent_run_id=R, video_id=R.video_id, reference_asset_id=<picked or given iteration>.raw_asset_id)`, re-renders the prompt with the append and `vars`, and passes the reference path in `GenerationRequest.reference_images`. Without a picked iteration and without an explicit iteration id, exit `2` with hint `thumb pick`. `--from-picked` walks to the newest picked iteration in the parent chain.
+6. `thumb iterate R --n 4 --prompt-append "warmer colours"` creates `run(kind='iterate', parent_run_id=R, video_id=R.video_id, reference_asset_id=<picked or given iteration>.raw_asset_id)`, re-renders the prompt with the append and `vars`, and passes the reference path in `GenerationRequest.reference_images`. The argument is a run id or an iteration id: a run id refines that run's picked iteration, an iteration id refines that iteration and overrides any pick, and the child's parent is the run of that iteration. Without a picked iteration and without an explicit iteration id, exit `2` with hint `thumb pick`; an iteration that is not `completed` exits `2`; an unknown id exits `3`. `--from-picked` walks to the newest picked iteration in the parent chain: the run's own pick if it has one, otherwise its parent's, and so on. The child runs the parent's template version and provider with the parent's stored provider settings, `[batch] concurrency` bounds its parallelism, `--n` defaults to 4, and its seeds count up from 0 as a hero's do. The prompt is the template rendered with `--var` alone (nothing is inherited from the parent's variables, so a template that needs one needs it passed again; a missing one exits `2` before any run exists), then `--prompt-append` after a blank line. The reference is part of each iteration's idempotency key. The output is the run view `generate` prints, plus the `Pick one with:` line.
 7. `thumb export` copies (never moves) assets; `--raw` selects `raw_asset_id`. `--to` is always a directory, created when missing, and the files are named `<youtube_id>-<ordinal>.<ext>` like `generate --out`. A run id exports every `completed` iteration; an iteration id exports that one. Export does not need a pick. A target with no `completed` iteration exits `2` with a hint (`runs show`); an unknown id exits `3`; a destination that cannot be written exits `1` (`AssetError`). `--json` prints `{run_id, iteration_id, raw, files}`.
 8. `thumb show R` prints the run header and iteration table that `generate` prints (the picked iteration is starred in the table), then a grid with one tile per iteration that has a final, in ordinal order, captioned `#<ordinal>`, ` ★` when picked, then `✔` or `✘` for compliance; a non-compliant final is drawn so it can be inspected. A console that cannot draw colour gets the numbered path table instead, led by the same captions. `--json` prints the document `runs show` prints, each iteration carrying `picked`.
 
@@ -82,5 +87,5 @@ Commands (`PLAN.md` §5.2):
 
 ## Open spikes
 
-- **S4** reference images — if Antigravity ignores reference paths, `thumb iterate` with `--provider antigravity` warns that the reference was not used (`capabilities.supports_reference_image = False`) and proceeds prompt-only.
+- **S4** reference images — closed: Antigravity takes references as prose only (`capabilities.supports_reference_image = False`). `thumb iterate` on such a provider logs a warning that the reference was not used and proceeds prompt-only; the child run still records `reference_asset_id` so the lineage is complete.
 - **S10** preview rendering for `thumb show` (shared with Phase 5).

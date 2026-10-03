@@ -1,5 +1,8 @@
 """`HeroService` — generate N hero thumbnails for one video (ROADMAP P6.1).
 
+`IterateService` (P6.3) reuses it: a refinement is a run of the same shape that also carries a
+parent run and a reference image, so those ride in `RunSpec` and the machinery stays here.
+
 The CLI contributes argument parsing and rendering; the decisions live here:
 
 - what a hero run is made of (one run, N iterations, one profile snapshot, one prompt),
@@ -68,6 +71,13 @@ class RunSpec:
     #: The provider's own settings. Handed to the registry and to every request, and
     #: snapshotted into the `provider_profile` row.
     provider_params: Mapping[str, JsonValue] = field(default_factory=dict[str, JsonValue])
+    #: What kind of run this is; `iterate` for a refinement of an earlier run.
+    kind: RunKind = RunKind.HERO
+    #: The run this one refines, and the asset it takes as reference. Both `None` for a hero.
+    parent_run_id: str | None = None
+    reference: AssetInfo | None = None
+    #: Text added after the rendered prompt, on its own paragraph.
+    prompt_append: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -144,6 +154,8 @@ class HeroStore(Protocol):
         video_id: str,
         params_json: str,
         iterations: Sequence[IterationDraft],
+        parent_run_id: str | None = None,
+        reference_asset_id: str | None = None,
     ) -> list[str]:
         """Insert a `running` run and its `pending` iterations; return the iteration ids."""
         ...
@@ -258,6 +270,8 @@ class RunResult:
     completed: int
     failed: int
     compliance_failed: int
+    #: A reference was asked for but the provider cannot take one, so the run went prompt-only.
+    reference_ignored: bool = False
 
     @property
     def exit_code(self) -> ExitCode:
@@ -316,6 +330,8 @@ class _RunContext:
     workdir: Path
     gate: asyncio.Semaphore
     progress: ProgressSink
+    #: Reference images sent with every request; empty when there is none or it cannot be used.
+    references: tuple[Path, ...]
 
 
 @dataclass(frozen=True, slots=True)
@@ -358,17 +374,27 @@ def _idempotency_key(
     prompt: str,
     seed: int | None,
     ordinal: int,
+    reference_sha256: str,
     run_id: str,
 ) -> str:
-    """`PLAN.md` §6's key for a hero iteration.
+    """`PLAN.md` §6's key for a hero or iterate iteration.
 
-    `part_number` and `reference_asset.sha256` are empty strings for a hero run, so they drop
-    out of the concatenation; the ordinal rides in the seed, or is the seed when the provider
-    has none. The run id is appended: a hero run is neither deduplicated nor resumable, and
-    without it re-issuing a run would collide on `iteration.idempotency_key UNIQUE`.
+    `part_number` is an empty string for both, so it drops out of the concatenation, as does
+    `reference_asset.sha256` for a hero run; the ordinal rides in the seed, or is the seed
+    when the provider has none. The run id is appended: neither kind is deduplicated or
+    resumable, and without it re-issuing a run would collide on `iteration.idempotency_key
+    UNIQUE`.
     """
     seed_part = str(ordinal) if seed is None else str(seed)
-    material = template.spec_hash + profile_id + youtube_id + prompt + seed_part + run_id
+    material = (
+        template.spec_hash
+        + profile_id
+        + youtube_id
+        + prompt
+        + seed_part
+        + reference_sha256
+        + run_id
+    )
     return sha256_bytes(material.encode())[:32]
 
 
@@ -437,6 +463,8 @@ class HeroService:
         provider = self._registry.get(spec.provider_key, spec.provider_params)
         info = await provider.info()
         prompt = self._renderer.render(template, target.video, target.channel, spec.vars)
+        if spec.prompt_append:
+            prompt = f"{prompt}\n\n{spec.prompt_append}"
         if not prompt.strip():
             # Caught here, not by the request model after the run exists.
             msg = f"template {template.ref} rendered an empty prompt"
@@ -447,12 +475,21 @@ class HeroService:
         profile_id = store.ensure_profile(profile_name, info.key, info.version, params_json)
 
         capabilities = provider.capabilities
+        reference_sha256 = "" if spec.reference is None else spec.reference.sha256
+        usable_reference = spec.reference is not None and capabilities.supports_reference_image
         run_id = new_id()
         drafts: list[IterationDraft] = []
         for ordinal in range(1, spec.n + 1):
             seed = ((spec.seed or 0) + ordinal - 1) if capabilities.supports_seed else None
             key = _idempotency_key(
-                template, profile_id, target.video.youtube_id, prompt, seed, ordinal, run_id
+                template,
+                profile_id,
+                target.video.youtube_id,
+                prompt,
+                seed,
+                ordinal,
+                reference_sha256,
+                run_id,
             )
             drafts.append(IterationDraft(ordinal, key, prompt, seed))
 
@@ -462,14 +499,18 @@ class HeroService:
             "seed": spec.seed,
             "vars": dict(spec.vars),
         }
+        if spec.prompt_append:
+            run_params["prompt_append"] = spec.prompt_append
         iteration_ids = store.create_run(
             run_id,
-            kind=RunKind.HERO,
+            kind=spec.kind,
             template=template,
             profile_id=profile_id,
             video_id=target.row_id,
             params_json=canonical_json(run_params),
             iterations=drafts,
+            parent_run_id=spec.parent_run_id,
+            reference_asset_id=None if spec.reference is None else spec.reference.id,
         )
         store.commit()
         progress.run_started(run_id, len(drafts))
@@ -477,7 +518,10 @@ class HeroService:
         workdir = self._logs_dir / run_id
         workdir.mkdir(parents=True, exist_ok=True)
         gate = asyncio.Semaphore(max(1, min(spec.concurrency, capabilities.max_concurrency)))
-        context = _RunContext(run_id, target, template, spec, provider, workdir, gate, progress)
+        references = (spec.reference.path,) if spec.reference and usable_reference else ()
+        context = _RunContext(
+            run_id, target, template, spec, provider, workdir, gate, progress, references
+        )
 
         try:
             async with asyncio.TaskGroup() as group:
@@ -513,6 +557,7 @@ class HeroService:
             completed=completed,
             failed=failed,
             compliance_failed=compliance_failed,
+            reference_ignored=spec.reference is not None and not usable_reference,
         )
 
     async def _iterate(
@@ -525,6 +570,7 @@ class HeroService:
             prompt=draft.prompt_text,
             width=layout.canvas.width,
             height=layout.canvas.height,
+            reference_images=context.references,
             seed=draft.seed,
             params=dict(context.spec.provider_params),
             idempotency_key=draft.idempotency_key,
