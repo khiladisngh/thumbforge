@@ -20,15 +20,26 @@ from typing import TYPE_CHECKING, cast
 from sqlalchemy import select, update
 
 from thumbforge.core.enums import AssetKind, RunKind, RunStatus
-from thumbforge.core.errors import NotFoundError, UsageError
+from thumbforge.core.errors import AssetError, NotFoundError, UsageError
+from thumbforge.core.services.batch import (
+    BatchItem,
+    BatchPlaylist,
+    BatchReference,
+    ExistingIteration,
+)
 from thumbforge.core.services.hero import AssetInfo, HeroTarget, copy_assets
 from thumbforge.core.services.iterate import IterateSource
 from thumbforge.storage.models import Asset, Iteration, ProviderProfile, Run, utcnow_iso
 from thumbforge.storage.models import Template as TemplateRow
-from thumbforge.storage.repositories import VideoRepository, channel_meta, video_meta
+from thumbforge.storage.repositories import (
+    PlaylistRepository,
+    VideoRepository,
+    channel_meta,
+    video_meta,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Collection, Sequence
     from pathlib import Path
 
     from sqlalchemy.orm import Session
@@ -40,8 +51,14 @@ if TYPE_CHECKING:
     from thumbforge.storage.assets import AssetStore
 
 
+def _attempts(response_json: str) -> int:
+    """Provider calls recorded in an iteration's response; none for one that never ran."""
+    attempts = cast("dict[str, JsonValue]", json.loads(response_json)).get("attempts", 0)
+    return attempts if isinstance(attempts, int) else 0
+
+
 class RunRepository:
-    """Hero runs over one session and one asset store."""
+    """Hero, iterate and batch runs over one session and one asset store."""
 
     def __init__(self, session: Session, assets: AssetStore) -> None:
         """Bind to the caller's session; the service owns the transaction."""
@@ -79,11 +96,12 @@ class RunRepository:
         kind: RunKind,
         template: Template,
         profile_id: str,
-        video_id: str,
+        video_id: str | None,
         params_json: str,
         iterations: Sequence[IterationDraft],
         parent_run_id: str | None = None,
         reference_asset_id: str | None = None,
+        playlist_id: str | None = None,
     ) -> list[str]:
         """Insert a `running` run and its `pending` iterations; return the iteration ids."""
         template_id = self._session.scalars(
@@ -103,6 +121,7 @@ class RunRepository:
                 template_id=template_id,
                 provider_profile_id=profile_id,
                 video_id=video_id,
+                playlist_id=playlist_id,
                 parent_run_id=parent_run_id,
                 reference_asset_id=reference_asset_id,
                 params_json=params_json,
@@ -112,7 +131,7 @@ class RunRepository:
         rows = [
             Iteration(
                 run_id=run_id,
-                video_id=video_id,
+                video_id=draft.video_id or video_id,
                 ordinal=draft.ordinal,
                 idempotency_key=draft.idempotency_key,
                 status=RunStatus.PENDING,
@@ -257,6 +276,72 @@ class RunRepository:
             provider_params=cast("dict[str, JsonValue]", json.loads(profile.params_json)),
             reference=self._info(chosen.raw_asset),
         )
+
+    def resolve_playlist(self, reference: str) -> BatchPlaylist:
+        """The stored playlist named by a ULID or YouTube id, with its items in order."""
+        playlists = PlaylistRepository(self._session)
+        playlist = playlists.resolve(reference)
+        items = tuple(
+            BatchItem(
+                target=HeroTarget(
+                    row_id=item.video_id,
+                    video=video_meta(item.video),
+                    channel=None
+                    if item.video.channel is None
+                    else channel_meta(item.video.channel),
+                ),
+                position=item.position,
+                part_number=item.part_number,
+                part_label=item.part_label,
+            )
+            for item in playlists.items(playlist)
+        )
+        return BatchPlaylist(row_id=playlist.id, items=items)
+
+    def resolve_reference(self, ref: str, *, raw: bool) -> BatchReference:
+        """The image a batch takes as its style reference, from a hero run or iteration.
+
+        A run yields its picked iteration; an iteration id names its iteration outright. It
+        must be completed. `raw` chooses the art without overlay text over the finished
+        thumbnail. The batch hangs off the run the iteration belongs to, and the file must
+        still match its hash: a reference that has gone missing is an asset error, not a
+        silent prompt-only run.
+        """
+        found = self.resolve_target(ref)
+        if isinstance(found, Iteration):
+            run, chosen = found.run, found
+        else:
+            run, chosen = found, self._picked(found, walk=False)
+        listing = f"`thumbforge runs show {run.id}` lists the run's iterations"
+        if chosen is None:
+            msg = f"run {run.id} has no picked iteration to use as the reference"
+            raise UsageError(
+                msg,
+                hint=(
+                    f"pick one with `thumbforge thumb pick {run.id} <ordinal>`, "
+                    "or name an iteration id"
+                ),
+            )
+        asset = chosen.raw_asset if raw else chosen.final_asset
+        if chosen.status is not RunStatus.COMPLETED or asset is None:
+            msg = f"iteration {chosen.ordinal} of run {chosen.run_id} is {chosen.status.value}"
+            raise UsageError(msg, hint=f"use a completed iteration; {listing}")
+        if not self._assets.verify(asset):
+            msg = f"the reference image {asset.id} is missing or does not match its hash"
+            raise AssetError(msg, hint="generate the hero again and pick it")
+        return BatchReference(parent_run_id=run.id, asset=self._info(asset))
+
+    def find_iterations(self, keys: Collection[str]) -> dict[str, ExistingIteration]:
+        """The iterations whose idempotency key is in `keys`, by key, with their try counts."""
+        rows = self._session.scalars(
+            select(Iteration).where(Iteration.idempotency_key.in_(keys))
+        ).all()
+        return {
+            row.idempotency_key: ExistingIteration(
+                id=row.id, status=row.status, attempts=_attempts(row.provider_response_json)
+            )
+            for row in rows
+        }
 
     def resolve_target(self, ref: str) -> Run | Iteration:
         """The run or the iteration `ref` is the id of; `NotFoundError` if it is neither."""

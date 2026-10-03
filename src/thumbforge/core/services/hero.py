@@ -110,6 +110,12 @@ class IterationDraft:
     idempotency_key: str
     prompt_text: str
     seed: int | None
+    #: A batch iteration belongs to its own video and part; a hero run's is the run's video.
+    video_id: str | None = None
+    part_number: int | None = None
+    part_label: str | None = None
+    #: Provider calls spent on earlier tries of this iteration (a batch retry).
+    prior_attempts: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,38 +132,18 @@ class IterationOutcome:
     cost_json: str | None
 
 
-class HeroStore(Protocol):
-    """The persistence surface a hero run needs, satisfied by `storage.runs.RunRepository`.
+class IterationStore(Protocol):
+    """What running one iteration and closing its run needs, shared by hero and batch runs.
 
     The repository's session must have nothing uncommitted when `put_raw` or `put_final`
     run: the asset store writes through its own connection, and SQLite allows one writer.
-    The service therefore commits before every `await` and every asset write.
+    The services therefore commit before every `await` and every asset write.
     """
-
-    def resolve_video(self, reference: str) -> HeroTarget:
-        """The stored video named by a ULID or YouTube id; `NotFoundError` if unknown."""
-        ...
 
     def ensure_profile(
         self, name: str, provider_key: str, provider_version: str, params_json: str
     ) -> str:
         """The id of the provider profile called `name`, created on first use."""
-        ...
-
-    def create_run(
-        self,
-        run_id: str,
-        *,
-        kind: RunKind,
-        template: Template,
-        profile_id: str,
-        video_id: str,
-        params_json: str,
-        iterations: Sequence[IterationDraft],
-        parent_run_id: str | None = None,
-        reference_asset_id: str | None = None,
-    ) -> list[str]:
-        """Insert a `running` run and its `pending` iterations; return the iteration ids."""
         ...
 
     def mark_iteration_running(self, iteration_id: str) -> None:
@@ -185,6 +171,30 @@ class HeroStore(Protocol):
         ...
 
 
+class HeroStore(IterationStore, Protocol):
+    """The persistence surface a hero run needs, satisfied by `storage.runs.RunRepository`."""
+
+    def resolve_video(self, reference: str) -> HeroTarget:
+        """The stored video named by a ULID or YouTube id; `NotFoundError` if unknown."""
+        ...
+
+    def create_run(
+        self,
+        run_id: str,
+        *,
+        kind: RunKind,
+        template: Template,
+        profile_id: str,
+        video_id: str,
+        params_json: str,
+        iterations: Sequence[IterationDraft],
+        parent_run_id: str | None = None,
+        reference_asset_id: str | None = None,
+    ) -> list[str]:
+        """Insert a `running` run and its `pending` iterations; return the iteration ids."""
+        ...
+
+
 class TemplateRenderer(Protocol):
     """Template lookup and prompt rendering, satisfied by `templates.loader.PromptRenderer`."""
 
@@ -198,6 +208,9 @@ class TemplateRenderer(Protocol):
         video: VideoMeta,
         channel: ChannelMeta | None,
         vars: Mapping[str, str],
+        *,
+        part_number: int | None = None,
+        part_label: str | None = None,
     ) -> str:
         """The provider prompt; `TemplateError` for a syntax error or a missing variable."""
         ...
@@ -319,13 +332,13 @@ class _Attempts:
 
 
 @dataclass(frozen=True, slots=True)
-class _RunContext:
+class RunContext:
     """Everything one iteration needs besides its own draft."""
 
     run_id: str
     target: HeroTarget
     template: Template
-    spec: RunSpec
+    provider_params: Mapping[str, JsonValue]
     provider: ImageProvider
     workdir: Path
     gate: asyncio.Semaphore
@@ -335,7 +348,7 @@ class _RunContext:
 
 
 @dataclass(frozen=True, slots=True)
-class _Done:
+class Done:
     """What one finished iteration contributes to the run roll-up."""
 
     ordinal: int
@@ -423,12 +436,95 @@ def _leaf(error: BaseException) -> BaseException:
     return _leaf(members[0]) if members else error
 
 
-def _failure_text(error: BaseException) -> str:
+def failure_text(error: BaseException) -> str:
     """A short run-level reason for an error that is not an expected failure."""
     leaf = _leaf(error)
     if isinstance(leaf, asyncio.CancelledError | KeyboardInterrupt):
         return "interrupted"
     return f"unexpected error: {type(leaf).__name__}"
+
+
+async def run_iteration(
+    store: IterationStore,
+    finalize: Finalize,
+    context: RunContext,
+    iteration_id: str,
+    draft: IterationDraft,
+) -> Done:
+    """Generate, store, finalize and record one iteration; never raises a `ThumbforgeError`."""
+    layout = context.template.layout
+    request = GenerationRequest(
+        prompt=draft.prompt_text,
+        width=layout.canvas.width,
+        height=layout.canvas.height,
+        reference_images=context.references,
+        seed=draft.seed,
+        params=dict(context.provider_params),
+        idempotency_key=draft.idempotency_key,
+    )
+    attempts = _Attempts(draft.prior_attempts)
+    result: GenerationResult | None = None
+    raw: AssetInfo | None = None
+    final: AssetInfo | None = None
+    compliance_failure = False
+    try:
+        # The semaphore bounds the provider, the scarce resource; finalizing and storing
+        # run outside it so they overlap with the next generation.
+        async with context.gate:
+            store.mark_iteration_running(iteration_id)
+            store.commit()
+            result = await _generate(context.provider, request, context.workdir, attempts)
+        raw = store.put_raw(result.image_path)
+        if result.image_path.parent == context.workdir:
+            result.image_path.unlink(missing_ok=True)
+        data, report = await asyncio.to_thread(
+            finalize,
+            raw.path,
+            layout,
+            title=context.target.video.title,
+            part_number=draft.part_number,
+            part_label=draft.part_label,
+        )
+        final = store.put_final(data, report)
+        if report.ok:
+            status, error_text = RunStatus.COMPLETED, None
+        else:
+            # Stored so it can be inspected, but it is not a usable thumbnail.
+            compliance_failure = True
+            status = RunStatus.FAILED
+            error_text = "not compliant: " + ", ".join(report.violations)
+    except ThumbforgeError as error:
+        status, error_text = RunStatus.FAILED, f"{error.code}: {error.message}"
+
+    response: JsonPayload = {"attempts": attempts.count}
+    cost_json = None
+    duration_ms = None
+    if result is not None:
+        response |= {
+            "provider_key": result.provider_key,
+            "provider_version": result.provider_version,
+            "model": result.model,
+            "seed_used": result.seed_used,
+            "raw_response": result.raw_response,
+        }
+        duration_ms = result.duration_ms
+        cost_json = None if result.cost is None else result.cost.model_dump_json()
+    store.finish_iteration(
+        iteration_id,
+        IterationOutcome(
+            status=status,
+            raw_asset_id=None if raw is None else raw.id,
+            final_asset_id=None if final is None else final.id,
+            error_text=error_text,
+            provider_request_json=request.model_dump_json(),
+            provider_response_json=canonical_json(response),
+            duration_ms=duration_ms,
+            cost_json=cost_json,
+        ),
+    )
+    store.commit()
+    context.progress.iteration_finished(context.run_id, draft.ordinal, status, error_text)
+    return Done(draft.ordinal, status, compliance_failure, final)
 
 
 class HeroService:
@@ -519,20 +615,30 @@ class HeroService:
         workdir.mkdir(parents=True, exist_ok=True)
         gate = asyncio.Semaphore(max(1, min(spec.concurrency, capabilities.max_concurrency)))
         references = (spec.reference.path,) if spec.reference and usable_reference else ()
-        context = _RunContext(
-            run_id, target, template, spec, provider, workdir, gate, progress, references
+        context = RunContext(
+            run_id,
+            target,
+            template,
+            spec.provider_params,
+            provider,
+            workdir,
+            gate,
+            progress,
+            references,
         )
 
         try:
             async with asyncio.TaskGroup() as group:
                 tasks = [
-                    group.create_task(self._iterate(context, iteration_id, draft))
+                    group.create_task(
+                        run_iteration(store, self._finalize, context, iteration_id, draft)
+                    )
                     for iteration_id, draft in zip(iteration_ids, drafts, strict=True)
                 ]
         except BaseException as error:
             # Cancellation, Ctrl-C or a bug: the run must not stay `running` forever.
             # Resuming or pausing it is Phase 7's job.
-            store.finish_run(run_id, RunStatus.FAILED, _failure_text(error))
+            store.finish_run(run_id, RunStatus.FAILED, failure_text(error))
             store.commit()
             raise
 
@@ -560,87 +666,8 @@ class HeroService:
             reference_ignored=spec.reference is not None and not usable_reference,
         )
 
-    async def _iterate(
-        self, context: _RunContext, iteration_id: str, draft: IterationDraft
-    ) -> _Done:
-        """Generate, store, finalize and record one iteration; never raises a `ThumbforgeError`."""
-        store = self._store
-        layout = context.template.layout
-        request = GenerationRequest(
-            prompt=draft.prompt_text,
-            width=layout.canvas.width,
-            height=layout.canvas.height,
-            reference_images=context.references,
-            seed=draft.seed,
-            params=dict(context.spec.provider_params),
-            idempotency_key=draft.idempotency_key,
-        )
-        attempts = _Attempts()
-        result: GenerationResult | None = None
-        raw: AssetInfo | None = None
-        final: AssetInfo | None = None
-        compliance_failure = False
-        try:
-            # The semaphore bounds the provider, the scarce resource; finalizing and storing
-            # run outside it so they overlap with the next generation.
-            async with context.gate:
-                store.mark_iteration_running(iteration_id)
-                store.commit()
-                result = await _generate(context.provider, request, context.workdir, attempts)
-            raw = store.put_raw(result.image_path)
-            if result.image_path.parent == context.workdir:
-                result.image_path.unlink(missing_ok=True)
-            data, report = await asyncio.to_thread(
-                self._finalize,
-                raw.path,
-                layout,
-                title=context.target.video.title,
-                part_number=None,
-                part_label=None,
-            )
-            final = store.put_final(data, report)
-            if report.ok:
-                status, error_text = RunStatus.COMPLETED, None
-            else:
-                # Stored so it can be inspected, but it is not a usable thumbnail.
-                compliance_failure = True
-                status = RunStatus.FAILED
-                error_text = "not compliant: " + ", ".join(report.violations)
-        except ThumbforgeError as error:
-            status, error_text = RunStatus.FAILED, f"{error.code}: {error.message}"
-
-        response: JsonPayload = {"attempts": attempts.count}
-        cost_json = None
-        duration_ms = None
-        if result is not None:
-            response |= {
-                "provider_key": result.provider_key,
-                "provider_version": result.provider_version,
-                "model": result.model,
-                "seed_used": result.seed_used,
-                "raw_response": result.raw_response,
-            }
-            duration_ms = result.duration_ms
-            cost_json = None if result.cost is None else result.cost.model_dump_json()
-        store.finish_iteration(
-            iteration_id,
-            IterationOutcome(
-                status=status,
-                raw_asset_id=None if raw is None else raw.id,
-                final_asset_id=None if final is None else final.id,
-                error_text=error_text,
-                provider_request_json=request.model_dump_json(),
-                provider_response_json=canonical_json(response),
-                duration_ms=duration_ms,
-                cost_json=cost_json,
-            ),
-        )
-        store.commit()
-        context.progress.iteration_finished(context.run_id, draft.ordinal, status, error_text)
-        return _Done(draft.ordinal, status, compliance_failure, final)
-
     @staticmethod
-    def _export(out_dir: Path, youtube_id: str, done: Sequence[_Done]) -> None:
+    def _export(out_dir: Path, youtube_id: str, done: Sequence[Done]) -> None:
         """Copy each completed iteration's final to `out_dir/<youtube_id>-<ordinal>.<ext>`."""
         copy_assets(
             out_dir,

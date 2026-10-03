@@ -113,9 +113,8 @@ def resolve(store: TemplateStore, ref: TemplateRef) -> Template:
 class PromptRenderer:
     """Template lookup and prompt rendering for a generation run (`core.services.hero`).
 
-    Satisfies the service's `TemplateRenderer` Protocol. A hero run has no playlist and no
-    part, so those context fields are empty; the layout supplies the size and the
-    negative-space hint.
+    Satisfies the service's `TemplateRenderer` Protocol. A run has no playlist context, so
+    that field is empty; the layout supplies the size and the negative-space hint.
     """
 
     def __init__(self, store: TemplateStore) -> None:
@@ -132,13 +131,19 @@ class PromptRenderer:
         video: VideoMeta,
         channel: ChannelMeta | None,
         vars: Mapping[str, str],
+        *,
+        part_number: int | None = None,
+        part_label: str | None = None,
     ) -> str:
-        """Render the template's prompt for ``video``; ``vars`` feeds ``{{ vars.key }}``."""
+        """Render the template's prompt for ``video``; ``vars`` feeds ``{{ vars.key }}``.
+
+        A batch run passes the item's ``part_number`` and ``part_label``; a hero run has none.
+        """
         context = RenderContext(
             video=video,
             playlist=None,
-            part_number=None,
-            part_label=None,
+            part_number=part_number,
+            part_label=part_label,
             channel=channel,
             vars=vars,
             negative_space=template.layout.negative_space.hint,

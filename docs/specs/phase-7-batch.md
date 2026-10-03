@@ -80,6 +80,20 @@ Commands (`PLAN.md` §5.2):
 - `runs delete <hero run>` while the batch run exists exits `2` naming the batch run id.
 - `--reference raw` stores `reference_asset_id = <picked>.raw_asset_id`.
 
+## Decisions made in P7.1
+
+The service lands before its command (P7.3), so these are where the spec was silent or the code had to choose:
+
+- `BatchService.run(spec, *, progress)` takes no `cancel` event yet and `BatchSpec` has no `resume_run_id` or `vars` (P7.2, P7.3). `hero` is a run or iteration id; `BatchSpec` also carries `provider_params`. `plan(spec)` is `async`, because a key needs the provider's identity; the only row a plan writes is the provider profile.
+- `--max-images` is checked in `run` against the `create` + `retry` rows, before the run row exists, and raises `UsageError` (exit `2`). A dry run ignores it: it returns the plan so the user can see what to narrow.
+- Every non-dry run writes a batch run, also when every item is skipped (it then has no iterations of its own). A retried item is reused in place: its key is unique, so it stays in the iteration (and run) it was created in, and `BatchResult.iteration_ids` lists the iterations this batch ran.
+- Selection: without `--only`, the items that have a `part_number` (`playlist renumber --skip` clears it on purpose). With `--only`, an item is selected when its `part_number` is listed, or when it has none and its playlist position is listed. Selecting nothing is a `UsageError`.
+- Retry budget: `provider_response_json.attempts` is cumulative over all tries of an iteration, and a failed iteration is retried while it is `< max_retries`. A transient failure uses its three provider calls in one try, so it is not retried automatically; a permanent one is retried once with the default of 2.
+- A `running` iteration with the same key is skipped as "running in another run". Staleness (`batch.stale_after_s`) belongs to P7.2.
+- The roll-up reports the playlist, not just the batch's own work: a skipped `completed` item counts as completed and a skipped failed item whose tries are used up counts as failed. Exit `0` when nothing failed, `4` when nothing completed, else `6`; a batch has no exit `5`.
+- No seed is sent: the key's `seed` and `part_number` parts are empty strings when absent, as in hero keys. A provider that cannot take a reference image runs prompt-only and the result says so (`reference_ignored`).
+- The per-item pipeline is `hero.run_iteration`; `TemplateRenderer.render` takes keyword-only `part_number` and `part_label`.
+
 ## Test plan
 
 - Unit: `plan()` matrix (completed/skip, running-stale/retry, failed-under-max/retry, failed-at-max/skip-with-reason, new/create); `--only` parsing (`3,7-9`); reference resolution; roll-up + exit codes; key formula golden values for fixed inputs.
