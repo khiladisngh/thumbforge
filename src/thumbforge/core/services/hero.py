@@ -372,6 +372,25 @@ def _idempotency_key(
     return sha256_bytes(material.encode())[:32]
 
 
+def copy_assets(out_dir: Path, stem: str, files: Sequence[tuple[int, Path]]) -> list[Path]:
+    """Copy each `(ordinal, source)` to `out_dir/<stem>-<ordinal><suffix of source>`.
+
+    Copies, never moves. `out_dir` is created on first use, so a call with nothing to copy
+    makes nothing. Returns the files written, in the order given.
+    """
+    written: list[Path] = []
+    try:
+        for ordinal, source in files:
+            out_dir.mkdir(parents=True, exist_ok=True)
+            target = out_dir / f"{stem}-{ordinal}{source.suffix}"
+            shutil.copyfile(source, target)
+            written.append(target)
+    except OSError as error:
+        msg = f"cannot write to {out_dir}: {error}"
+        raise AssetError(msg, hint="check the destination directory is writable") from error
+    return written
+
+
 def _leaf(error: BaseException) -> BaseException:
     """The first real error inside a (possibly nested) exception group."""
     members: tuple[BaseException, ...] = getattr(error, "exceptions", ())
@@ -577,13 +596,12 @@ class HeroService:
     @staticmethod
     def _export(out_dir: Path, youtube_id: str, done: Sequence[_Done]) -> None:
         """Copy each completed iteration's final to `out_dir/<youtube_id>-<ordinal>.<ext>`."""
-        try:
-            for item in done:
-                if item.status is not RunStatus.COMPLETED or item.final is None:
-                    continue
-                out_dir.mkdir(parents=True, exist_ok=True)
-                target = out_dir / f"{youtube_id}-{item.ordinal}{item.final.path.suffix}"
-                shutil.copyfile(item.final.path, target)
-        except OSError as error:
-            msg = f"cannot write to {out_dir}: {error}"
-            raise AssetError(msg, hint="check the --out directory is writable") from error
+        copy_assets(
+            out_dir,
+            youtube_id,
+            [
+                (item.ordinal, item.final.path)
+                for item in done
+                if item.status is RunStatus.COMPLETED and item.final is not None
+            ],
+        )

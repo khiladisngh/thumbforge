@@ -15,11 +15,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from thumbforge.core.enums import AssetKind, RunKind, RunStatus
-from thumbforge.core.errors import NotFoundError
-from thumbforge.core.services.hero import AssetInfo, HeroTarget
+from thumbforge.core.errors import NotFoundError, UsageError
+from thumbforge.core.services.hero import AssetInfo, HeroTarget, copy_assets
 from thumbforge.storage.models import Asset, Iteration, ProviderProfile, Run, utcnow_iso
 from thumbforge.storage.models import Template as TemplateRow
 from thumbforge.storage.repositories import VideoRepository, channel_meta, video_meta
@@ -178,6 +178,73 @@ class RunRepository:
             msg = f"run {run_id!r}"
             raise NotFoundError(msg, hint="run ids are printed by `thumbforge thumb generate`")
         return row
+
+    def pick(self, run_id: str, target: int | str) -> Iteration:
+        """Make `target` the run's one picked iteration; its siblings are un-picked.
+
+        `target` is an ordinal or the id of one of this run's iterations. Picking again moves
+        the pick, and picking the picked iteration changes nothing. Only a completed iteration
+        can be picked: a failed one has no usable final.
+        """
+        run = self.get(run_id)
+        listing = f"`thumbforge runs show {run.id}` lists the run's iterations"
+        match target:
+            case int():
+                chosen = next((row for row in run.iterations if row.ordinal == target), None)
+            case str():
+                chosen = next((row for row in run.iterations if row.id == target), None)
+        if chosen is None:
+            msg = f"iteration {target!r} of run {run.id!r}"
+            raise NotFoundError(msg, hint=listing)
+        if chosen.status is not RunStatus.COMPLETED:
+            msg = f"iteration {chosen.ordinal} of run {run.id} is {chosen.status.value}"
+            raise UsageError(msg, hint=f"pick a completed iteration; {listing}")
+        # One statement: the run is never seen with no pick or with two.
+        self._session.execute(
+            update(Iteration)
+            .where(Iteration.run_id == run.id)
+            .values(picked=Iteration.id == chosen.id)
+            .execution_options(synchronize_session="fetch")
+        )
+        self._session.refresh(chosen)
+        return chosen
+
+    def resolve_target(self, ref: str) -> Run | Iteration:
+        """The run or the iteration `ref` is the id of; `NotFoundError` if it is neither."""
+        found = self._session.get(Run, ref) or self._session.get(Iteration, ref)
+        if found is None:
+            msg = f"run or iteration {ref!r}"
+            raise NotFoundError(
+                msg,
+                hint="ids are printed by `thumbforge thumb generate` and `thumbforge runs show`",
+            )
+        return found
+
+    def export(self, target: Run | Iteration, to: Path, *, raw: bool) -> list[Path]:
+        """Copy the final (or, with `raw`, the raw) assets of `target` into the directory `to`.
+
+        A run exports every completed iteration, an iteration only itself. Files are named
+        `<youtube id>-<ordinal><extension>`, as `thumb generate --out` names them.
+        """
+        run = target if isinstance(target, Run) else target.run
+        candidates = sorted(run.iterations, key=lambda row: row.ordinal)
+        if isinstance(target, Iteration):
+            candidates = [target]
+        files: list[tuple[int, Path]] = []
+        for item in candidates:
+            asset = item.raw_asset if raw else item.final_asset
+            if item.status is RunStatus.COMPLETED and asset is not None:
+                files.append((item.ordinal, self._assets.path_for(asset)))
+        if not files:
+            subject = (
+                f"iteration {target.ordinal} of run {run.id}"
+                if isinstance(target, Iteration)
+                else f"run {run.id}"
+            )
+            msg = f"{subject} has no completed iteration to export"
+            raise UsageError(msg, hint=f"`thumbforge runs show {run.id}` lists each outcome")
+        stem = run.id if run.video is None else run.video.youtube_id
+        return copy_assets(to, stem, files)
 
     def _iteration(self, iteration_id: str) -> Iteration:
         row = self._session.get(Iteration, iteration_id)

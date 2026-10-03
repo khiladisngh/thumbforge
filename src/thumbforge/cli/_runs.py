@@ -97,6 +97,23 @@ def final_paths(run: Run, data_dir: Path) -> list[Path]:
     ]
 
 
+def final_tiles(run: Run, data_dir: Path) -> list[tuple[Path, str]]:
+    """The stored final of every iteration that has one, with its grid caption, by ordinal.
+
+    A non-compliant final is included: it is stored so it can be inspected, and its `✘` says
+    why it cannot be picked. Captions read `#2 ★ ✔`: ordinal, picked marker, compliance.
+    """
+    tiles: list[tuple[Path, str]] = []
+    for item in _ordered(run):
+        final = item.final_asset
+        if final is None:
+            continue
+        picked = " ★" if item.picked else ""
+        verdict = "✔" if final.compliant else "✘"
+        tiles.append((data_dir / final.rel_path, f"#{item.ordinal}{picked} {verdict}"))
+    return tiles
+
+
 def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
     """The JSON payload and the Rich renderable for one stored run."""
     iterations = _ordered(run)
@@ -159,7 +176,8 @@ def _iteration_row(item: Iteration) -> list[str]:
         detail = escape(item.error_text)
     else:
         detail = EMPTY if final is None else final.sha256[:12]
-    return [str(item.ordinal), status, size, compliant, item.idempotency_key[:12], detail]
+    ordinal = f"{item.ordinal} ★" if item.picked else str(item.ordinal)
+    return [ordinal, status, size, compliant, item.idempotency_key[:12], detail]
 
 
 def _iteration_payload(item: Iteration, data_dir: Path) -> JsonPayload:
@@ -173,6 +191,7 @@ def _iteration_payload(item: Iteration, data_dir: Path) -> JsonPayload:
         "status": item.status.value,
         "idempotency_key": item.idempotency_key,
         "seed": item.seed,
+        "picked": item.picked,
         "raw_asset": _asset_payload(item.raw_asset, data_dir),
         "final_asset": _asset_payload(final, data_dir),
         "compliant": None if final is None else final.compliant,

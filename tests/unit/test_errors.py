@@ -25,6 +25,7 @@ from thumbforge.core.errors import (
     SourceError,
     TemplateError,
     ThumbforgeError,
+    UsageError,
 )
 
 runner = CliRunner()
@@ -32,6 +33,7 @@ runner = CliRunner()
 CASES = [
     (SettingsError, 2),
     (TemplateError, 2),
+    (UsageError, 2),
     (NotFoundError, 3),
     (ProviderAuthError, 4),
     (ProviderTransientError, 4),

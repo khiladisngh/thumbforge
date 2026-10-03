@@ -130,20 +130,29 @@ def _can_draw_pixels(console: Console) -> bool:
     )
 
 
-def preview(ctx: AppContext, paths: Sequence[Path], columns: int = 2) -> None:
+def preview(
+    ctx: AppContext,
+    paths: Sequence[Path],
+    columns: int = 2,
+    captions: Sequence[str] | None = None,
+) -> None:
     """Draw ``paths`` as block-character thumbnails, ``columns`` tiles per row.
 
-    Each tile is as wide as its grid cell, keeps the image's aspect ratio and carries the file
-    name as a caption. The grid is a ``Table.grid``: ``rich.columns.Columns`` does not place
-    ``Pixels`` tiles side by side.
+    Each tile is as wide as its grid cell, keeps the image's aspect ratio and carries a
+    caption: the file name, or the matching entry of ``captions`` when given. The grid is a
+    ``Table.grid``: ``rich.columns.Columns`` does not place ``Pixels`` tiles side by side.
 
     Falls back to a numbered path table plus the export hint when the console cannot draw
     colour (not a terminal, no colour, a non-UTF-8 encoding, dumb or legacy Windows console)
-    or when any path cannot be decoded; a preview never raises for a bad image. Prints nothing
-    in ``--json`` mode.
+    or when any path cannot be decoded; a preview never raises for a bad image. The fallback
+    table leads each row with the caption instead of the plain number. Prints nothing in
+    ``--json`` mode.
     """
     if columns < 1:
         msg = f"columns must be at least 1, got {columns}"
+        raise ValueError(msg)
+    if captions is not None and len(captions) != len(paths):
+        msg = f"captions must match paths: got {len(captions)} captions for {len(paths)} paths"
         raise ValueError(msg)
     if ctx.json_mode or not paths:
         return
@@ -152,7 +161,7 @@ def preview(ctx: AppContext, paths: Sequence[Path], columns: int = 2) -> None:
     tiles: list[RenderableType] = []
     try:
         if _can_draw_pixels(console):
-            for path in paths:
+            for index, path in enumerate(paths):
                 with Image.open(path) as image:
                     width, height = image.size
                     tile_height = max(round(tile_width * height / width), 1)
@@ -165,12 +174,16 @@ def preview(ctx: AppContext, paths: Sequence[Path], columns: int = 2) -> None:
                         (tile_width, tile_height), Image.Resampling.LANCZOS
                     )
                 pixels = Pixels.from_image(small)
-                caption = Text(path.name, style="dim", no_wrap=True, overflow="ellipsis")
+                label = path.name if captions is None else captions[index]
+                caption = Text(label, style="dim", no_wrap=True, overflow="ellipsis")
                 tiles.append(Group(pixels, caption))
     except OSError, Image.DecompressionBombError:
         tiles = []
     if not tiles:
-        rows = [(str(index), str(path)) for index, path in enumerate(paths, start=1)]
+        rows = [
+            (str(index + 1) if captions is None else captions[index], str(path))
+            for index, path in enumerate(paths)
+        ]
         console.print(table(["#", "path"], rows))
         console.print(Text(_EXPORT_HINT, style="dim"))
         return

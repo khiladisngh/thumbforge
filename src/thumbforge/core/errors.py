@@ -11,7 +11,8 @@ Code  Meaning
 ===== ==========================================================================
 0     success
 1     unexpected error (``SourceError``, uncaught exception)
-2     usage or validation error (Typer default; ``TemplateError``, ``SettingsError``)
+2     usage or validation error (Typer default; ``TemplateError``, ``SettingsError``,
+      ``UsageError``)
 3     not found (video, playlist, run, iteration, template, provider)
 4     provider error (auth, permanent, output missing, transient, timeout)
 5     compliance failure
@@ -74,6 +75,13 @@ class TemplateError(ThumbforgeError):
     """A template's layout spec or prompt failed to load, validate or render."""
 
     code = "template"
+    exit_code = ExitCode.USAGE
+
+
+class UsageError(ThumbforgeError):
+    """A command was given something it cannot act on, such as an iteration that failed."""
+
+    code = "usage"
     exit_code = ExitCode.USAGE
 
 

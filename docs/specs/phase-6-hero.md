@@ -32,7 +32,9 @@ class HeroService:
 class IterateService:
     async def iterate(self, parent: Run | Iteration, *, n: int, prompt_append: str | None, vars: dict[str, str], from_picked: bool, progress: ProgressSink) -> RunResult
 
+# storage.runs.RunRepository, over ORM rows, so `core` does not name them
 def pick(run_id: str, target: int | str) -> Iteration          # ordinal or iteration id
+def resolve_target(ref: str) -> Run | Iteration                # a run id or an iteration id
 def export(target: Run | Iteration, to: Path, *, raw: bool) -> list[Path]
 ```
 
@@ -44,9 +46,9 @@ Commands (`PLAN.md` §5.2):
 | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------- |
 | `thumbforge thumb generate <video>`                   | `--template NAME[@VERSION]`, `--provider KEY`, `--n 4`, `--concurrency 1`, `--seed N`, `--var key=value` (repeatable), `--out DIR` | creates hero `run` + N iterations; preview grid; prints run id                                                           | 0, 3, 4, 5, 6 |
 | `thumbforge thumb iterate <run\|iteration>`           | `--n 4`, `--prompt-append TEXT`, `--var …`, `--from-picked`                                                                        | child run (`kind='iterate'`, `parent_run_id`), same template/provider; reference = picked or given iteration's raw asset | 0, 3, 4, 6    |
-| `thumbforge thumb pick <run> <ordinal\|iteration-id>` |                                                                                                                                    | marks picked; un-picks siblings                                                                                          | 0, 3          |
+| `thumbforge thumb pick <run> <ordinal\|iteration-id>` |                                                                                                                                    | marks picked; un-picks siblings                                                                                          | 0, 2, 3       |
 | `thumbforge thumb show <run>`                         | `--columns 2`                                                                                                                      | preview grid with ordinals, picked marker, compliance status                                                             | 0, 3          |
-| `thumbforge thumb export <run\|iteration>`            | `--to PATH`, `--raw`                                                                                                               | copies final (or raw) asset(s) to PATH                                                                                   | 0, 3          |
+| `thumbforge thumb export <run\|iteration>`            | `--to DIR`, `--raw`                                                                                                                | copies the final (or raw) asset of every completed iteration of a run, or of one iteration, into DIR                     | 0, 2, 3       |
 
 `thumbforge runs show <run>` (minimal, P6.1; P7.4 adds `list|resume|cancel|delete`) prints the run header and the iteration table of a stored run, or the same as `--json` with each iteration's full idempotency key, assets and compliance report; exit `3` for an unknown run.
 
@@ -56,9 +58,10 @@ Commands (`PLAN.md` §5.2):
 2. Iterations run under `asyncio.Semaphore(min(--concurrency, capabilities.max_concurrency))`, which guards the provider call only (finalizing and storing overlap with the next generation), with the Phase 3 retry policy; each success is stored as the `raw` asset, passed through `finalize` (Phase 5 `render_final`), and the returned bytes are stored as the `final` asset with `compliant` and `compliance_report_json` set from the report — stored even when non-compliant, so the user can inspect it → `raw_asset_id`, `final_asset_id`, `compliant`. Provider stdout/stderr land in `<state_dir>/logs/runs/<run_id>/<idempotency_key>.{out,err}` (the provider names them by the request key, not the iteration id).
 3. Run status at the end: all completed → `completed`, exit `0`; some failed → `failed`, exit `6` and the message from `PLAN.md` §5.3; all failed → `failed`, exit `4`. A compliance failure on an otherwise successful iteration marks that iteration `failed` with `error_text` from the report. When every failure is a compliance failure, exit `5` replaces both `6` and `4`.
 4. `--out DIR` additionally copies the final asset of every completed iteration to `DIR/<youtube_id>-<ordinal>.<ext>`; a non-compliant final stays inspectable in the store but is not copied.
-5. `thumb pick R 2` sets `picked = 1` on ordinal 2 and `0` on siblings; picking a `failed` iteration exits `2`.
+5. `thumb pick R 2` sets `picked = 1` on ordinal 2 and `0` on siblings in one statement, so a run never has two picks; the argument is an ordinal or the id of one of that run's iterations. Picking again moves the pick; picking the picked iteration changes nothing. An unknown run, ordinal or iteration id exits `3`. An iteration that is not `completed` exits `2` with a hint to pick a completed one: a `failed` iteration (compliance failures included) has no usable final. `--json` prints `{run_id, picked: {id, ordinal}}`.
 6. `thumb iterate R --n 4 --prompt-append "warmer colours"` creates `run(kind='iterate', parent_run_id=R, video_id=R.video_id, reference_asset_id=<picked or given iteration>.raw_asset_id)`, re-renders the prompt with the append and `vars`, and passes the reference path in `GenerationRequest.reference_images`. Without a picked iteration and without an explicit iteration id, exit `2` with hint `thumb pick`. `--from-picked` walks to the newest picked iteration in the parent chain.
-7. `thumb export` copies (never moves) assets; `--raw` selects `raw_asset_id`.
+7. `thumb export` copies (never moves) assets; `--raw` selects `raw_asset_id`. `--to` is always a directory, created when missing, and the files are named `<youtube_id>-<ordinal>.<ext>` like `generate --out`. A run id exports every `completed` iteration; an iteration id exports that one. Export does not need a pick. A target with no `completed` iteration exits `2` with a hint (`runs show`); an unknown id exits `3`; a destination that cannot be written exits `1` (`AssetError`). `--json` prints `{run_id, iteration_id, raw, files}`.
+8. `thumb show R` prints the run header and iteration table that `generate` prints (the picked iteration is starred in the table), then a grid with one tile per iteration that has a final, in ordinal order, captioned `#<ordinal>`, ` ★` when picked, then `✔` or `✘` for compliance; a non-compliant final is drawn so it can be inspected. A console that cannot draw colour gets the numbered path table instead, led by the same captions. `--json` prints the document `runs show` prints, each iteration carrying `picked`.
 
 ## Acceptance criteria
 
@@ -67,7 +70,7 @@ Commands (`PLAN.md` §5.2):
 - With a FakeProvider `delay_ms=500` and `--concurrency 4`, wall time for `--n 4` is below 1.5 s; with `--concurrency 1` above 2 s.
 - `thumbforge thumb pick <run> 2` then `thumb show <run>` marks ordinal 2 with `★`; `thumb pick <run> 9` exits `3`.
 - `thumbforge thumb iterate <run> --n 2` creates a run with `kind = iterate`, `parent_run_id = <run>`, `reference_asset_id = <picked>.raw_asset_id`; FakeProvider output shows the reference thumbnail in a corner (pixel check at `(0,0)` region).
-- `thumbforge thumb export <run> --to out/` writes `out/dQw4w9WgXcQ-1.jpg` … `-4.jpg`; `--raw` writes `.png` for FakeProvider.
+- `thumbforge thumb export <run> --to out/` writes `out/dQw4w9WgXcQ-1.jpg` … `-4.jpg`, byte for byte the stored finals; `--raw` writes `.png` for FakeProvider.
 - `thumbforge --json thumb generate …` prints one JSON object with `run.id`, `iterations[]`, `exit_code`.
 
 ## Test plan

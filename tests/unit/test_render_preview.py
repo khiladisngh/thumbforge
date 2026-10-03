@@ -53,11 +53,16 @@ def _pixel_console(width: int = 60) -> Console:
 
 
 def _render(
-    console: Console, paths: list[Path], columns: int = 2, *, json_mode: bool = False
+    console: Console,
+    paths: list[Path],
+    columns: int = 2,
+    *,
+    json_mode: bool = False,
+    captions: list[str] | None = None,
 ) -> str:
     ctx = AppContext(console=console, json_mode=json_mode)
     with console.capture() as captured:
-        preview(ctx, paths, columns=columns)
+        preview(ctx, paths, columns=columns, captions=captions)
     return captured.get()
 
 
@@ -205,3 +210,33 @@ def test_columns_must_be_positive(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="columns"):
         _render(_pixel_console(), [red], columns=0)
+
+
+def test_captions_replace_the_file_names_under_the_tiles(tmp_path: Path) -> None:
+    red = _image(tmp_path, "red.png", RED)
+    blue = _image(tmp_path, "blue.png", BLUE)
+
+    output = _render(_pixel_console(), [red, blue], captions=["#1 ★ ✔", "#2 ✘"])
+
+    assert "#1 ★ ✔" in output
+    assert "#2 ✘" in output
+    assert "red.png" not in output
+    assert "blue.png" not in output
+
+
+def test_captions_lead_each_row_of_the_fallback_listing(tmp_path: Path) -> None:
+    paths = [_image(tmp_path, "red.png", RED), _image(tmp_path, "blue.png", BLUE)]
+    console = Console(force_terminal=False, width=200, no_color=False)
+
+    output = _render(console, paths, captions=["#1 ★ ✔", "#2 ✘"])
+
+    _assert_fallback(output, paths)
+    assert "#1 ★ ✔" in output
+    assert "#2 ✘" in output
+
+
+def test_captions_must_match_the_paths(tmp_path: Path) -> None:
+    red = _image(tmp_path, "red.png", RED)
+
+    with pytest.raises(ValueError, match="captions"):
+        _render(_pixel_console(), [red], captions=["one", "two"])

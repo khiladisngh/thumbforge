@@ -31,7 +31,7 @@ Because the text is drawn the same way every time, titles are spelled correctly 
 
 !!! note "Coming in v0.1.0"
 
-    Generating, picking, refining and exporting a hero (`thumbforge thumb generate|pick|show|export|iterate`) is planned in roadmap tasks P6.1–P6.3 and defined in the [Phase 6 spec](../../specs/phase-6-hero.md#behaviour). The overlay and compliance check are defined in the [Phase 5 spec](../../specs/phase-5-imaging.md). See [Generate a hero](../how-to/generate-a-hero.md) and [Pick and refine](../how-to/pick-and-refine.md).
+    Refining a hero (`thumbforge thumb iterate`) is roadmap task P6.3, defined in the [Phase 6 spec](../../specs/phase-6-hero.md#behaviour); generating, picking, showing and exporting (`thumb generate|pick|show|export`) work today. The overlay and compliance check are defined in the [Phase 5 spec](../../specs/phase-5-imaging.md). See [Generate a hero](../how-to/generate-a-hero.md) and [Pick and refine](../how-to/pick-and-refine.md).
 
 ## Going deeper
 

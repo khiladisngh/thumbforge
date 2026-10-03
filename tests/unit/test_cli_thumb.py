@@ -1,13 +1,14 @@
-"""`thumbforge thumb generate` and `thumbforge runs show` end to end with the real fake provider.
+"""`thumb generate|pick|show|export` and `runs show` end to end with the real fake provider.
 
 Every test starts from a migrated database holding the built-in templates and one stored
 video, drives the real Typer app through `CliRunner`, and reads back what the commands print
-and what exit status they return (ROADMAP P6.1, phase-6 spec Behaviour 1-4).
+and what exit status they return (ROADMAP P6.1 and P6.2, phase-6 spec Behaviour 1-5 and 7).
 """
 
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -250,3 +251,318 @@ def test_log_lines_carry_the_run_id(data_dir: Path) -> None:
     finished = [event for event in events if event.get("event") == "iteration finished"]
     assert len(finished) == 2
     assert {event["run_id"] for event in finished} == {run_id}
+
+
+# --- pick, show, export (P6.2) -------------------------------------------------------------
+
+CAPTION = re.compile(r"#(\d+) (★ )?([✔✘])")
+
+
+def _generate_any(data_dir: Path, *args: str) -> dict[str, Any]:
+    """Generate in JSON mode whatever the exit status: the payload carries the run either way."""
+    result = _run(data_dir, "thumb", "generate", VIDEO, *args, json_mode=True)
+    return json.loads(result.stdout)
+
+
+def _flaky_run(data_dir: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Any]:
+    """A run whose ordinal 2 failed and whose ordinals 1, 3 and 4 completed."""
+    monkeypatch.setitem(registry.BUILTIN, "flaky", _Flaky)
+    payload = _generate_any(data_dir, "--provider", "flaky")
+    assert payload["exit_code"] == ExitCode.PARTIAL
+    return payload
+
+
+def _failed_run(data_dir: Path, tmp_path: Path) -> dict[str, Any]:
+    """A run in which every iteration failed at the provider."""
+    _import_failing_template(data_dir, tmp_path)
+    payload = _generate_any(data_dir, "--template", "failing", "--var", f"fail={FAIL_PERMANENT}")
+    assert payload["exit_code"] == ExitCode.PROVIDER
+    return payload
+
+
+def _shown(data_dir: Path, run_id: str) -> dict[str, Any]:
+    result = _run(data_dir, "runs", "show", run_id, json_mode=True)
+    assert result.exit_code == ExitCode.OK, result.output
+    return json.loads(result.stdout)
+
+
+def _picked(data_dir: Path, run_id: str) -> list[int]:
+    return [item["ordinal"] for item in _shown(data_dir, run_id)["iterations"] if item["picked"]]
+
+
+def _ids(payload: dict[str, Any]) -> dict[int, str]:
+    return {item["ordinal"]: item["id"] for item in payload["iterations"]}
+
+
+def _captions(output: str) -> list[tuple[int, bool, str]]:
+    return [(int(n), bool(star), mark) for n, star, mark in CAPTION.findall(output)]
+
+
+def test_picking_an_ordinal_marks_exactly_that_iteration(data_dir: Path) -> None:
+    run_id = _generate_json(data_dir)["run"]["id"]
+    assert _picked(data_dir, run_id) == []
+
+    result = _run(data_dir, "thumb", "pick", run_id, "2")
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert f"Picked #2 of run {run_id}" in result.stdout
+    assert _picked(data_dir, run_id) == [2]
+
+
+def test_picking_again_moves_the_pick_instead_of_adding_one(data_dir: Path) -> None:
+    payload = _generate_json(data_dir)
+    run_id = payload["run"]["id"]
+    ids = _ids(payload)
+
+    assert _run(data_dir, "thumb", "pick", run_id, "2").exit_code == ExitCode.OK
+    assert _run(data_dir, "thumb", "pick", run_id, ids[4]).exit_code == ExitCode.OK
+    assert _picked(data_dir, run_id) == [4]
+    # Picking what is already picked succeeds and changes nothing.
+    assert _run(data_dir, "thumb", "pick", run_id, "4").exit_code == ExitCode.OK
+    assert _picked(data_dir, run_id) == [4]
+
+
+def test_a_pick_in_one_run_leaves_another_runs_pick_alone(data_dir: Path) -> None:
+    first = _generate_json(data_dir, "--n", "2")["run"]["id"]
+    second = _generate_json(data_dir, "--n", "2")["run"]["id"]
+
+    assert _run(data_dir, "thumb", "pick", first, "1").exit_code == ExitCode.OK
+    assert _run(data_dir, "thumb", "pick", second, "2").exit_code == ExitCode.OK
+
+    assert _picked(data_dir, first) == [1]
+    assert _picked(data_dir, second) == [2]
+
+
+def test_json_pick_prints_the_run_and_the_picked_iteration(data_dir: Path) -> None:
+    payload = _generate_json(data_dir)
+    run_id = payload["run"]["id"]
+
+    result = _run(data_dir, "thumb", "pick", run_id, "3", json_mode=True)
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert json.loads(result.stdout) == {
+        "run_id": run_id,
+        "picked": {"id": _ids(payload)[3], "ordinal": 3},
+    }
+
+
+def test_picking_something_that_does_not_exist_exits_3(data_dir: Path) -> None:
+    payload = _generate_json(data_dir, "--n", "2")
+    run_id = payload["run"]["id"]
+    other = _generate_json(data_dir, "--n", "2")
+
+    assert _run(data_dir, "thumb", "pick", run_id, "9").exit_code == ExitCode.NOT_FOUND
+    assert _run(data_dir, "thumb", "pick", run_id, "0").exit_code == ExitCode.NOT_FOUND
+    unknown_run = _run(data_dir, "thumb", "pick", "01ARZ3NDEKTSV4RRFFQ69G5FAV", "1")
+    assert unknown_run.exit_code == ExitCode.NOT_FOUND
+    # An iteration of another run is not an iteration of this one.
+    foreign = _run(data_dir, "thumb", "pick", run_id, _ids(other)[1])
+    assert foreign.exit_code == ExitCode.NOT_FOUND
+    assert _picked(data_dir, run_id) == []
+
+
+def test_picking_a_failed_iteration_exits_2_and_keeps_the_pick(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = _flaky_run(data_dir, monkeypatch)
+    run_id = payload["run"]["id"]
+    assert _run(data_dir, "thumb", "pick", run_id, "1").exit_code == ExitCode.OK
+
+    by_ordinal = _run(data_dir, "thumb", "pick", run_id, "2")
+    by_id = _run(data_dir, "thumb", "pick", run_id, _ids(payload)[2])
+
+    assert by_ordinal.exit_code == ExitCode.USAGE
+    assert by_id.exit_code == ExitCode.USAGE
+    assert "usage" in by_ordinal.stderr
+    assert "hint:" in by_ordinal.stderr
+    assert _picked(data_dir, run_id) == [1]
+
+
+def test_a_non_compliant_final_cannot_be_picked(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("THUMBFORGE_OUTPUT__MAX_BYTES", "1000")
+    run_id = _generate_any(data_dir, "--n", "2")["run"]["id"]
+
+    result = _run(data_dir, "thumb", "pick", run_id, "1")
+
+    assert result.exit_code == ExitCode.USAGE
+    assert _picked(data_dir, run_id) == []
+
+
+def test_show_draws_every_iteration_and_marks_the_pick(data_dir: Path) -> None:
+    run_id = _generate_json(data_dir)["run"]["id"]
+
+    before = _run(data_dir, "thumb", "show", run_id)
+    assert _run(data_dir, "thumb", "pick", run_id, "2").exit_code == ExitCode.OK
+    after = _run(data_dir, "thumb", "show", run_id)
+
+    assert before.exit_code == ExitCode.OK, before.output
+    assert _captions(before.stdout) == [(n, False, "✔") for n in (1, 2, 3, 4)]
+    assert after.exit_code == ExitCode.OK, after.output
+    assert _captions(after.stdout) == [(n, n == 2, "✔") for n in (1, 2, 3, 4)]
+    assert "bold-title@1" in after.stdout
+    assert "2 ★" in after.stdout
+
+
+def test_show_accepts_a_column_count_and_rejects_zero(data_dir: Path) -> None:
+    run_id = _generate_json(data_dir, "--n", "2")["run"]["id"]
+
+    assert _run(data_dir, "thumb", "show", run_id, "--columns", "1").exit_code == ExitCode.OK
+    assert _run(data_dir, "thumb", "show", run_id, "--columns", "0").exit_code == ExitCode.USAGE
+
+
+def test_json_show_is_the_same_document_as_runs_show(data_dir: Path) -> None:
+    run_id = _generate_json(data_dir, "--n", "2")["run"]["id"]
+    assert _run(data_dir, "thumb", "pick", run_id, "1").exit_code == ExitCode.OK
+
+    shown = _run(data_dir, "thumb", "show", run_id, json_mode=True)
+
+    assert shown.exit_code == ExitCode.OK, shown.output
+    assert json.loads(shown.stdout) == _shown(data_dir, run_id)
+    assert json.loads(shown.stdout)["iterations"][0]["picked"] is True
+
+
+def test_show_skips_a_failed_iteration_and_still_draws_the_rest(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_id = _flaky_run(data_dir, monkeypatch)["run"]["id"]
+
+    result = _run(data_dir, "thumb", "show", run_id)
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert [ordinal for ordinal, _, _ in _captions(result.stdout)] == [1, 3, 4]
+    assert "failed" in result.stdout
+
+
+def test_show_draws_a_non_compliant_final_with_a_cross(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("THUMBFORGE_OUTPUT__MAX_BYTES", "1000")
+    run_id = _generate_any(data_dir, "--n", "2")["run"]["id"]
+
+    result = _run(data_dir, "thumb", "show", run_id)
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert _captions(result.stdout) == [(1, False, "✘"), (2, False, "✘")]
+
+
+def test_showing_an_unknown_run_exits_3(data_dir: Path) -> None:
+    result = _run(data_dir, "thumb", "show", "01ARZ3NDEKTSV4RRFFQ69G5FAV")
+
+    assert result.exit_code == ExitCode.NOT_FOUND
+
+
+def test_exporting_a_run_writes_every_final_byte_for_byte(data_dir: Path, tmp_path: Path) -> None:
+    payload = _generate_json(data_dir)
+    out = tmp_path / "out" / "nested"
+
+    result = _run(data_dir, "thumb", "export", payload["run"]["id"], "--to", str(out))
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert sorted(path.name for path in out.iterdir()) == [f"{VIDEO}-{n}.jpg" for n in (1, 2, 3, 4)]
+    for item in payload["iterations"]:
+        stored = Path(item["final_asset"]["path"]).read_bytes()
+        assert (out / f"{VIDEO}-{item['ordinal']}.jpg").read_bytes() == stored
+
+
+def test_export_raw_writes_the_raw_assets(data_dir: Path, tmp_path: Path) -> None:
+    payload = _generate_json(data_dir, "--n", "2")
+    out = tmp_path / "raw"
+
+    result = _run(data_dir, "thumb", "export", payload["run"]["id"], "--to", str(out), "--raw")
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert sorted(path.name for path in out.iterdir()) == [f"{VIDEO}-1.png", f"{VIDEO}-2.png"]
+    for item in payload["iterations"]:
+        stored = Path(item["raw_asset"]["path"]).read_bytes()
+        assert (out / f"{VIDEO}-{item['ordinal']}.png").read_bytes() == stored
+
+
+def test_exporting_an_iteration_writes_only_that_one(data_dir: Path, tmp_path: Path) -> None:
+    payload = _generate_json(data_dir)
+    out = tmp_path / "one"
+
+    result = _run(data_dir, "thumb", "export", _ids(payload)[3], "--to", str(out))
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert [path.name for path in out.iterdir()] == [f"{VIDEO}-3.jpg"]
+
+
+def test_exporting_a_partial_run_skips_the_failed_iteration(
+    data_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = _flaky_run(data_dir, monkeypatch)
+    out = tmp_path / "out"
+
+    result = _run(data_dir, "thumb", "export", payload["run"]["id"], "--to", str(out))
+
+    assert result.exit_code == ExitCode.OK, result.output
+    assert sorted(path.name for path in out.iterdir()) == [f"{VIDEO}-{n}.jpg" for n in (1, 3, 4)]
+
+
+def test_json_export_lists_the_files_it_wrote(data_dir: Path, tmp_path: Path) -> None:
+    payload = _generate_json(data_dir, "--n", "2")
+    out = tmp_path / "out"
+
+    result = _run(
+        data_dir, "thumb", "export", payload["run"]["id"], "--to", str(out), json_mode=True
+    )
+
+    assert result.exit_code == ExitCode.OK, result.output
+    exported = json.loads(result.stdout)
+    assert exported == {
+        "run_id": payload["run"]["id"],
+        "iteration_id": None,
+        "raw": False,
+        "files": [str(out / f"{VIDEO}-1.jpg"), str(out / f"{VIDEO}-2.jpg")],
+    }
+
+
+def test_exporting_an_unknown_run_or_iteration_exits_3(data_dir: Path, tmp_path: Path) -> None:
+    result = _run(
+        data_dir, "thumb", "export", "01ARZ3NDEKTSV4RRFFQ69G5FAV", "--to", str(tmp_path / "out")
+    )
+
+    assert result.exit_code == ExitCode.NOT_FOUND
+    assert not (tmp_path / "out").exists()
+
+
+def test_exporting_a_run_with_nothing_completed_exits_2(data_dir: Path, tmp_path: Path) -> None:
+    payload = _failed_run(data_dir, tmp_path)
+    out = tmp_path / "out"
+
+    run = _run(data_dir, "thumb", "export", payload["run"]["id"], "--to", str(out))
+    iteration = _run(data_dir, "thumb", "export", _ids(payload)[1], "--to", str(out))
+
+    assert run.exit_code == ExitCode.USAGE
+    assert iteration.exit_code == ExitCode.USAGE
+    assert "hint:" in run.stderr
+    assert not out.exists()
+
+
+def test_exporting_a_failed_iteration_exits_2(
+    data_dir: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    payload = _flaky_run(data_dir, monkeypatch)
+
+    result = _run(data_dir, "thumb", "export", _ids(payload)[2], "--to", str(tmp_path / "out"))
+
+    assert result.exit_code == ExitCode.USAGE
+
+
+def test_export_requires_a_destination(data_dir: Path) -> None:
+    run_id = _generate_json(data_dir, "--n", "1")["run"]["id"]
+
+    assert _run(data_dir, "thumb", "export", run_id).exit_code == ExitCode.USAGE
+
+
+def test_an_unwritable_destination_is_a_clean_asset_error(data_dir: Path, tmp_path: Path) -> None:
+    run_id = _generate_json(data_dir, "--n", "1")["run"]["id"]
+    blocker = tmp_path / "file"
+    blocker.write_text("in the way", encoding="utf-8")
+
+    result = _run(data_dir, "thumb", "export", run_id, "--to", str(blocker))
+
+    assert result.exit_code == ExitCode.UNEXPECTED
+    assert "asset" in result.stderr
