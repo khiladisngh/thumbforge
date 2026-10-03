@@ -1,8 +1,17 @@
 # Roadmap
 
-Each task is one PR. Task lines follow `P<phase>.<n> <title> — deps: […] — AC: <observable criteria>`. A task may start only when its deps are merged. Every task links to the phase spec in `docs/specs/` and, where noted, to a spike in `OPEN_QUESTIONS.md`.
+Each task is one commit on `main`. Task lines follow `P<phase>.<n> <title> — deps: […] — AC: <observable criteria>`. A task may start only when its deps are merged. Every task links to the phase spec in `docs/specs/` and, where noted, to a spike in `OPEN_QUESTIONS.md`.
 
-Branch naming: `feat/P3.2-fake-provider`, `infra/P0.5-github`, `spike/S1-agy-image-tool`.
+Branch naming (optional, worktree-local): `feat/P3.2-fake-provider`, `infra/P0.5-github`, `spike/S1-agy-image-tool`.
+
+### Resolved ordering notes
+
+Spec decisions that override the task lines below where they differ:
+
+1. `runs show` is built minimally inside P6.1; P7.4 extends it.
+2. Built-in template loading (`sync_builtins`) belongs to P4.4; P4.3 tests load the built-ins straight from their files.
+3. P7.4 follows P7.2, and P8.4 follows P7.4.
+4. Spike S10 fallback: P5.4 ships a path/table fallback plus a real two-column `Table.grid`, and does not wait on the spike.
 
 ## Phase 0 — Infrastructure (no runtime code)
 

@@ -1,6 +1,6 @@
 # AGENTS.md — canonical instructions for coding agents
 
-This file is the single source of truth for how agents work in this repository. `CLAUDE.md` and `GEMINI.md` only point here. Keep this file current: when structure, commands or conventions change, update it in the same PR.
+This file is the single source of truth for how agents work in this repository. `CLAUDE.md` and `GEMINI.md` only point here. Keep this file current: when structure, commands or conventions change, update it in the same commit.
 
 ## Project map
 
@@ -52,11 +52,20 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 
 ## How to pick up a task
 
-1. Find the task id in `docs/ROADMAP.md` (e.g. `P3.2`). Confirm every dependency is merged.
-2. Open or claim the GitHub issue for it; the issue must link the spec.
-3. Branch: `feat/P3.2-fake-provider`, `infra/P0.5-github`, `fix/<issue>-<slug>`, `spike/S1-agy-image-tool`.
-4. Implement only that task. If the spec is wrong or incomplete, update the spec in the same PR and say why in the PR description.
-5. Open a PR using the template; fill in the test evidence section with real command output.
+Solo workflow: no pull requests. Work lands on `main` directly, and `main` history stays linear.
+
+1. Find the task id in `docs/ROADMAP.md` (e.g. `P3.2`). Confirm every dependency is already on `main`.
+2. Optionally branch in a worktree: `git worktree add ../tf-P3.2 -b feat/P3.2-fake-provider origin/main` (`infra/…`, `fix/…`, `spike/S1-…` work the same way). Working straight on `main` is fine for small changes.
+3. Implement only that task. If the spec is wrong or incomplete, update the spec in the same commit and say why in the commit body.
+4. One roadmap task = one commit, in Conventional Commits form, e.g. `feat(templates): render prompts with Jinja (P4.2)`.
+5. Before pushing, run both local CI legs and review the change yourself: `scripts/ci-local.sh` (Linux) and `scripts/ci-local.cmd` (Windows), then read `git diff origin/main...HEAD` for correctness bugs, spec drift and scope creep.
+6. `git fetch origin && git rebase origin/main`. If the rebase pulled in any changes, re-run `ruff check`, `ruff format --check`, `pyright`, `lint-imports` and `pytest -q`.
+7. `git push origin HEAD:main` (plain push; this relies on the repository admin bypassing branch protection). If it is rejected as non-fast-forward, fetch, rebase and retry.
+8. Check the remote run: `gh run list --branch main --limit 3`. A red run is fixed forward immediately.
+
+History is linear only: rebase, never create a merge commit, never force-push.
+
+`act` is not used: the dev machines have no Docker API for it to drive. `scripts/ci-local.sh` and `scripts/ci-local.cmd` replace it by running the `test` job of `.github/workflows/ci.yml` step for step on each OS natively. When you change that job, change both scripts in the same commit.
 
 ## Conventions
 
@@ -69,16 +78,16 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 - Secrets: env var or keyring only. Never in the DB, TOML, logs, or fixtures.
 - Schema changes always ship with an Alembic migration.
 - Commit messages: Conventional Commits (`feat(providers): add FakeProvider`, `fix(batch): …`, `docs(adr): …`, `chore(ci): …`).
-- One concern per PR; small and reviewable.
+- One concern per commit; small and reviewable.
 
 ## Definition of done
 
-- Spec or issue linked in the PR.
+- Spec or roadmap task referenced in the commit body.
 - Tests added at the right layer: unit (no network, FakeProvider / recorded fixtures), contract (every provider), `integration` marker for live systems, `golden` for image and prompt-text snapshots.
-- `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, `uv run pytest -q`, `uv run lint-imports`, `uv run zensical build` all green locally and in CI.
-- Docs updated in the same PR when behaviour or structure changed: `docs/ARCHITECTURE.md`, the phase spec, `AGENTS.md`, ADR if a decision changed.
+- `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, `uv run pytest --cov --cov-fail-under=80`, `uv run lint-imports`, `uv run zensical build` all green locally (`scripts/ci-local.sh` and `scripts/ci-local.cmd`) and in the remote CI run after the push.
+- Docs updated in the same commit when behaviour or structure changed: `docs/ARCHITECTURE.md`, the phase spec, `AGENTS.md`, ADR if a decision changed.
 - Knowledge graph refreshed when source structure changed: `graphify extract . --code-only && graphify cluster-only . --no-label`, then commit `graphify-out/`. Installed once with `uv tool install graphifyy`. CI runs an advisory drift check (`scripts/check_graph_drift.py`); regeneration is manual, not hooked.
-- CodeRabbit review comments on the PR resolved or explicitly answered (advisory, not a merge gate). Rules live in `.coderabbit.yaml`; `@coderabbitai review` re-runs it. If a comment is wrong for this project, reply with the reason instead of silently dismissing it.
+- Local review of the diff done before the push; findings fixed or consciously deferred.
 
 ## Updating docs
 
@@ -97,4 +106,5 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 - Hit the network or a real provider from unit tests.
 - Commit `graphify-out/cache/`, `graphify-out/cost.json`, or the built `site/` directory.
 - Mark a spike as resolved without recorded command output.
-- Widen a PR beyond its ROADMAP task.
+- Widen a commit beyond its ROADMAP task.
+- Create merge commits or force-push `main`.
