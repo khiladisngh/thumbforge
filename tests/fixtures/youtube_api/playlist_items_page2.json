@@ -1,0 +1,317 @@
+{
+  "kind": "youtube#playlistItemListResponse",
+  "etag": "4spbTyz6IGWcNoJ5wWfOI_azq3p",
+  "prevPageToken": "EAEaBlBUOkNBWQ",
+  "items": [
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "koEgoi_vr1L7I2tn8jtb0zhFTHl",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS44ODVqMnhPOVZCOA",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Finesse2Tymes - Crazy [Official Music Video]",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/885j2xO9VB8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/885j2xO9VB8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/885j2xO9VB8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/885j2xO9VB8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/885j2xO9VB8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 6,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "885j2xO9VB8"
+        },
+        "videoOwnerChannelTitle": "2FithyRicky ",
+        "videoOwnerChannelId": "UCWot_hGZs3ovEEzAKu_EzLw"
+      },
+      "contentDetails": {
+        "videoId": "885j2xO9VB8",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "-BHHgVdjg83ieqOs-4FWMmdU4K9",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5tdXpRMHIxNEwyWQ",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "NLE Choppa - Shotta Flow 7 “FINAL” (Official Music Video)",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/muzQ0r14L2Y/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/muzQ0r14L2Y/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/muzQ0r14L2Y/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/muzQ0r14L2Y/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/muzQ0r14L2Y/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 7,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "muzQ0r14L2Y"
+        },
+        "videoOwnerChannelTitle": "NLE CHOPPA",
+        "videoOwnerChannelId": "UCWICXNlSLc7eeNazpzUZcLg"
+      },
+      "contentDetails": {
+        "videoId": "muzQ0r14L2Y",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "WBpi6-tBQv6xmTo9bR1Ds1AfalF",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5wOUpBdDUzVFNXRQ",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Anuel AA - Arcangel Es Chota (Audio)",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/p9JAt53TSWE/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/p9JAt53TSWE/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/p9JAt53TSWE/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/p9JAt53TSWE/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/p9JAt53TSWE/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 8,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "p9JAt53TSWE"
+        },
+        "videoOwnerChannelTitle": "Anuel AA",
+        "videoOwnerChannelId": "UCRI7hheejBbWS6etTNwMT0g"
+      },
+      "contentDetails": {
+        "videoId": "p9JAt53TSWE",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "YHinrcTS9PeWRr2xmYJBx5dwD9X",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5uVzl0RUdJMmUtaw",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Everybody",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/nW9tEGI2e-k/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/nW9tEGI2e-k/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/nW9tEGI2e-k/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/nW9tEGI2e-k/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/nW9tEGI2e-k/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 9,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "nW9tEGI2e-k"
+        },
+        "videoOwnerChannelTitle": "Nicki Minaj",
+        "videoOwnerChannelId": "UC3jOd7GUMhpgJRBhiLzuLsg"
+      },
+      "contentDetails": {
+        "videoId": "nW9tEGI2e-k",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "ZAgUrybO1MsNQ5_ANp_IY9tQONy",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5mSFhoaEpUUmtRUQ",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "42 Dugg - SpinDatBac (Official Music Video)",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/fHXhhJTRkQQ/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/fHXhhJTRkQQ/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/fHXhhJTRkQQ/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/fHXhhJTRkQQ/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/fHXhhJTRkQQ/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 10,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "fHXhhJTRkQQ"
+        },
+        "videoOwnerChannelTitle": "42 dugg Music",
+        "videoOwnerChannelId": "UChFLDvWugOtrzxmUCAjfnGg"
+      },
+      "contentDetails": {
+        "videoId": "fHXhhJTRkQQ",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "BFNPr51ilfxHekkKJsxpxDmkP7l",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5PMWQyRFlaWnJlaw",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "정국 (Jung Kook), USHER ‘Standing Next to You - USHER Remix’ Official Performance Video",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/O1d2DYZZrek/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/O1d2DYZZrek/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/O1d2DYZZrek/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/O1d2DYZZrek/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/O1d2DYZZrek/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 11,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "O1d2DYZZrek"
+        },
+        "videoOwnerChannelTitle": "BANGTANTV",
+        "videoOwnerChannelId": "UCLkAepWjdylmXSltofFvsYQ"
+      },
+      "contentDetails": {
+        "videoId": "O1d2DYZZrek",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 12,
+    "resultsPerPage": 6
+  }
+}

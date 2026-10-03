@@ -1,6 +1,6 @@
 """Wiring and shared views for the YouTube metadata commands (ROADMAP P2.3).
 
-`core.services` declares Protocols; the concrete `YtDlpSource` and `Repositories` are
+`core.services` declares Protocols; the concrete metadata source and `Repositories` are
 chosen here, which is the injection point `PLAN.md` §2.2 describes.
 
 The row and payload builders are shared because `fetch` and `playlist show --videos`
@@ -14,8 +14,9 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import TYPE_CHECKING
 
+from thumbforge import credentials
 from thumbforge.core.enums import ChannelSource
-from thumbforge.core.errors import SettingsError
+from thumbforge.core.errors import SourceError
 from thumbforge.core.json import JsonPayload
 from thumbforge.storage.db import get_engine, session_scope
 from thumbforge.storage.repositories import Repositories
@@ -32,14 +33,26 @@ EMPTY = "—"
 
 
 def build_source(source: ChannelSource) -> MetadataSource:
-    """Select a metadata source.
+    """Select a metadata source, resolving the Data API key when that one is asked for.
 
-    The Data API source is a Phase 8 extra, so asking for it now is a usage error carrying
-    the install hint rather than an import failure (spec behaviour 3).
+    The `api` extra is checked before the key (phase 8 spec): without the extra a key is
+    useless, so the install hint is the actionable one. Both failures are `SourceError`,
+    exit 1 — this replaced the Phase 2 placeholder, a `SettingsError` exiting 2. The key is
+    resolved here because adapters never read credentials; it is handed over, not logged.
     """
     if source is ChannelSource.API:
-        msg = "the YouTube Data API source is not available yet"
-        raise SettingsError(msg, hint="install the `api` extra (Phase 8)")
+        from thumbforge.sources.youtube_api import YouTubeDataApiSource, require_extra
+
+        require_extra()
+        api_key = credentials.api_key(ChannelSource.API.value)
+        if api_key is None:
+            msg = "no YouTube Data API key found"
+            hint = (
+                "thumbforge provider set-key api "
+                f"(or set {credentials.env_var(ChannelSource.API.value)})"
+            )
+            raise SourceError(msg, hint=hint)
+        return YouTubeDataApiSource(api_key)
 
     from thumbforge.sources.ytdlp import YtDlpSource
 

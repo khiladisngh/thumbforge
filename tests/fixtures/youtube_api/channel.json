@@ -1,0 +1,41 @@
+{
+  "kind": "youtube#channelListResponse",
+  "etag": "wm7xqk1LiyTTycLFWMvuK4QW6F6",
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "xmFf8ry-Pd7sZ2f4BPzm_nXRsws",
+      "id": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+      "snippet": {
+        "title": "Music",
+        "description": "Visit the YouTube Music Channel to find today’s top talent, featured artists, and playlists. Subscribe to see the latest in the music world.\nThis channel was generated automatically by YouTube's video discovery system.",
+        "publishedAt": "2013-09-20T19:51:30Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/synthetic=s88",
+            "width": 88,
+            "height": 88
+          },
+          "medium": {
+            "url": "https://yt3.ggpht.com/synthetic=s240",
+            "width": 240,
+            "height": 240
+          },
+          "high": {
+            "url": "https://yt3.ggpht.com/synthetic=s800",
+            "width": 800,
+            "height": 800
+          }
+        },
+        "localized": {
+          "title": "Music",
+          "description": "Visit the YouTube Music Channel to find today’s top talent, featured artists, and playlists. Subscribe to see the latest in the music world.\nThis channel was generated automatically by YouTube's video discovery system."
+        }
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 5
+  }
+}

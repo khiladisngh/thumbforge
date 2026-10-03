@@ -10,6 +10,7 @@ import typer
 from thumbforge import credentials
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
+from thumbforge.core.enums import ChannelSource
 from thumbforge.core.errors import ProviderAuthError, ProviderPermanentError
 from thumbforge.core.json import JsonPayload, JsonValue
 from thumbforge.providers import registry
@@ -204,13 +205,16 @@ def set_key(ctx: typer.Context, key: _KEY_ARGUMENT) -> None:
     """Store a provider's API key in the system keyring.
 
     The only writer of a secret in this codebase. The value is prompted for rather than taken
-    as an argument, so it never reaches the shell history or a process listing.
+    as an argument, so it never reaches the shell history or a process listing. Also accepts
+    ``api``, the YouTube Data API metadata source, which reuses this keyring path but is not
+    an image provider.
     """
     app_ctx = get_app_context(ctx)
     settings = app_ctx.require_settings()
 
     # Resolved before prompting so a typo costs a message rather than a typed-out secret.
-    registry.get(key, _config(settings, key))
+    if key != ChannelSource.API.value:
+        registry.get(key, _config(settings, key))
 
     value = typer.prompt(f"API key for {key}", hide_input=True)
     credentials.store_api_key(key, value)

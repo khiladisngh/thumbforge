@@ -1,0 +1,53 @@
+{
+  "kind": "youtube#playlistListResponse",
+  "etag": "D0gE8supwccmb4ia_jf4ykslXrW",
+  "items": [
+    {
+      "kind": "youtube#playlist",
+      "etag": "liSOIXux8Ga_yyUM_fOowIBlmZy",
+      "id": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+      "snippet": {
+        "publishedAt": "2015-06-01T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Popular Music Videos",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "localized": {
+          "title": "Popular Music Videos",
+          "description": ""
+        }
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 5
+  }
+}

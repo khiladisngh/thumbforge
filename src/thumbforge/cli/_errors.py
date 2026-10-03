@@ -14,6 +14,7 @@ from collections.abc import Callable, Mapping
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 
 from thumbforge.cli._render import AppContext
 from thumbforge.core.errors import ExitCode, ThumbforgeError
@@ -53,9 +54,11 @@ def _report(app_ctx: AppContext | None, error: ThumbforgeError) -> None:
         sys.stderr.flush()
         return
     console = Console(stderr=True, highlight=False)
-    console.print(f"[bold red]{error.code}[/]: {error.message}")
+    # Escaped: error text is plain, and Rich would swallow a bracketed span such as the
+    # `[api]` in `uv tool install "thumbforge[api]"` as a markup tag.
+    console.print(f"[bold red]{error.code}[/]: {escape(error.message)}")
     if error.hint:
-        console.print(f"[dim]hint:[/] {error.hint}")
+        console.print(f"[dim]hint:[/] {escape(error.hint)}")
 
 
 def handle_errors[**P, R](func: Callable[P, R]) -> Callable[P, R]:

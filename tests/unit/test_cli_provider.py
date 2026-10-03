@@ -180,6 +180,21 @@ def test_set_key_stores_in_the_keyring(
     assert "s3cret" not in result.stdout, "the secret must never be echoed back"
 
 
+def test_set_key_accepts_the_data_api_source(
+    _no_real_keyring: dict[tuple[str, str], str],
+) -> None:
+    """`api` is a metadata source, not an image provider, but its key uses the same path.
+
+    It is the hint `fetch --source api` prints when no key is found, so it has to work.
+    """
+    result = runner.invoke(app, ["provider", "set-key", "api"], input="s3cret\n")
+
+    assert result.exit_code == 0, result.stderr
+    assert _no_real_keyring == {(credentials.SERVICE, "api"): "s3cret"}
+    assert credentials.api_key("api") == "s3cret"
+    assert "s3cret" not in result.stdout
+
+
 def test_set_key_rejects_an_unknown_provider_before_prompting(
     _no_real_keyring: dict[tuple[str, str], str],
 ) -> None:

@@ -1,0 +1,317 @@
+{
+  "kind": "youtube#playlistItemListResponse",
+  "etag": "fejC_0a8FF5frUFPBVQTTX6uggQ",
+  "nextPageToken": "EAAaBlBUOkNBWQ",
+  "items": [
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "VWVooTamYigIYEZ4KgNJWfeTz4w",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5mT1QwQlVwSVR3OA",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "BELLAKEO (Video Oficial) - Peso Pluma, Anitta",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/fOT0BUpITw8/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 0,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "fOT0BUpITw8"
+        },
+        "videoOwnerChannelTitle": "Peso Pluma",
+        "videoOwnerChannelId": "UCzrM_068Odho89mTRrrxqbA"
+      },
+      "contentDetails": {
+        "videoId": "fOT0BUpITw8",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "16MO-NsINHLY567h7lgeAY3nPX8",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5ORnZESFlNemo5VQ",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Arcángel - FN8 ( Video Lyric )",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/NFvDHYMzj9U/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/NFvDHYMzj9U/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/NFvDHYMzj9U/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/NFvDHYMzj9U/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/NFvDHYMzj9U/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 1,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "NFvDHYMzj9U"
+        },
+        "videoOwnerChannelTitle": "Arcangel",
+        "videoOwnerChannelId": "UCu4bj03KW4CwAsYtHSwMEsQ"
+      },
+      "contentDetails": {
+        "videoId": "NFvDHYMzj9U",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "3ntKJRT5TL4qSO39gRcrrX4iHnw",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS44YzdLT0d4ZVkzdw",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Becky G - POR EL CONTRARIO (Performance Video) ft. Ángela Aguilar, Leonardo Aguilar",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/8c7KOGxeY3w/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/8c7KOGxeY3w/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/8c7KOGxeY3w/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/8c7KOGxeY3w/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/8c7KOGxeY3w/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 2,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "8c7KOGxeY3w"
+        },
+        "videoOwnerChannelTitle": "Becky G",
+        "videoOwnerChannelId": "UCgtNC51EUSgcZ6kKyVoPxKA"
+      },
+      "contentDetails": {
+        "videoId": "8c7KOGxeY3w",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "EwAcIz_PS8XauT6xz1jnZvpvzgh",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5qV2R4WGRwOHNaSQ",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Real Boston Richey - The Type (Official Music Video) ft. YTB Fatt",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/jWdxXdp8sZI/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/jWdxXdp8sZI/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/jWdxXdp8sZI/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/jWdxXdp8sZI/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/jWdxXdp8sZI/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 3,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "jWdxXdp8sZI"
+        },
+        "videoOwnerChannelTitle": "Real Boston Richey",
+        "videoOwnerChannelId": "UCpkyspUtZwYhgUkepiREflg"
+      },
+      "contentDetails": {
+        "videoId": "jWdxXdp8sZI",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "Ue_7zmSb1VyjU7LLgphoa4d1G2j",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS5zNmNkakp2R00ybw",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "La Diabla",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/s6cdjJvGM2o/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/s6cdjJvGM2o/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/s6cdjJvGM2o/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/s6cdjJvGM2o/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/s6cdjJvGM2o/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 4,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "s6cdjJvGM2o"
+        },
+        "videoOwnerChannelTitle": "Xavi Oficial",
+        "videoOwnerChannelId": "UCx0lY_L_o5vFPQaLAdBasmQ"
+      },
+      "contentDetails": {
+        "videoId": "s6cdjJvGM2o",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    },
+    {
+      "kind": "youtube#playlistItem",
+      "etag": "sFoAFnsfjOLodb4PhcMJ51_8HJP",
+      "id": "UExGZ3F1TG5MNTlhbENsXzJUUXZPaUQ1VmdtMWhDYUdTSS53MS1qc3MybVpsWQ",
+      "snippet": {
+        "publishedAt": "2026-07-17T00:00:00Z",
+        "channelId": "UC-9-kyTW8ZkZNDHQJ6FgpwQ",
+        "title": "Drake - You Broke My Heart",
+        "description": "",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/w1-jss2mZlY/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/w1-jss2mZlY/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/w1-jss2mZlY/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          },
+          "standard": {
+            "url": "https://i.ytimg.com/vi/w1-jss2mZlY/sddefault.jpg",
+            "width": 640,
+            "height": 480
+          },
+          "maxres": {
+            "url": "https://i.ytimg.com/vi/w1-jss2mZlY/maxresdefault.jpg",
+            "width": 1280,
+            "height": 720
+          }
+        },
+        "channelTitle": "Music",
+        "playlistId": "PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI",
+        "position": 5,
+        "resourceId": {
+          "kind": "youtube#video",
+          "videoId": "w1-jss2mZlY"
+        },
+        "videoOwnerChannelTitle": "Drake",
+        "videoOwnerChannelId": "UCByOQJjav0CUDwxCk-jVNRQ"
+      },
+      "contentDetails": {
+        "videoId": "w1-jss2mZlY",
+        "videoPublishedAt": "2026-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 12,
+    "resultsPerPage": 6
+  }
+}

@@ -206,6 +206,8 @@ def test_skip_permissions_defaults_to_false(tmp_path: Path) -> None:
         # A provider with no settings section at all: dropping only the leaf would leave
         # `providers.fake = {}` behind, which `extra="forbid"` rejects just the same.
         "THUMBFORGE_PROVIDERS__FAKE__API_KEY",
+        # The YouTube Data API source's key (phase 8): `api` is not an image provider.
+        "THUMBFORGE_PROVIDERS__API__API_KEY",
     ],
 )
 def test_a_provider_api_key_in_the_environment_does_not_break_loading(

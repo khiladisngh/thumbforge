@@ -8,6 +8,7 @@ makes the `--json` contract and the exit codes meaningful here.
 from __future__ import annotations
 
 import json
+import sys
 from typing import TYPE_CHECKING, ClassVar
 
 import pytest
@@ -188,14 +189,18 @@ def test_fetch_channel_url_stores_only_the_channel(data_dir: Path, source: StubS
     assert payload["stored"] == {"channels": 1, "playlists": 0, "videos": 0}
 
 
-def test_source_api_exits_two_with_the_install_hint(data_dir: Path) -> None:
-    """Spec behaviour 3, and it must not surface as an ImportError."""
+def test_source_api_without_the_extra_exits_one_with_the_install_hint(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Phase 8 spec: a `SourceError`, not an ImportError, and checked before the key."""
+    monkeypatch.setitem(sys.modules, "googleapiclient", None)
+
     result = runner.invoke(
         app, ["--data-dir", str(data_dir), "fetch", PLAYLIST_URL, "--source", "api"]
     )
 
-    assert result.exit_code == 2
-    assert "api` extra" in result.stdout + str(result.stderr)
+    assert result.exit_code == 1
+    assert 'uv tool install "thumbforge[api]"' in result.stdout + str(result.stderr)
 
 
 def test_unrecognised_url_exits_two(data_dir: Path, source: StubSource) -> None:

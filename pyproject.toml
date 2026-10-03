@@ -35,6 +35,11 @@ dependencies = [
   "yt-dlp>=2026.8.19",
 ]
 
+[project.optional-dependencies]
+# The YouTube Data API v3 metadata source (decision D7, `docs/specs/phase-8-polish.md`).
+# Optional because yt-dlp needs no key; `sources/youtube_api.py` imports these lazily.
+api = ["google-api-python-client", "google-auth"]
+
 [project.urls]
 Homepage = "https://github.com/khiladisngh/thumbforge"
 Documentation = "https://khiladisngh.github.io/thumbforge/"
@@ -62,6 +67,11 @@ dev = [
   "import-linter",
   "zensical",
   "testcontainers>=4.15.0",
+  # The `api` extra, so `uv sync --locked` (no extras) still type-checks and tests
+  # `sources/youtube_api.py`; the stubs type the otherwise-untyped client under strict pyright.
+  "google-api-python-client",
+  "google-api-python-client-stubs",
+  "google-auth",
 ]
 
 [build-system]
