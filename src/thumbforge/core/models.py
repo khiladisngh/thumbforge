@@ -4,6 +4,8 @@ These mirror the `channel`, `playlist` and `video` columns but are *not* ORM row
 `MetadataSource` produces them from an upstream API, and `storage/repositories.py` upserts
 them. Keeping the two apart is what lets the Data API source (Phase 8) satisfy the same
 Protocol without touching the schema. Frozen, because a fetched snapshot is a value.
+
+`ComplianceReport` also lives here (ADR 0018): `imaging` builds it, `core.services` records it.
 """
 
 from __future__ import annotations
@@ -89,3 +91,22 @@ class ResolvedUrl(BaseModel):
 
     kind: UrlKind
     youtube_id: str = Field(min_length=1)
+
+
+class ComplianceReport(BaseModel):
+    """The YouTube compliance verdict on one encoded thumbnail (phase 5 spec, Compliance rule).
+
+    `violations` holds bare check codes, in matrix order: ``aspect``, ``width``, ``format``,
+    ``size``, ``color``. `format` is Pillow's format name (``JPEG``, ``PNG``), `color_mode` its
+    image mode.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    ok: bool
+    width: int
+    height: int
+    bytes: int
+    format: str
+    color_mode: str
+    violations: list[str]

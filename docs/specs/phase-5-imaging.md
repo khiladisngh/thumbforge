@@ -49,7 +49,7 @@ def check(data: bytes, *, max_bytes: int = 2_097_152) -> ComplianceReport
 
 # imaging/finalize.py
 def render_final(raw: Path, layout: LayoutSpec, output: OutputSettings, *, title: str, part_number: int | None, part_label: str | None) -> tuple[bytes, ComplianceReport]
-    # fit → overlay → encode (jpeg quality / png) → re-encode at lower quality while bytes > max_bytes (floor quality 60) → check
+    # fit to layout.canvas → overlay → fit to output size → encode (jpeg quality / png) → re-encode 5 quality lower while bytes > max_bytes (floor 60) → check
 ```
 
 Persisting the result is not Phase 5's job: P6.1's `HeroService` (in `core`) receives `render_final` as an injected callable (the CLI binds `output`), stores the bytes as the `final` asset, and records the report.
@@ -76,8 +76,8 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 2. `overlay` is deterministic: same input image, layout, text and bundled font → byte-identical output on every OS. Only bundled fonts are used in tests.
 3. Title layout: text is upper-cased per `layout.title.case`, wrapped by words into ≤ `max_lines` at `size_px`; if it does not fit, size decreases by 4 px until `min_size_px`; if it still does not fit, the last line is ellipsised and a `WARNING` is logged.
 4. Part badge: rendered only when `layout.part.enabled` and `part_number is not None`; `{n}` and `{label}` are filled by plain string replacement, never `str.format`, because layouts are user data. `part_label` replaces `{label}`; when it is missing or empty, `{label}` is removed and the whitespace collapsed (`"{label} {n}"` → `"7"`). With `part.badge` the text sits on a rounded rectangle and is black or white by the fill's luminance; without it the text takes the title's colour and stroke. The badge is placed by `part.anchor` inside the canvas inset by `canvas.safe_margin_px`.
-5. `render_final` returns the encoded bytes and the report even when the report is not `ok`, so the caller can store the non-compliant asset for inspection before raising `ComplianceError` (exit `5`; P6.1).
-6. JPEG encode: `quality=[output] quality`, `subsampling=0`, `optimize=True`; PNG: `optimize=True`. Metadata stripped.
+5. `render_final` fits the raw to `layout.canvas` (overlay coordinates are canvas pixels), overlays, then fits to `[output] width/height` (a plain copy when they match, a `LANCZOS` rescale otherwise). A canvas with a different aspect ratio than the output raises `TemplateError` (the final fit would crop the overlay), hint "use a canvas with the same aspect ratio as [output] width/height". A JPEG over `max_bytes` is re-encoded 5 quality lower at a time, never below 60; a starting quality at or below 60 is kept, and PNG is encoded once. It returns the encoded bytes and the report even when the report is not `ok`, so the caller can store the non-compliant asset for inspection before raising `ComplianceError` (exit `5`; P6.1). `violations` holds the codes `aspect`, `width`, `format`, `size`, `color`, in that order; an ICC profile counts as sRGB when its description contains `sRGB`, and an unreadable one is a violation.
+6. JPEG encode: `quality=[output] quality`, `subsampling=0`, `optimize=True`; PNG: `optimize=True`. Metadata stripped, including what Pillow would copy from the raw (a PNG's ICC profile). Pillow holds an optimized JPEG in one buffer of `width×height` bytes below quality 95 (2,073,600 at 1920×1080, under the 2 MiB default), so the encode raises `PIL.ImageFile.MAXBLOCK` to at least `2×width×height` for the save and restores it afterwards.
 
 ## Acceptance criteria
 
