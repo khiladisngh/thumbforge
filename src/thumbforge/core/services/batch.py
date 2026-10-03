@@ -14,8 +14,8 @@ The per-item pipeline is `hero.run_iteration`: a batch item is generated, stored
 recorded exactly as a hero iteration is. Every collaborator arrives as a Protocol, so this module
 imports no adapter package and, like `hero`, logs nothing.
 
-Not here yet: the `batch` command and its progress display (P7.3), and the `runs` commands
-(P7.4), which call `resume` and `cancel` and turn an interrupt into exit `130`.
+Not here yet: the `runs` commands (P7.4), which call `resume` and `cancel`. The `batch` command
+and its progress display (P7.3) live in `cli/batch.py`; `BatchResult.error` is what it raises.
 """
 
 from __future__ import annotations
@@ -27,7 +27,15 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, cast
 
 from thumbforge.core.enums import RunKind, RunStatus
-from thumbforge.core.errors import ExitCode, TemplateError, UsageError
+from thumbforge.core.errors import (
+    ExitCode,
+    PartialBatchError,
+    ProviderError,
+    RunInterruptedError,
+    TemplateError,
+    ThumbforgeError,
+    UsageError,
+)
 from thumbforge.core.ids import new_id, sha256_bytes
 from thumbforge.core.json import JsonPayload, JsonValue, canonical_json
 from thumbforge.core.services.hero import (
@@ -251,6 +259,40 @@ class BatchResult:
         if self.failed == 0:
             return ExitCode.OK
         return ExitCode.PROVIDER if self.completed == 0 else ExitCode.PARTIAL
+
+    def error(self) -> ThumbforgeError | None:
+        """The error the CLI raises once it has printed the result, or `None` on success.
+
+        Re-running the same command is the way to continue until `runs resume` exists (P7.4):
+        it retries failed and unfinished items inside the run that created them.
+        """
+        total = len(self.plan.rows)
+        run_id = self.run_id or ""
+        again = (
+            "run the same command again to retry what is left; "
+            f"`thumbforge runs show {run_id}` lists each iteration"
+        )
+        match self.exit_code:
+            case ExitCode.OK:
+                return None
+            case ExitCode.INTERRUPTED:
+                counts = f"{self.completed} completed, {self.failed} failed, {self.pending} pending"
+                return RunInterruptedError(f"run {run_id} paused ({counts})", hint=again)
+            case ExitCode.PROVIDER:
+                msg = (
+                    f"all {total} items failed"
+                    if self.failed == total
+                    else f"no item completed, {self.failed} of {total} failed"
+                )
+                return ProviderError(msg, hint=again)
+            case _:
+                return PartialBatchError(
+                    f"{self.completed} of {total} items completed, {self.failed} failed",
+                    hint=f"the completed items are kept; {again}",
+                    completed=self.completed,
+                    failed=self.failed,
+                    pending=self.pending,
+                )
 
 
 def idempotency_key(

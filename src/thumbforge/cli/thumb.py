@@ -9,15 +9,16 @@ import asyncio
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
-import structlog
 import typer
 from rich.markup import escape
 
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, preview
 from thumbforge.cli._runs import (
+    LogProgress,
     final_paths,
     final_tiles,
+    finalizer,
     open_run_store,
     parse_vars,
     provider_config,
@@ -26,7 +27,6 @@ from thumbforge.cli._runs import (
 from thumbforge.cli._youtube import lookup_key
 from thumbforge.core.services.hero import HeroService, RunSpec
 from thumbforge.core.services.iterate import IterateService
-from thumbforge.imaging.finalize import render_final
 from thumbforge.logging import get_logger
 from thumbforge.providers import registry
 from thumbforge.storage.models import Iteration
@@ -37,12 +37,9 @@ if TYPE_CHECKING:
 
     from thumbforge.cli._render import AppContext
     from thumbforge.cli._runs import RunStore
-    from thumbforge.core.enums import RunStatus
     from thumbforge.core.json import JsonPayload
-    from thumbforge.core.layout import LayoutSpec
-    from thumbforge.core.models import ComplianceReport
-    from thumbforge.core.services.hero import Finalize, RunResult
-    from thumbforge.settings import OutputSettings, Settings
+    from thumbforge.core.services.hero import RunResult
+    from thumbforge.settings import Settings
 
 log = get_logger(__name__)
 
@@ -53,45 +50,13 @@ app = typer.Typer(
 )
 
 
-class _LogProgress:
-    """Binds `run_id` for the run's log lines and reports each finished iteration."""
-
-    def run_started(self, run_id: str, total: int) -> None:
-        # Bound inside the service's task, so it reaches every iteration task it spawns.
-        structlog.contextvars.bind_contextvars(run_id=run_id)
-        log.info("run started", iterations=total)
-
-    def iteration_finished(
-        self, run_id: str, ordinal: int, status: RunStatus, error: str | None
-    ) -> None:
-        log.info("iteration finished", ordinal=ordinal, status=status.value, error=error)
-
-
-def _finalizer(output: OutputSettings) -> Finalize:
-    """`render_final` with the `[output]` settings bound, as the service expects it."""
-
-    def finalize(
-        raw: Path,
-        layout: LayoutSpec,
-        *,
-        title: str,
-        part_number: int | None,
-        part_label: str | None,
-    ) -> tuple[bytes, ComplianceReport]:
-        return render_final(
-            raw, layout, output, title=title, part_number=part_number, part_label=part_label
-        )
-
-    return finalize
-
-
 def _hero_service(store: RunStore, settings: Settings) -> HeroService:
     """The hero machinery, wired to this command's store, as `generate` and `iterate` share it."""
     return HeroService(
         store.runs,
         registry,
         PromptRenderer(store.repos.templates),
-        _finalizer(settings.output),
+        finalizer(settings.output),
         logs_dir=settings.state_dir / "logs" / "runs",
     )
 
@@ -179,7 +144,7 @@ def generate(
     with open_run_store(settings) as store:
         service = _hero_service(store, settings)
         # One `asyncio.run` per invocation: the CLI is the only sync/async boundary.
-        result = asyncio.run(service.generate(spec, progress=_LogProgress()))
+        result = asyncio.run(service.generate(spec, progress=LogProgress()))
         view = _run_report(store, settings, result)
 
     _print_run(app_ctx, result, view)
@@ -224,7 +189,7 @@ def iterate(
                 prompt_append=prompt_append,
                 vars=parse_vars(var or []),
                 from_picked=from_picked,
-                progress=_LogProgress(),
+                progress=LogProgress(),
             )
         )
         view = _run_report(store, settings, result)

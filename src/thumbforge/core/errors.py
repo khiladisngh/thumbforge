@@ -178,6 +178,13 @@ class ComplianceError(ThumbforgeError):
     exit_code = ExitCode.COMPLIANCE
 
 
+class RunInterruptedError(ThumbforgeError):
+    """A run was stopped from the keyboard and paused; what finished is kept."""
+
+    code = "interrupted"
+    exit_code = ExitCode.INTERRUPTED
+
+
 class PartialBatchError(ThumbforgeError):
     """A batch finished with some items failed; the run is resumable."""
 

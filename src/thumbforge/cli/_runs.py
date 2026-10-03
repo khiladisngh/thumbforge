@@ -1,5 +1,7 @@
 """Wiring and the shared run view for `thumb generate` and `runs show` (ROADMAP P6.1).
 
+`batch` (P7.3) shares the progress sink, the final-render binding and the run object.
+
 `core.services.hero` declares Protocols; the concrete store is chosen here, which is the
 injection point `PLAN.md` §2.2 describes. The view reads the **stored** rows, never what the
 service returned: `generate` and `runs show` then print the same thing, and a run looks the
@@ -9,10 +11,12 @@ same a minute or a month after it finished.
 from __future__ import annotations
 
 import json
+import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
+import structlog
 from rich.console import Group
 from rich.markup import escape
 
@@ -20,6 +24,8 @@ from thumbforge.cli._render import kv, table
 from thumbforge.core.enums import RunStatus
 from thumbforge.core.errors import TemplateError
 from thumbforge.core.json import JsonPayload, JsonValue
+from thumbforge.imaging.finalize import render_final
+from thumbforge.logging import get_logger
 from thumbforge.storage.assets import AssetStore
 from thumbforge.storage.db import get_engine, session_factory, session_scope
 from thumbforge.storage.repositories import Repositories
@@ -31,8 +37,13 @@ if TYPE_CHECKING:
 
     from rich.console import RenderableType
 
-    from thumbforge.settings import Settings
+    from thumbforge.core.layout import LayoutSpec
+    from thumbforge.core.models import ComplianceReport
+    from thumbforge.core.services.hero import Finalize
+    from thumbforge.settings import OutputSettings, Settings
     from thumbforge.storage.models import Asset, Iteration, Run
+
+log = get_logger(__name__)
 
 #: Shown where an iteration has nothing to report, matching the other tables.
 EMPTY = "—"
@@ -88,6 +99,44 @@ def provider_config(settings: Settings, key: str) -> Mapping[str, JsonValue]:
     return dumped
 
 
+def finalizer(output: OutputSettings) -> Finalize:
+    """`render_final` with the `[output]` settings bound, as the services expect it."""
+
+    def finalize(
+        raw: Path,
+        layout: LayoutSpec,
+        *,
+        title: str,
+        part_number: int | None,
+        part_label: str | None,
+    ) -> tuple[bytes, ComplianceReport]:
+        return render_final(
+            raw, layout, output, title=title, part_number=part_number, part_label=part_label
+        )
+
+    return finalize
+
+
+class LogProgress:
+    """Binds `run_id` for the run's log lines and reports each finished iteration."""
+
+    def __init__(self, level: int = logging.INFO) -> None:
+        """Log at `level`; a display that owns the terminal asks for `DEBUG`."""
+        self._level = level
+
+    def run_started(self, run_id: str, total: int) -> None:
+        # Bound inside the service's task, so it reaches every iteration task it spawns.
+        structlog.contextvars.bind_contextvars(run_id=run_id)
+        log.log(self._level, "run started", iterations=total)
+
+    def iteration_finished(
+        self, run_id: str, ordinal: int, status: RunStatus, error: str | None
+    ) -> None:
+        log.log(
+            self._level, "iteration finished", ordinal=ordinal, status=status.value, error=error
+        )
+
+
 def final_paths(run: Run, data_dir: Path) -> list[Path]:
     """The stored final image of every completed iteration, in ordinal order."""
     return [
@@ -137,20 +186,7 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
         header["Error"] = escape(run.error_text)
 
     payload: JsonPayload = {
-        "run": {
-            "id": run.id,
-            "kind": run.kind.value,
-            "status": run.status.value,
-            "template": f"{run.template.name}@{run.template.version}",
-            "provider": run.provider_profile.name,
-            "video": None if run.video is None else run.video.youtube_id,
-            "parent_run_id": run.parent_run_id,
-            "child_run_ids": children,
-            "reference_asset": _asset_payload(run.reference_asset, data_dir),
-            "started_at": run.started_at,
-            "finished_at": run.finished_at,
-            "error": run.error_text,
-        },
+        "run": run_payload(run, data_dir),
         "iterations": [_iteration_payload(item, data_dir) for item in iterations],
     }
     renderable = Group(
@@ -163,6 +199,24 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
     return payload, renderable
 
 
+def run_payload(run: Run, data_dir: Path) -> JsonPayload:
+    """The JSON object for a run's own fields, shared by `runs show` and `batch`."""
+    return {
+        "id": run.id,
+        "kind": run.kind.value,
+        "status": run.status.value,
+        "template": f"{run.template.name}@{run.template.version}",
+        "provider": run.provider_profile.name,
+        "video": None if run.video is None else run.video.youtube_id,
+        "parent_run_id": run.parent_run_id,
+        "child_run_ids": sorted(child.id for child in run.child_runs),
+        "reference_asset": _asset_payload(run.reference_asset, data_dir),
+        "started_at": run.started_at,
+        "finished_at": run.finished_at,
+        "error": run.error_text,
+    }
+
+
 def _ordered(run: Run) -> list[Iteration]:
     return sorted(run.iterations, key=lambda item: item.ordinal)
 
@@ -170,21 +224,39 @@ def _ordered(run: Run) -> list[Iteration]:
 _STATUS_STYLE = {RunStatus.COMPLETED: "green", RunStatus.FAILED: "red"}
 
 
+def status_cell(status: RunStatus) -> str:
+    """A status for a table cell: green when completed, red when failed."""
+    style = _STATUS_STYLE.get(status)
+    return status.value if style is None else f"[{style}]{status.value}[/]"
+
+
+def size_cell(final: Asset | None) -> str:
+    """`WxH` of a stored final, or the placeholder when there is none."""
+    return EMPTY if final is None else f"{final.width}x{final.height}"
+
+
+def compliance_cell(final: Asset | None) -> str:
+    """`✔` or `✘` for a stored final's verdict, or the placeholder when it has none."""
+    if final is None or final.compliant is None:
+        return EMPTY
+    return "✔" if final.compliant else "✘"
+
+
 def _iteration_row(item: Iteration) -> list[str]:
     final = item.final_asset
-    style = _STATUS_STYLE.get(item.status)
-    status = item.status.value if style is None else f"[{style}]{item.status.value}[/]"
-    size = EMPTY if final is None else f"{final.width}x{final.height}"
-    if final is None or final.compliant is None:
-        compliant = EMPTY
-    else:
-        compliant = "✔" if final.compliant else "✘"
     if item.error_text:
         detail = escape(item.error_text)
     else:
         detail = EMPTY if final is None else final.sha256[:12]
     ordinal = f"{item.ordinal} ★" if item.picked else str(item.ordinal)
-    return [ordinal, status, size, compliant, item.idempotency_key[:12], detail]
+    return [
+        ordinal,
+        status_cell(item.status),
+        size_cell(final),
+        compliance_cell(final),
+        item.idempotency_key[:12],
+        detail,
+    ]
 
 
 def _iteration_payload(item: Iteration, data_dir: Path) -> JsonPayload:

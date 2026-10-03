@@ -374,13 +374,17 @@ class RunRepository:
             raise AssetError(msg, hint="generate the hero again and pick it")
         return BatchReference(parent_run_id=run.id, iteration_id=chosen.id, asset=self._info(asset))
 
-    def find_iterations(self, keys: Collection[str]) -> dict[str, ExistingIteration]:
-        """The iterations whose idempotency key is in `keys`, by key, with their try counts."""
+    def iterations_by_key(self, keys: Collection[str]) -> dict[str, Iteration]:
+        """The stored iterations whose idempotency key is in `keys`, by key, as rows to render."""
         rows = self._session.scalars(
             select(Iteration).where(Iteration.idempotency_key.in_(keys))
         ).all()
+        return {row.idempotency_key: row for row in rows}
+
+    def find_iterations(self, keys: Collection[str]) -> dict[str, ExistingIteration]:
+        """The iterations whose idempotency key is in `keys`, by key, with their try counts."""
         return {
-            row.idempotency_key: ExistingIteration(
+            key: ExistingIteration(
                 id=row.id,
                 run_id=row.run_id,
                 status=row.status,
@@ -389,7 +393,7 @@ class RunRepository:
                 if row.started_at is None
                 else datetime.fromisoformat(row.started_at),
             )
-            for row in rows
+            for key, row in self.iterations_by_key(keys).items()
         }
 
     def resolve_target(self, ref: str) -> Run | Iteration:

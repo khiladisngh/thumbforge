@@ -17,6 +17,7 @@ import typer
 from rich.console import Console
 
 from thumbforge import __version__
+from thumbforge.cli import batch as batch_cli
 from thumbforge.cli import config as config_cli
 from thumbforge.cli import db as db_cli
 from thumbforge.cli import fetch as fetch_cli
@@ -144,9 +145,10 @@ app.add_typer(template_cli.app)
 app.add_typer(thumb_cli.app)
 app.add_typer(video_cli.app)
 
-# `fetch` is a bare top-level command (`thumbforge fetch <url>`), not a sub-app, so it is
-# registered directly rather than through add_typer.
+# `fetch` and `batch` are bare top-level commands (`thumbforge fetch <url>`), not sub-apps, so
+# they are registered directly rather than through add_typer.
 app.command("fetch")(fetch_cli.fetch)
+app.command("batch")(batch_cli.batch)
 
 
 def main() -> None:
