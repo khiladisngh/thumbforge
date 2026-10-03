@@ -3,3 +3,4 @@
 *.jpg binary
 *.ttf binary
 *.cmd text eol=crlf
+*.woff2 binary

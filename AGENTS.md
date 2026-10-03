@@ -18,7 +18,9 @@ src/thumbforge/
   logging.py    structlog configuration
 tests/          unit/ contract/ integration/ golden/ templates/golden/ fixtures/
 docs/           site sources (nav in zensical.toml): index.md, user-guide/, developers/ (architecture, conventions,
-                testing, glossary), maintainers/ (branching-and-releases, ci, open-questions), ROADMAP.md, adr/, specs/, spikes/
+                testing, glossary), maintainers/ (branching-and-releases, ci, open-questions), ROADMAP.md, adr/, specs/, spikes/,
+                static/ (landing page CSS, font subset, favicon, docs header logo, NOTICE.txt)
+overrides/      home.html: the standalone landing page template (no JavaScript); docs/index.md selects it in its front matter
 graphify-out/   generated codebase knowledge graph (committed; cache/ and cost.json ignored)
 ```
 

@@ -96,6 +96,10 @@ nav = [
 [project.theme]
 # System fonts only: no requests to a third-party font CDN.
 font = false
+# overrides/home.html is the standalone landing page (docs/index.md sets template: home.html).
+custom_dir = "overrides"
+favicon = "static/favicon.svg"
+logo = "static/logo.svg"
 features = [
   "navigation.tabs",
   "navigation.tabs.sticky",

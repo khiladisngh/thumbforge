@@ -1,3 +1,7 @@
+---
+template: home.html
+---
+
 # Thumbforge
 
 Generate consistent, spec-compliant YouTube thumbnails from a hero image and a playlist — from the terminal.

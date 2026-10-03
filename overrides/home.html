@@ -1,0 +1,319 @@
+{#-
+  Thumbforge landing page: a standalone document, used only by docs/index.md (template: home.html).
+  No theme CSS, no JavaScript. Styles live in docs/static/landing.css.
+  The thumbnail mock-ups are fixed SVG generated once from a seeded script.
+-#}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Icons: Lucide (https://lucide.dev), ISC licence; see static/NOTICE.txt. -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>{{ config.site_name }}: thumbnails that look like a series</title>
+    <meta name="description" content="{{ config.site_description }}">
+    <meta name="author" content="{{ config.site_author }}">
+    {% if page.canonical_url %}
+    <link rel="canonical" href="{{ page.canonical_url }}">
+    <meta property="og:url" content="{{ page.canonical_url }}">
+    {% endif %}
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="{{ config.site_name }}">
+    <meta property="og:title" content="{{ config.site_name }}: thumbnails that look like a series">
+    <meta property="og:description" content="{{ config.site_description }}">
+    <meta name="theme-color" content="#f6f3ee" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#100e0b" media="(prefers-color-scheme: dark)">
+    <link rel="icon" href="{{ 'static/favicon.svg' | url }}" type="image/svg+xml">
+    <link rel="preload" href="{{ 'static/inter-bold-latin.woff2' | url }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ 'static/landing.css' | url }}">
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap site-header__inner">
+        <a class="brand" href="{{ './' | url }}" aria-label="{{ config.site_name }} home">
+          <svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false"><rect x="2.5" y="7.5" width="27" height="17" rx="3.5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M7 19.5h6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="spark" d="M22 10l1.5 3.9 3.9 1.6-3.9 1.6L22 21l-1.5-3.9-3.9-1.6 3.9-1.6z"/></svg>
+          <span>{{ config.site_name }}</span>
+        </a>
+        <nav class="nav" aria-label="Main">
+          <ul>
+            <li class="nav__wide"><a href="#how">How it works</a></li>
+            <li class="nav__wide"><a href="#status">Status</a></li>
+            <li class="nav__wide"><a href="#install">Install</a></li>
+            <li><a href="{{ 'user-guide/' | url }}">User guide</a></li>
+            <li><a href="{{ 'developers/' | url }}">Developers</a></li>
+            <li><a href="{{ config.repo_url }}">GitHub <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10M7 17 17 7"/></svg></a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="wrap hero__grid">
+          <div class="hero__copy">
+            <p class="eyebrow">Open source · pre-alpha · MIT</p>
+            <h1 id="hero-title">Thumbnails that look like a series.</h1>
+            <p class="lede">Thumbforge turns a YouTube playlist into a matching set of spec-compliant thumbnails. Pick one hero, then batch the whole series in its style, from your terminal.</p>
+            <div class="cta">
+              <a class="btn btn--primary" href="{{ 'user-guide/getting-started/' | url }}">Get started <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+              <a class="btn" href="{{ config.repo_url }}">View on GitHub <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10M7 17 17 7"/></svg></a>
+            </div>
+            <p class="hero__note">Pre-alpha: fetching playlists and numbering parts work today; generating thumbnails lands in v0.1.0. <a href="#status">What works today</a></p>
+          </div>
+
+          <div class="stack">
+            <div class="stack__hero">
+              <div class="frame">
+                <span class="tag" aria-hidden="true">HERO</span>
+                <svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Thumbnail mock-up: &quot;Build a CLI&quot;, Part 1 (hero): title &quot;Start with a plan&quot; over teal hills under a sand sun"><defs><clipPath id="tf-hero-clip"><rect width="1280" height="720" rx="24"/></clipPath><linearGradient id="tf-hero-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10283a"/><stop offset="1" stop-color="#1c6a6e"/></linearGradient><linearGradient id="tf-hero-scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080b" stop-opacity="0"/><stop offset=".25" stop-color="#05080b" stop-opacity=".82"/><stop offset="1" stop-color="#05080b" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#tf-hero-clip)"><rect width="1280" height="720" fill="url(#tf-hero-sky)"/><circle cx="857" cy="315" r="190" fill="#f2d49b" opacity=".18"/><circle cx="857" cy="315" r="132" fill="#f2d49b"/><path d="M-80 412.8C-53.3 411.7 26.7 412.1 80 405.9C133.3 399.7 186.7 374.4 240 375.6C293.3 376.7 346.7 416.7 400 412.7C453.3 408.6 506.7 352.3 560 351.5C613.3 350.7 666.7 403.6 720 408C773.3 412.3 826.7 380.7 880 377.8C933.3 374.9 986.7 394.9 1040 390.5C1093.3 386 1146.7 353.7 1200 351.1C1253.3 348.6 1306.7 375.8 1360 375.1C1413.3 374.4 1493.3 351.7 1520 347L1520 730L-80 730Z" fill="#4fa69b" opacity=".85"/><path d="M-80 473.1C-53.3 477.8 26.7 500 80 501.2C133.3 502.5 186.7 484.7 240 480.8C293.3 476.8 346.7 480.8 400 477.6C453.3 474.5 506.7 463.6 560 461.7C613.3 459.8 666.7 461.7 720 466.2C773.3 470.8 826.7 486.5 880 489.1C933.3 491.7 986.7 483.5 1040 482C1093.3 480.5 1146.7 477.4 1200 479.9C1253.3 482.3 1306.7 504 1360 496.5C1413.3 489.1 1493.3 445.3 1520 435.1L1520 730L-80 730Z" fill="#1c6a6e"/><path d="M-80 532.1C-53.3 540.6 26.7 577.1 80 582.8C133.3 588.4 186.7 567 240 566C293.3 565 346.7 579.4 400 576.7C453.3 574 506.7 551.4 560 549.6C613.3 547.7 666.7 566.8 720 565.5C773.3 564.1 826.7 545.3 880 541.7C933.3 538.1 986.7 543 1040 544C1093.3 545 1146.7 549.9 1200 547.6C1253.3 545.4 1306.7 532.4 1360 530.3C1413.3 528.2 1493.3 534.3 1520 535.1L1520 730L-80 730Z" fill="#10283a"/><rect y="360" width="1280" height="360" fill="url(#tf-hero-scrim)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><rect x="64" y="64" width="253.7" height="96" rx="14" fill="#c2410c"/><text x="96" y="132" class="tb-t" font-size="56" fill="#fff">PART 1</text><text x="64" y="538" class="tb-t" font-size="96" fill="#fff">Start with</text><text x="64" y="644" class="tb-t" font-size="96" fill="#fff">a plan</text></g></svg>
+              </div>
+            </div>
+            <ul class="stack__row" aria-label="The rest of the series in the hero's style">
+              <li><div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Thumbnail mock-up: &quot;Build a CLI&quot;, Part 2: title &quot;Parse arguments&quot; over a sun on a grid horizon"><defs><clipPath id="tf-p2-clip"><rect width="1280" height="720" rx="24"/></clipPath><linearGradient id="tf-p2-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1a26"/><stop offset="1" stop-color="#1c6a6e"/></linearGradient><linearGradient id="tf-p2-scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080b" stop-opacity="0"/><stop offset=".25" stop-color="#05080b" stop-opacity=".82"/><stop offset="1" stop-color="#05080b" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#tf-p2-clip)"><rect width="1280" height="720" fill="url(#tf-p2-sky)"/><circle cx="752" cy="360" r="150" fill="#f2d49b"/><rect x="592" y="300" width="320" height="6" fill="#1c6a6e"/><rect x="592" y="326" width="320" height="9" fill="#1c6a6e"/><rect x="592" y="348" width="320" height="12" fill="#1c6a6e"/><rect y="360" width="1280" height="360" fill="#10283a"/><path d="M446 360L-1588 720M480 360L-1328 720M514 360L-1068 720M548 360L-808 720M582 360L-548 720M616 360L-288 720M650 360L-28 720M684 360L232 720M718 360L492 720M752 360L752 720M786 360L1012 720M820 360L1272 720M854 360L1532 720M888 360L1792 720M922 360L2052 720M956 360L2312 720M990 360L2572 720M1024 360L2832 720M1058 360L3092 720M0 368H1280M0 381.8H1280M0 400.8H1280M0 427.1H1280M0 463.4H1280M0 513.4H1280M0 582.5H1280M0 677.8H1280" stroke="#4fa69b" stroke-width="3" fill="none" opacity=".75"/><rect y="360" width="1280" height="360" fill="url(#tf-p2-scrim)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><rect x="64" y="64" width="264.8" height="96" rx="14" fill="#c2410c"/><text x="96" y="132" class="tb-t" font-size="56" fill="#fff">PART 2</text><text x="64" y="538" class="tb-t" font-size="96" fill="#fff">Parse</text><text x="64" y="644" class="tb-t" font-size="96" fill="#fff">arguments</text></g></svg></div></li>
+              <li><div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Thumbnail mock-up: &quot;Build a CLI&quot;, Part 3: title &quot;Store the data&quot; over stepped teal bars under a sand sun"><defs><clipPath id="tf-p3-clip"><rect width="1280" height="720" rx="24"/></clipPath><linearGradient id="tf-p3-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1a26"/><stop offset="1" stop-color="#10283a"/></linearGradient><linearGradient id="tf-p3-scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080b" stop-opacity="0"/><stop offset=".25" stop-color="#05080b" stop-opacity=".82"/><stop offset="1" stop-color="#05080b" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#tf-p3-clip)"><rect width="1280" height="720" fill="url(#tf-p3-sky)"/><circle cx="673" cy="196" r="96" fill="#f2d49b"/><path d="M0 720V441h88V720ZM96 720V315h120V720ZM224 720V465h152V720ZM384 720V303h152V720ZM544 720V314h120V720ZM672 720V416h120V720ZM800 720V524h152V720ZM960 720V349h120V720ZM1088 720V306h120V720ZM1216 720V342h88V720Z" fill="#1c6a6e"/><path d="M-48 720V549h80v31H104V720ZM112 720V549h42v37h42v28H232V720ZM240 720V537h96v44H424V720ZM432 720V499h42v44h42v24H552V720ZM560 720V496h53v49h53v48H712V720ZM720 720V602h64v47H840V720ZM848 720V487h96v28H1032V720ZM1040 720V607h64v44H1160V720ZM1168 720V616h42v41h42v46H1288V720Z" fill="#10283a"/><rect y="360" width="1280" height="360" fill="url(#tf-p3-scrim)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><rect x="64" y="64" width="265.7" height="96" rx="14" fill="#c2410c"/><text x="96" y="132" class="tb-t" font-size="56" fill="#fff">PART 3</text><text x="64" y="538" class="tb-t" font-size="96" fill="#fff">Store</text><text x="64" y="644" class="tb-t" font-size="96" fill="#fff">the data</text></g></svg></div></li>
+              <li><div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Thumbnail mock-up: &quot;Build a CLI&quot;, Part 4: title &quot;Ship it&quot; over layered teal waves under a pale sun"><defs><clipPath id="tf-p4-clip"><rect width="1280" height="720" rx="24"/></clipPath><linearGradient id="tf-p4-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c6a6e"/><stop offset="1" stop-color="#f2d49b"/></linearGradient><linearGradient id="tf-p4-scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080b" stop-opacity="0"/><stop offset=".25" stop-color="#05080b" stop-opacity=".82"/><stop offset="1" stop-color="#05080b" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#tf-p4-clip)"><rect width="1280" height="720" fill="url(#tf-p4-sky)"/><circle cx="992" cy="250" r="240" fill="#fff8ea" opacity=".14"/><circle cx="992" cy="250" r="180" fill="#fff8ea" opacity=".2"/><circle cx="992" cy="250" r="120" fill="#fff8ea"/><path d="M-80 361.1C-58.7 362.8 5.3 375.1 48 371.3C90.7 367.5 133.3 341.5 176 338.5C218.7 335.5 261.3 351.6 304 353.3C346.7 354.9 389.3 349.7 432 348.2C474.7 346.8 517.3 342 560 344.6C602.7 347.2 645.3 365 688 363.8C730.7 362.7 773.3 335.7 816 337.6C858.7 339.5 901.3 369.9 944 375.4C986.7 380.9 1029.3 375 1072 370.6C1114.7 366.2 1157.3 349.5 1200 349C1242.7 348.5 1285.3 364.8 1328 367.5C1370.7 370.2 1434.7 365.5 1456 365.1L1456 730L-80 730Z" fill="#4fa69b"/><path d="M-80 456C-58.7 455 5.3 454.3 48 450.2C90.7 446.1 133.3 434.8 176 431.5C218.7 428.2 261.3 431.1 304 430.3C346.7 429.6 389.3 428.8 432 427C474.7 425.2 517.3 417.3 560 419.5C602.7 421.8 645.3 436.4 688 440.7C730.7 445 773.3 447.7 816 445.3C858.7 442.9 901.3 428.9 944 426.2C986.7 423.5 1029.3 422.2 1072 428.9C1114.7 435.7 1157.3 461.5 1200 466.6C1242.7 471.7 1285.3 465.8 1328 459.3C1370.7 452.8 1434.7 432.7 1456 427.4L1456 730L-80 730Z" fill="#1c6a6e"/><path d="M-80 512.5C-58.7 510.5 5.3 499.5 48 500.6C90.7 501.7 133.3 518.1 176 518.9C218.7 519.6 261.3 507.9 304 505.1C346.7 502.4 389.3 497.8 432 502.2C474.7 506.7 517.3 526.7 560 531.9C602.7 537 645.3 538.9 688 533.3C730.7 527.6 773.3 496.6 816 498.1C858.7 499.6 901.3 537 944 542.1C986.7 547.2 1029.3 530.6 1072 528.6C1114.7 526.6 1157.3 529.6 1200 530.1C1242.7 530.5 1285.3 531.6 1328 531.5C1370.7 531.3 1434.7 529.7 1456 529.3L1456 730L-80 730Z" fill="#10283a"/><path d="M-80 612.4C-58.7 612.2 5.3 614.1 48 611.2C90.7 608.4 133.3 597.3 176 595.3C218.7 593.3 261.3 598.4 304 599C346.7 599.5 389.3 596.3 432 598.3C474.7 600.3 517.3 612.7 560 610.9C602.7 609.1 645.3 589.3 688 587.4C730.7 585.5 773.3 594.3 816 599.4C858.7 604.5 901.3 616.2 944 617.8C986.7 619.3 1029.3 608.5 1072 608.5C1114.7 608.5 1157.3 618.5 1200 617.8C1242.7 617.1 1285.3 604.3 1328 604.2C1370.7 604.1 1434.7 614.9 1456 617L1456 730L-80 730Z" fill="#0a1a26"/><rect y="360" width="1280" height="360" fill="url(#tf-p4-scrim)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><rect x="64" y="64" width="267.4" height="96" rx="14" fill="#c2410c"/><text x="96" y="132" class="tb-t" font-size="56" fill="#fff">PART 4</text><text x="64" y="644" class="tb-t" font-size="96" fill="#fff">Ship it</text></g></svg></div></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="how" aria-labelledby="how-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>01</b> How it works</p>
+            <h2 id="how-title">One hero sets the look. The series follows it.</h2>
+          </div>
+          <ol class="steps">
+            <li class="step">
+              <h3>Fetch the playlist</h3>
+              <span class="chip chip--now">Available now</span>
+              <p>Give it a playlist URL. Thumbforge stores the channel, the playlist and every video, and numbers the parts in playlist order.</p>
+              <div class="step__cmds">
+                <code class="cmd">thumbforge fetch <span class="nb">&lt;playlist-url&gt;</span></code>
+              </div>
+            </li>
+            <li class="step">
+              <h3>Pick your hero</h3>
+              <span class="chip chip--soon">Coming in v0.1.0</span>
+              <p>Generate several candidates for one video, compare them and pick the one that sets the look of the series.</p>
+              <div class="step__cmds">
+                <code class="cmd">thumbforge thumb generate <span class="nb">&lt;video-id&gt;</span> <span class="nb">--n 4</span></code>
+                <code class="cmd">thumbforge thumb pick <span class="nb">&lt;run-id&gt; 2</span></code>
+              </div>
+            </li>
+            <li class="step">
+              <h3>Batch the series</h3>
+              <span class="chip chip--soon">Coming in v0.1.0</span>
+              <p>Every other video gets a thumbnail in the hero's style, with its own title and Part N badge.</p>
+              <div class="step__cmds">
+                <code class="cmd">thumbforge batch <span class="nb">&lt;playlist-id&gt;</span> <span class="nb">--hero &lt;run-id&gt;</span></code>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="split" aria-labelledby="split-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>02</b> The split</p>
+            <h2 id="split-title">AI paints. Pillow draws.</h2>
+          </div>
+          <ol class="equation" aria-label="How one thumbnail is put together">
+            <li>
+              <figure>
+                <div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="AI-painted background layer for Part 2: a sun on a grid horizon, no text"><defs><clipPath id="tf-sbg-clip"><rect width="1280" height="720" rx="24"/></clipPath><linearGradient id="tf-sbg-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1a26"/><stop offset="1" stop-color="#1c6a6e"/></linearGradient></defs><g clip-path="url(#tf-sbg-clip)"><rect width="1280" height="720" fill="url(#tf-sbg-sky)"/><circle cx="752" cy="360" r="150" fill="#f2d49b"/><rect x="592" y="300" width="320" height="6" fill="#1c6a6e"/><rect x="592" y="326" width="320" height="9" fill="#1c6a6e"/><rect x="592" y="348" width="320" height="12" fill="#1c6a6e"/><rect y="360" width="1280" height="360" fill="#10283a"/><path d="M446 360L-1588 720M480 360L-1328 720M514 360L-1068 720M548 360L-808 720M582 360L-548 720M616 360L-288 720M650 360L-28 720M684 360L232 720M718 360L492 720M752 360L752 720M786 360L1012 720M820 360L1272 720M854 360L1532 720M888 360L1792 720M922 360L2052 720M956 360L2312 720M990 360L2572 720M1024 360L2832 720M1058 360L3092 720M0 368H1280M0 381.8H1280M0 400.8H1280M0 427.1H1280M0 463.4H1280M0 513.4H1280M0 582.5H1280M0 677.8H1280" stroke="#4fa69b" stroke-width="3" fill="none" opacity=".75"/></g></svg></div>
+                <figcaption><strong>AI-painted background</strong>From the image provider, no text.</figcaption>
+              </figure>
+            </li>
+            <li class="op" aria-hidden="true">+</li>
+            <li>
+              <figure>
+                <div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Title layer drawn by Pillow: &quot;Parse arguments&quot; in white on a dark band, on a transparent canvas"><defs><clipPath id="tf-sti-clip"><rect width="1280" height="720" rx="24"/></clipPath><pattern id="tf-sti-chk" width="64" height="64" patternUnits="userSpaceOnUse"><rect width="64" height="64" class="chk-a"/><path d="M0 0h32v32H0zM32 32h32v32H32z" class="chk-b"/></pattern><linearGradient id="tf-sti-scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080b" stop-opacity="0"/><stop offset=".25" stop-color="#05080b" stop-opacity=".82"/><stop offset="1" stop-color="#05080b" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#tf-sti-clip)"><rect width="1280" height="720" fill="url(#tf-sti-chk)"/><rect y="360" width="1280" height="360" fill="url(#tf-sti-scrim)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><text x="64" y="538" class="tb-t" font-size="96" fill="#fff">Parse</text><text x="64" y="644" class="tb-t" font-size="96" fill="#fff">arguments</text></g></svg></div>
+                <figcaption><strong>Title (Pillow)</strong>Bundled Inter Bold, placed by the template.</figcaption>
+              </figure>
+            </li>
+            <li class="op" aria-hidden="true">+</li>
+            <li>
+              <figure>
+                <div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Badge layer drawn by Pillow: &quot;PART 2&quot; on an ember badge, on a transparent canvas"><defs><clipPath id="tf-sba-clip"><rect width="1280" height="720" rx="24"/></clipPath><pattern id="tf-sba-chk" width="64" height="64" patternUnits="userSpaceOnUse"><rect width="64" height="64" class="chk-a"/><path d="M0 0h32v32H0zM32 32h32v32H32z" class="chk-b"/></pattern></defs><g clip-path="url(#tf-sba-clip)"><rect width="1280" height="720" fill="url(#tf-sba-chk)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><rect x="64" y="64" width="264.8" height="96" rx="14" fill="#c2410c"/><text x="96" y="132" class="tb-t" font-size="56" fill="#fff">PART 2</text></g></svg></div>
+                <figcaption><strong>“Part N” badge (Pillow)</strong>Same size and place on every video.</figcaption>
+              </figure>
+            </li>
+            <li class="op" aria-hidden="true">=</li>
+            <li class="is-final">
+              <figure>
+                <div class="frame"><svg class="thumb" viewBox="0 0 1280 720" role="img" aria-label="Final thumbnail: the three layers combined, Part 2 &quot;Parse arguments&quot;"><defs><clipPath id="tf-sfi-clip"><rect width="1280" height="720" rx="24"/></clipPath><linearGradient id="tf-sfi-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1a26"/><stop offset="1" stop-color="#1c6a6e"/></linearGradient><linearGradient id="tf-sfi-scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#05080b" stop-opacity="0"/><stop offset=".25" stop-color="#05080b" stop-opacity=".82"/><stop offset="1" stop-color="#05080b" stop-opacity=".92"/></linearGradient></defs><g clip-path="url(#tf-sfi-clip)"><rect width="1280" height="720" fill="url(#tf-sfi-sky)"/><circle cx="752" cy="360" r="150" fill="#f2d49b"/><rect x="592" y="300" width="320" height="6" fill="#1c6a6e"/><rect x="592" y="326" width="320" height="9" fill="#1c6a6e"/><rect x="592" y="348" width="320" height="12" fill="#1c6a6e"/><rect y="360" width="1280" height="360" fill="#10283a"/><path d="M446 360L-1588 720M480 360L-1328 720M514 360L-1068 720M548 360L-808 720M582 360L-548 720M616 360L-288 720M650 360L-28 720M684 360L232 720M718 360L492 720M752 360L752 720M786 360L1012 720M820 360L1272 720M854 360L1532 720M888 360L1792 720M922 360L2052 720M956 360L2312 720M990 360L2572 720M1024 360L2832 720M1058 360L3092 720M0 368H1280M0 381.8H1280M0 400.8H1280M0 427.1H1280M0 463.4H1280M0 513.4H1280M0 582.5H1280M0 677.8H1280" stroke="#4fa69b" stroke-width="3" fill="none" opacity=".75"/><rect y="360" width="1280" height="360" fill="url(#tf-sfi-scrim)"/><rect x="64" y="64" width="1152" height="592" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="3" stroke-dasharray="14 12"/><rect x="64" y="64" width="264.8" height="96" rx="14" fill="#c2410c"/><text x="96" y="132" class="tb-t" font-size="56" fill="#fff">PART 2</text><text x="64" y="538" class="tb-t" font-size="96" fill="#fff">Parse</text><text x="64" y="644" class="tb-t" font-size="96" fill="#fff">arguments</text></g></svg></div>
+                <figcaption><strong>Final thumbnail</strong>Part 2 of the series.</figcaption>
+              </figure>
+            </li>
+          </ol>
+          <p class="split-note">Text is composited, not generated. The provider only paints the background; Pillow draws the title and the badge from the template's layout. <strong>Every thumbnail gets identical typography, and a model's spelling never decides what your thumbnail says.</strong> The text overlay works today; joining it to image generation lands in v0.1.0.</p>
+        </div>
+      </section>
+
+      <section class="section" id="cli" aria-labelledby="cli-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>03</b> In the terminal</p>
+            <h2 id="cli-title">A handful of commands, one series.</h2>
+          </div>
+          <div class="term-grid">
+            <div class="term">
+              <div class="term__bar" aria-hidden="true">~/series</div>
+<pre tabindex="0" role="region" aria-label="Example commands, scrollable"><code><span class="t-c"># works today</span>
+<span class="t-p">$</span> thumbforge fetch "https://www.youtube.com/playlist?list=PL…"
+<span class="t-p">$</span> thumbforge playlist show <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--videos</span></span>
+<span class="t-p">$</span> thumbforge playlist renumber <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--start</span> 1</span>
+
+<span class="t-soon"><span class="t-mark"># coming in v0.1.0</span>
+<span class="t-p">$</span> thumbforge thumb generate <span class="t-a nb">&lt;video-id&gt;</span> <span class="nb"><span class="t-f">--template</span> bold-title</span> <span class="nb"><span class="t-f">--provider</span> antigravity</span> <span class="nb"><span class="t-f">--n</span> 4</span>
+<span class="t-p">$</span> thumbforge thumb pick <span class="t-a nb">&lt;run-id&gt;</span> 2
+<span class="t-p">$</span> thumbforge batch <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--hero</span> <span class="t-a">&lt;run-id&gt;</span></span> <span class="nb"><span class="t-f">--template</span> series-parts</span></span></code></pre>
+            </div>
+            <ul class="facts">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg><p><strong>Local-first</strong>One SQLite database and a folder of images on your machine.</p></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg><p><strong>Scriptable</strong>The global <code>--json</code> flag prints one JSON document instead of tables.</p></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg><p><strong>No API key for metadata</strong>yt-dlp reads public playlists, videos and channels.</p></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="features" aria-labelledby="features-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>04</b> Features</p>
+            <h2 id="features-title">Built to repeat one look.</h2>
+          </div>
+          <ul class="features">
+            <li class="card">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z"/><path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12"/><path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17"/></svg></span>
+              <h3>Consistent by construction</h3>
+              <p>AI paints the background. Pillow draws the title and the Part N badge the same way every time.</p>
+            </li>
+            <li class="card">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0ZM14.5 12.5l2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></svg></span>
+              <h3>Spec-compliant</h3>
+              <p>16:9, at least 1280 px wide, JPEG or PNG, under 2 MB, sRGB. Checked before an image is accepted.</p>
+              <span class="chip chip--soon">Coming in v0.1.0</span>
+            </li>
+            <li class="card">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></svg></span>
+              <h3>Pluggable providers</h3>
+              <p>Providers are plugins found through the <code>thumbforge.providers</code> entry-point group. The Antigravity CLI comes first; a deterministic fake provider keeps tests and demos offline.</p>
+            </li>
+            <li class="card">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></span>
+              <h3>Local and resumable</h3>
+              <p>Channels, playlists, videos, templates, runs and assets live in SQLite; images are content-addressed on disk. An interrupted batch resumes where it stopped.</p>
+              <span class="chip chip--soon">Resume: coming in v0.1.0</span>
+            </li>
+            <li class="card">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 12.5 8 15l2 2.5M14 12.5l2 2.5-2 2.5"/></svg></span>
+              <h3>Templates you can read</h3>
+              <p>A template is a Jinja2 prompt plus a TOML layout: canvas, title box, badge, font, colours, safe margins. Check one with <code>thumbforge template validate</code>.</p>
+            </li>
+            <li class="card">
+              <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19h8M4 17l6-6-6-6"/></svg></span>
+              <h3>Scriptable</h3>
+              <p><code>--json</code> prints one JSON document; logs go to stderr, results to stdout. Metadata comes from yt-dlp, so no API key.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section" id="status" aria-labelledby="status-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>05</b> Status</p>
+            <h2 id="status-title">Where it stands.</h2>
+            <p>Thumbforge is pre-alpha. This is the honest split between what runs today and what the first release adds.</p>
+          </div>
+          <div class="status">
+            <div class="status__col status__col--now">
+              <h3>Works today</h3>
+              <ul>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Fetch videos, playlists and channels</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>List and show what you fetched</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Renumber parts, leaving trailers unnumbered</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Validate templates and render their prompts (no provider call)</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>List, check and configure providers</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Inspect and edit configuration</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Manage the database</span></li>
+              </ul>
+            </div>
+            <div class="status__col status__col--soon">
+              <h3>Coming in v0.1.0</h3>
+              <ul>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Hero generation and comparison</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Pick and iterate</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Batch a playlist, with resume and cancel</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Compliance check on every final image</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Builtin templates and template management</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Run history and cost report</span></li>
+              </ul>
+            </div>
+          </div>
+          <p class="status__more"><a class="btn" href="{{ 'ROADMAP/' | url }}">Read the roadmap <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></p>
+        </div>
+      </section>
+
+      <section class="section" id="who" aria-labelledby="who-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>06</b> Who it is for</p>
+            <h2 id="who-title">For channels that publish in parts.</h2>
+          </div>
+          <div class="who">
+            <p class="who__lead">Thumbforge is for YouTubers who publish in series: courses, tutorial runs, episode seasons.</p>
+            <div>
+              <p>If you have ever nudged ‘Part 7’ around an editor to match ‘Part 6’, this is for you.</p>
+              <p class="who__not"><span>It is not a design suite: it makes one look and repeats it.</span></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="install" aria-labelledby="install-title">
+        <div class="wrap">
+          <div class="section__head">
+            <p class="label"><b>07</b> Install</p>
+            <h2 id="install-title">Install from GitHub.</h2>
+          </div>
+          <div class="install">
+            <pre><code>uv tool install git+https://github.com/khiladisngh/thumbforge
+thumbforge --version</code></pre>
+            <p class="install__note">Needs uv. uv fetches Python 3.14 if you do not have it.</p>
+            <div class="install__links">
+              <a class="btn btn--primary" href="{{ 'user-guide/' | url }}">User guide <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+              <a class="btn" href="{{ 'developers/' | url }}">Developers</a>
+              <a class="btn" href="{{ 'maintainers/' | url }}">Maintainers</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap site-footer__inner">
+        <div class="site-footer__meta">
+          <a class="brand" href="{{ './' | url }}" aria-label="{{ config.site_name }} home"><svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true" focusable="false"><rect x="2.5" y="7.5" width="27" height="17" rx="3.5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M7 19.5h6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path class="spark" d="M22 10l1.5 3.9 3.9 1.6-3.9 1.6L22 21l-1.5-3.9-3.9-1.6 3.9-1.6z"/></svg><span>{{ config.site_name }}</span></a>
+          <p>{{ config.copyright }}</p>
+          <p>Headings use Inter (SIL Open Font License); icons are from Lucide (ISC). <a href="{{ 'static/NOTICE.txt' | url }}">Licence notices</a></p>
+        </div>
+        <nav aria-label="Footer">
+          <ul>
+            <li><a href="{{ 'user-guide/' | url }}">User guide</a></li>
+            <li><a href="{{ 'developers/' | url }}">Developers</a></li>
+            <li><a href="{{ 'maintainers/' | url }}">Maintainers</a></li>
+            <li><a href="{{ config.repo_url }}">GitHub</a></li>
+            <li><a href="{{ config.repo_url }}/issues">Issues</a></li>
+          </ul>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
