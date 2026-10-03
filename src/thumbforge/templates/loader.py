@@ -19,12 +19,14 @@ from thumbforge.core.errors import NotFoundError, TemplateError
 from thumbforge.core.layout import LayoutSpec, Template, spec_hash
 from thumbforge.logging import get_logger
 from thumbforge.templates.builtins import BUILTIN_NAMES, builtin_files
-from thumbforge.templates.render import check_syntax
+from thumbforge.templates.render import RenderContext, check_syntax, render_prompt
 from thumbforge.templates.schema import dump_layout, load_layout
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
     from pathlib import Path
+
+    from thumbforge.core.models import ChannelMeta, VideoMeta
 
 log = get_logger(__name__)
 
@@ -106,6 +108,44 @@ def resolve(store: TemplateStore, ref: TemplateRef) -> Template:
         stored = ", ".join(f"{ref.name}@{v}" for v in versions)
         raise NotFoundError(msg, hint=f"stored versions: {stored}")
     return template
+
+
+class PromptRenderer:
+    """Template lookup and prompt rendering for a generation run (`core.services.hero`).
+
+    Satisfies the service's `TemplateRenderer` Protocol. A hero run has no playlist and no
+    part, so those context fields are empty; the layout supplies the size and the
+    negative-space hint.
+    """
+
+    def __init__(self, store: TemplateStore) -> None:
+        """Resolve references against ``store``."""
+        self._store = store
+
+    def resolve(self, ref: str) -> Template:
+        """The stored template ``NAME[@VERSION]`` names."""
+        return resolve(self._store, parse_ref(ref))
+
+    def render(
+        self,
+        template: Template,
+        video: VideoMeta,
+        channel: ChannelMeta | None,
+        vars: Mapping[str, str],
+    ) -> str:
+        """Render the template's prompt for ``video``; ``vars`` feeds ``{{ vars.key }}``."""
+        context = RenderContext(
+            video=video,
+            playlist=None,
+            part_number=None,
+            part_label=None,
+            channel=channel,
+            vars=vars,
+            negative_space=template.layout.negative_space.hint,
+            width=template.layout.canvas.width,
+            height=template.layout.canvas.height,
+        )
+        return render_prompt(template.prompt_template, context, name=template.ref)
 
 
 def locate(path: Path) -> tuple[Path, Path]:

@@ -10,16 +10,14 @@ import typer
 from thumbforge import credentials
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import emit, get_app_context, kv, table
+from thumbforge.cli._runs import provider_config
 from thumbforge.core.enums import ChannelSource
 from thumbforge.core.errors import ProviderAuthError, ProviderPermanentError
-from thumbforge.core.json import JsonPayload, JsonValue
+from thumbforge.core.json import JsonPayload
 from thumbforge.providers import registry
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from thumbforge.core.providers import HealthReport, ImageProvider
-    from thumbforge.settings import Settings
 
 app = typer.Typer(
     name="provider",
@@ -33,19 +31,6 @@ app = typer.Typer(
 AUTH_CHECK = "auth"
 
 _KEY_ARGUMENT = Annotated[str, typer.Argument(metavar="KEY", help="Provider registry key.")]
-
-
-def _config(settings: Settings, key: str) -> Mapping[str, JsonValue]:
-    """The provider's own settings section, or an empty mapping when it has none.
-
-    Providers take a plain mapping rather than `Settings` so nothing in `providers/` depends
-    on the settings model. `fake` has no section at all, which is not an error.
-    """
-    section = getattr(settings.providers, key, None)
-    if section is None:
-        return {}
-    dumped: JsonPayload = section.model_dump(mode="json")
-    return dumped
 
 
 def _summarise(provider: ImageProvider) -> str:
@@ -93,7 +78,7 @@ def list_(ctx: typer.Context) -> None:
         # Bound to a local because SIM118 mistakes this module-level function for dict.keys().
         registered = registry.keys()
         for key in registered:
-            provider = registry.get(key, _config(settings, key))
+            provider = registry.get(key, provider_config(settings, key))
             info = await provider.info()
             rows.append(
                 {
@@ -136,7 +121,7 @@ def check(ctx: typer.Context, key: _KEY_ARGUMENT) -> None:
     app_ctx = get_app_context(ctx)
     settings = app_ctx.require_settings()
 
-    provider = registry.get(key, _config(settings, key))
+    provider = registry.get(key, provider_config(settings, key))
     report = asyncio.run(provider.healthcheck())
     # Resolved once: the render thunk would otherwise repeat the keyring read.
     credential_state = credentials.describe(key)
@@ -181,7 +166,7 @@ def models(ctx: typer.Context, key: _KEY_ARGUMENT) -> None:
     app_ctx = get_app_context(ctx)
     settings = app_ctx.require_settings()
 
-    provider = registry.get(key, _config(settings, key))
+    provider = registry.get(key, provider_config(settings, key))
     report = asyncio.run(provider.healthcheck())
 
     # A failed report first: reporting "no models" when the real problem is a missing login
@@ -214,7 +199,7 @@ def set_key(ctx: typer.Context, key: _KEY_ARGUMENT) -> None:
 
     # Resolved before prompting so a typo costs a message rather than a typed-out secret.
     if key != ChannelSource.API.value:
-        registry.get(key, _config(settings, key))
+        registry.get(key, provider_config(settings, key))
 
     value = typer.prompt(f"API key for {key}", hide_input=True)
     credentials.store_api_key(key, value)

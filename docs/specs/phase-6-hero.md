@@ -19,14 +19,15 @@ Generate a hero thumbnail for one video as N iterations, show them, pick one, ex
 
 ## Interfaces
 
-Collaborators arrive as Protocols declared beside the service, as `FetchService` does (`core` imports no other package); the names in the signatures are the adapters the CLI passes in. `finalize` is `imaging.finalize.render_final` with `output` bound from `[output]`.
+Collaborators arrive as Protocols declared beside the service, as `FetchService` does (`core` imports no other package); the names in the signatures are the adapters the CLI passes in. `core` cannot name ORM rows, so persistence is one `HeroStore` Protocol, satisfied by `storage.runs.RunRepository`, which also writes the raw and final assets; the service returns counts and the CLI reads the stored rows back to render them (as `fetch` does), so `thumb generate` and `runs show` print the same view. `registry` is `providers.registry`; `renderer` is `templates.loader.PromptRenderer`; `finalize` is `imaging.finalize.render_final` with `output` bound from `[output]`.
 
 ```python
 class HeroService:
-    def __init__(self, repos: Repositories, registry: ProviderRegistry, renderer: TemplateRenderer, store: AssetStore, finalize: Finalize, settings: Settings) -> None: ...
+    def __init__(self, store: HeroStore, registry: ProviderRegistry, renderer: TemplateRenderer, finalize: Finalize, *, logs_dir: Path) -> None: ...
     async def generate(self, spec: RunSpec, *, progress: ProgressSink) -> RunResult
-        # RunSpec(video_id, template_ref, provider_key, n, concurrency, seed, vars, out_dir)
-        # RunResult(run: Run, iterations: list[Iteration], exit_code: int)
+        # RunSpec(video_id, template_ref, provider_key, n, concurrency, seed, vars, out_dir, provider_params)
+        # RunResult(run_id, status, iteration_ids, completed, failed, compliance_failed)
+        #   .exit_code -> ExitCode, .error() -> the ThumbforgeError the CLI raises after printing
 
 class IterateService:
     async def iterate(self, parent: Run | Iteration, *, n: int, prompt_append: str | None, vars: dict[str, str], from_picked: bool, progress: ProgressSink) -> RunResult
@@ -35,7 +36,7 @@ def pick(run_id: str, target: int | str) -> Iteration          # ordinal or iter
 def export(target: Run | Iteration, to: Path, *, raw: bool) -> list[Path]
 ```
 
-Idempotency key (`PLAN.md` §6, verbatim): `sha256(template.spec_hash + provider_profile.id + video.youtube_id + str(part_number) + rendered_prompt + str(seed) + reference_asset.sha256)[:32]`, stored on `iteration.idempotency_key UNIQUE`. For hero runs `part_number` is `""` and the ordinal is folded into `seed` (or `str(ordinal)` when the provider has no seed) so N iterations get N keys.
+Idempotency key (`PLAN.md` §6, verbatim): `sha256(template.spec_hash + provider_profile.id + video.youtube_id + str(part_number) + rendered_prompt + str(seed) + reference_asset.sha256)[:32]`, stored on `iteration.idempotency_key UNIQUE`. For hero runs `part_number` is `""` and the ordinal is folded into `seed` (or `str(ordinal)` when the provider has no seed) so N iterations get N keys. Iteration `k` of `--seed S` uses seed `S + k - 1` (`S` defaults to 0) when the provider supports seeds. A hero run is neither deduplicated nor resumable, so its key also folds in the run id as a final term: without it, re-issuing a failed run (the intended recovery) would collide on `iteration.idempotency_key UNIQUE`.
 
 Commands (`PLAN.md` §5.2):
 
@@ -47,12 +48,14 @@ Commands (`PLAN.md` §5.2):
 | `thumbforge thumb show <run>`                         | `--columns 2`                                                                                                                      | preview grid with ordinals, picked marker, compliance status                                                             | 0, 3          |
 | `thumbforge thumb export <run\|iteration>`            | `--to PATH`, `--raw`                                                                                                               | copies final (or raw) asset(s) to PATH                                                                                   | 0, 3          |
 
+`thumbforge runs show <run>` (minimal, P6.1; P7.4 adds `list|resume|cancel|delete`) prints the run header and the iteration table of a stored run, or the same as `--json` with each iteration's full idempotency key, assets and compliance report; exit `3` for an unknown run.
+
 ## Behaviour
 
 1. `thumb generate V` resolves the video (Phase 2 repos; exit `3` if unknown), template (`[general] default_template` unless `--template`), provider (`[general] default_provider` unless `--provider`); creates or reuses a `provider_profile` snapshot (`name = "<key>@<version>:<params sha>"`); renders the prompt once; creates `run(kind='hero', status='running', video_id=V)` and N `pending` iterations with distinct keys; binds `run_id` in structlog contextvars.
-2. Iterations run under `asyncio.Semaphore(min(--concurrency, capabilities.max_concurrency))` with the Phase 3 retry policy; each success is stored as the `raw` asset, passed through `finalize` (Phase 5 `render_final`), and the returned bytes are stored as the `final` asset with `compliant` and `compliance_report_json` set from the report — stored even when non-compliant, so the user can inspect it → `raw_asset_id`, `final_asset_id`, `compliant`. Provider stdout/stderr land in `<state_dir>/logs/runs/<run_id>/<iteration_id>.{out,err}`.
+2. Iterations run under `asyncio.Semaphore(min(--concurrency, capabilities.max_concurrency))`, which guards the provider call only (finalizing and storing overlap with the next generation), with the Phase 3 retry policy; each success is stored as the `raw` asset, passed through `finalize` (Phase 5 `render_final`), and the returned bytes are stored as the `final` asset with `compliant` and `compliance_report_json` set from the report — stored even when non-compliant, so the user can inspect it → `raw_asset_id`, `final_asset_id`, `compliant`. Provider stdout/stderr land in `<state_dir>/logs/runs/<run_id>/<idempotency_key>.{out,err}` (the provider names them by the request key, not the iteration id).
 3. Run status at the end: all completed → `completed`, exit `0`; some failed → `failed`, exit `6` and the message from `PLAN.md` §5.3; all failed → `failed`, exit `4`. A compliance failure on an otherwise successful iteration marks that iteration `failed` with `error_text` from the report. When every failure is a compliance failure, exit `5` replaces both `6` and `4`.
-4. `--out DIR` additionally copies every final asset to `DIR/<youtube_id>-<ordinal>.<ext>`.
+4. `--out DIR` additionally copies the final asset of every completed iteration to `DIR/<youtube_id>-<ordinal>.<ext>`; a non-compliant final stays inspectable in the store but is not copied.
 5. `thumb pick R 2` sets `picked = 1` on ordinal 2 and `0` on siblings; picking a `failed` iteration exits `2`.
 6. `thumb iterate R --n 4 --prompt-append "warmer colours"` creates `run(kind='iterate', parent_run_id=R, video_id=R.video_id, reference_asset_id=<picked or given iteration>.raw_asset_id)`, re-renders the prompt with the append and `vars`, and passes the reference path in `GenerationRequest.reference_images`. Without a picked iteration and without an explicit iteration id, exit `2` with hint `thumb pick`. `--from-picked` walks to the newest picked iteration in the parent chain.
 7. `thumb export` copies (never moves) assets; `--raw` selects `raw_asset_id`.

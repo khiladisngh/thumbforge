@@ -17,10 +17,11 @@ from rich.text import Text
 
 from thumbforge.cli._errors import handle_errors
 from thumbforge.cli._render import AppContext, emit, get_app_context, kv, table
+from thumbforge.cli._runs import parse_vars
 from thumbforge.cli._youtube import lookup_key, open_repositories
-from thumbforge.core.errors import TemplateError
-from thumbforge.core.models import ChannelMeta, PlaylistMeta, VideoMeta
+from thumbforge.core.models import PlaylistMeta
 from thumbforge.settings import default_config_path
+from thumbforge.storage.repositories import channel_meta, video_meta
 from thumbforge.templates.loader import (
     check_name,
     import_template,
@@ -211,7 +212,7 @@ def render(
     app_ctx = get_app_context(ctx)
     settings = app_ctx.require_settings()
     parsed = parse_ref(ref)
-    variables = _parse_vars(var or [])
+    variables = parse_vars(var or [])
 
     with open_repositories(settings.db_path) as repos:
         template = resolve(repos.templates, parsed)
@@ -239,17 +240,6 @@ def _templates_dir(app_ctx: AppContext) -> Path:
     return (app_ctx.config_path or default_config_path()).parent / "templates"
 
 
-def _parse_vars(pairs: list[str]) -> dict[str, str]:
-    variables: dict[str, str] = {}
-    for pair in pairs:
-        key, separator, value = pair.partition("=")
-        if not separator or not key:
-            msg = f"--var expects key=value, got {pair!r}"
-            raise TemplateError(msg)
-        variables[key] = value
-    return variables
-
-
 def _render_context(
     row: Video, layout: LayoutSpec, part: int | None, variables: dict[str, str]
 ) -> RenderContext:
@@ -261,19 +251,7 @@ def _render_context(
     item = row.playlist_items[0] if len(row.playlist_items) == 1 else None
     channel = row.channel
     return RenderContext(
-        video=VideoMeta(
-            youtube_id=row.youtube_id,
-            title=row.title,
-            url=row.url,
-            channel_id=None if channel is None else channel.youtube_id,
-            description=row.description,
-            duration_s=row.duration_s,
-            published_at=None
-            if row.published_at is None
-            else datetime.fromisoformat(row.published_at),
-            source_thumbnail_url=row.source_thumbnail_url,
-            fetched_at=datetime.fromisoformat(row.fetched_at),
-        ),
+        video=video_meta(row),
         playlist=None
         if item is None
         else PlaylistMeta(
@@ -285,15 +263,7 @@ def _render_context(
         ),
         part_number=part if part is not None or item is None else item.part_number,
         part_label=None if item is None else item.part_label,
-        channel=None
-        if channel is None
-        else ChannelMeta(
-            youtube_id=channel.youtube_id,
-            title=channel.title,
-            url=channel.url,
-            source=channel.source,
-            fetched_at=datetime.fromisoformat(channel.fetched_at),
-        ),
+        channel=None if channel is None else channel_meta(channel),
         vars=variables,
         negative_space=layout.negative_space.hint,
         width=layout.canvas.width,

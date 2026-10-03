@@ -22,6 +22,7 @@ from sqlalchemy import select
 
 from thumbforge.core.errors import NotFoundError
 from thumbforge.core.layout import LayoutSpec, Template, layout_json
+from thumbforge.core.models import ChannelMeta, VideoMeta
 from thumbforge.core.services.fetch import StoredPlaylist
 from thumbforge.storage.models import Channel, Playlist, PlaylistItem, Video
 from thumbforge.storage.models import Template as TemplateRow
@@ -31,7 +32,7 @@ if TYPE_CHECKING:
 
     from sqlalchemy.orm import Session
 
-    from thumbforge.core.models import ChannelMeta, PlaylistMeta, VideoMeta
+    from thumbforge.core.models import PlaylistMeta
 
 
 @dataclass(frozen=True, slots=True)
@@ -52,6 +53,32 @@ class Renumbering:
 def _iso(moment: datetime) -> str:
     """Render an aware datetime as the ISO-8601 UTC string the schema stores."""
     return moment.isoformat()
+
+
+def channel_meta(row: Channel) -> ChannelMeta:
+    """The snapshot of a stored channel, for services and prompt rendering."""
+    return ChannelMeta(
+        youtube_id=row.youtube_id,
+        title=row.title,
+        url=row.url,
+        source=row.source,
+        fetched_at=datetime.fromisoformat(row.fetched_at),
+    )
+
+
+def video_meta(row: Video) -> VideoMeta:
+    """The snapshot of a stored video; `channel_id` is the channel's YouTube id."""
+    return VideoMeta(
+        youtube_id=row.youtube_id,
+        title=row.title,
+        url=row.url,
+        channel_id=None if row.channel is None else row.channel.youtube_id,
+        description=row.description,
+        duration_s=row.duration_s,
+        published_at=None if row.published_at is None else datetime.fromisoformat(row.published_at),
+        source_thumbnail_url=row.source_thumbnail_url,
+        fetched_at=datetime.fromisoformat(row.fetched_at),
+    )
 
 
 class ChannelRepository:
