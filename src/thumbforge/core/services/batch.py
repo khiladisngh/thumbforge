@@ -7,28 +7,31 @@ provider, and produces one iteration per selected item. What this module decides
 - what each item's idempotency key is and, from the stored iterations, what to do about it:
   skip a `completed` one, retry a `failed` one while it has attempts left, create the rest,
 - the pre-flight budget guard (`--max-images`), applied before anything is written,
-- how items are bounded (one semaphore over the provider call) and how outcomes roll up.
+- how items are bounded (one semaphore over the provider call) and how outcomes roll up,
+- how a run ends early (an interrupt pauses it), continues (`resume`) and is abandoned (`cancel`).
 
 The per-item pipeline is `hero.run_iteration`: a batch item is generated, stored, finalized and
 recorded exactly as a hero iteration is. Every collaborator arrives as a Protocol, so this module
 imports no adapter package and, like `hero`, logs nothing.
 
-Not here yet: interruption, pause and resume (P7.2), the `batch` command and its progress
-display (P7.3), and `runs list|delete` (P7.4).
+Not here yet: the `batch` command and its progress display (P7.3), and the `runs` commands
+(P7.4), which call `resume` and `cancel` and turn an interrupt into exit `130`.
 """
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from datetime import UTC, datetime
 from enum import StrEnum
-from typing import TYPE_CHECKING, Final, Literal, Protocol
+from typing import TYPE_CHECKING, Any, Final, Literal, Protocol, cast
 
 from thumbforge.core.enums import RunKind, RunStatus
 from thumbforge.core.errors import ExitCode, TemplateError, UsageError
 from thumbforge.core.ids import new_id, sha256_bytes
 from thumbforge.core.json import JsonPayload, JsonValue, canonical_json
 from thumbforge.core.services.hero import (
+    INTERRUPTED,
     IterationDraft,
     IterationStore,
     RunContext,
@@ -37,13 +40,14 @@ from thumbforge.core.services.hero import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Collection, Mapping, Sequence
+    from collections.abc import Callable, Collection, Coroutine, Mapping, Sequence
     from pathlib import Path
 
     from thumbforge.core.layout import Template
     from thumbforge.core.providers import ImageProvider
     from thumbforge.core.services.hero import (
         AssetInfo,
+        Done,
         Finalize,
         HeroTarget,
         ProgressSink,
@@ -53,6 +57,8 @@ if TYPE_CHECKING:
 
 #: Provider calls an item may spend over all its tries when the caller does not say.
 DEFAULT_MAX_RETRIES: Final = 2
+#: Seconds after which an iteration still `running` is taken to belong to a dead process.
+DEFAULT_STALE_AFTER_S: Final = 900
 
 
 class PlanAction(StrEnum):
@@ -106,6 +112,8 @@ class BatchReference:
     """The style reference a batch is given: the hero run it hangs off and the image."""
 
     parent_run_id: str
+    #: The hero iteration the image belongs to; a resume names it, so a later pick cannot move it.
+    iteration_id: str
     asset: AssetInfo
 
 
@@ -114,9 +122,25 @@ class ExistingIteration:
     """A stored iteration found by its idempotency key."""
 
     id: str
+    #: The run the iteration was created in, which keeps it however many later runs retry it.
+    run_id: str
     status: RunStatus
     #: Provider calls spent on it over all earlier tries.
     attempts: int
+    started_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
+class StoredBatch:
+    """A batch run as stored: its status and what its `BatchSpec` is rebuilt from."""
+
+    status: RunStatus
+    playlist_id: str
+    template_ref: str
+    provider_key: str
+    provider_params: Mapping[str, JsonValue]
+    #: The run's own parameters, as `BatchService.run` recorded them.
+    params: Mapping[str, JsonValue]
 
 
 class BatchStore(IterationStore, Protocol):
@@ -153,6 +177,22 @@ class BatchStore(IterationStore, Protocol):
         reference_asset_id: str,
     ) -> list[str]:
         """Insert a `running` run and its `pending` iterations; return the iteration ids."""
+        ...
+
+    def run_status(self, run_id: str) -> RunStatus:
+        """The status of any run; `NotFoundError` if unknown."""
+        ...
+
+    def load_batch(self, run_id: str) -> StoredBatch:
+        """A batch run to resume; `NotFoundError` if unknown, `UsageError` if not a batch."""
+        ...
+
+    def reopen_run(self, run_id: str) -> None:
+        """Put a run back to `running`, clearing its end time and reason."""
+        ...
+
+    def cancel_run(self, run_id: str) -> None:
+        """Mark the run `cancelled`, and every iteration still `pending` or `running` with it."""
         ...
 
 
@@ -198,12 +238,16 @@ class BatchResult:
     iteration_ids: tuple[str, ...]
     completed: int
     failed: int
+    #: Items an interrupt left unstarted; `resume` picks them up.
+    pending: int = 0
     #: A reference was asked for but the provider cannot take one, so the run went prompt-only.
     reference_ignored: bool = False
 
     @property
     def exit_code(self) -> ExitCode:
-        """`0` clean; `4` when nothing completed; else `6` (some failed, some completed)."""
+        """`130` when interrupted; `0` clean; `4` when nothing completed; else `6`."""
+        if self.status is RunStatus.PAUSED:
+            return ExitCode.INTERRUPTED
         if self.failed == 0:
             return ExitCode.OK
         return ExitCode.PROVIDER if self.completed == 0 else ExitCode.PARTIAL
@@ -250,21 +294,103 @@ def select_items(items: Sequence[BatchItem], only: Collection[int] | None) -> li
     ]
 
 
-def _classify(existing: ExistingIteration | None, max_retries: int) -> tuple[PlanAction, str]:
-    """`PLAN.md` §6's resume algorithm for one key."""
+def _classify(
+    existing: ExistingIteration | None, max_retries: int, stale_after_s: int, now: datetime
+) -> tuple[PlanAction, str]:
+    """`PLAN.md` §6's resume algorithm for one key.
+
+    A `running` iteration older than `stale_after_s` belongs to a process that died, so it is
+    treated as `failed`; a younger one may still be running and is left alone.
+    """
     if existing is None:
         return PlanAction.CREATE, "new"
+    stale = existing.status is RunStatus.RUNNING and (
+        existing.started_at is None or (now - existing.started_at).total_seconds() > stale_after_s
+    )
+    tries = f"{existing.attempts} of {max_retries} tries used"
     match existing.status:
         case RunStatus.COMPLETED:
             return PlanAction.SKIP, "completed"
-        case RunStatus.RUNNING:
+        case RunStatus.RUNNING if not stale:
             return PlanAction.SKIP, "running in another run"
-        case RunStatus.FAILED if existing.attempts >= max_retries:
-            return PlanAction.SKIP, f"failed, {existing.attempts} of {max_retries} tries used"
-        case RunStatus.FAILED:
-            return PlanAction.RETRY, f"failed, {existing.attempts} of {max_retries} tries used"
+        case RunStatus.RUNNING | RunStatus.FAILED:
+            label = "stale" if stale else "failed"
+            if existing.attempts >= max_retries:
+                return PlanAction.SKIP, f"{label}, {tries}"
+            return PlanAction.RETRY, f"{label}, {tries}"
         case _:
             return PlanAction.RETRY, f"unfinished ({existing.status.value})"
+
+
+def _draft(row: PlanRow) -> IterationDraft:
+    return IterationDraft(
+        ordinal=row.item.position,
+        idempotency_key=row.key,
+        prompt_text=row.prompt,
+        seed=None,
+        video_id=row.item.target.row_id,
+        part_number=row.item.part_number,
+        part_label=row.item.part_label,
+        prior_attempts=0 if row.existing is None else row.existing.attempts,
+    )
+
+
+def _run_params(spec: BatchSpec, hero_iteration_id: str) -> JsonPayload:
+    """What a run records of its spec; `_spec_from` reads it back.
+
+    The hero is stored as the iteration whose image was used, not as the run or iteration the
+    user named, so a later pick on the hero run cannot change what a resume refers to.
+    """
+    return {
+        "hero": hero_iteration_id,
+        "concurrency": spec.concurrency,
+        "only": None if spec.only is None else sorted(spec.only),
+        "reference": spec.reference,
+        "max_images": spec.max_images,
+        "max_retries": spec.max_retries,
+    }
+
+
+def _spec_from(stored: StoredBatch) -> BatchSpec:
+    """The `BatchSpec` a stored run was started with."""
+    params = stored.params
+    only = cast("list[int] | None", params["only"])
+    return BatchSpec(
+        playlist_id=stored.playlist_id,
+        hero=cast("str", params["hero"]),
+        template_ref=stored.template_ref,
+        provider_key=stored.provider_key,
+        concurrency=cast("int", params["concurrency"]),
+        only=None if only is None else frozenset(only),
+        reference=cast("Literal['final', 'raw']", params["reference"]),
+        max_images=cast("int | None", params["max_images"]),
+        max_retries=cast("int", params["max_retries"]),
+        provider_params=stored.provider_params,
+    )
+
+
+async def _until_cancelled[T](
+    job: Callable[[], Coroutine[Any, Any, T]], cancel: asyncio.Event | None
+) -> T | None:
+    """Run `job` unless `cancel` is set first; `None` when it was cut short.
+
+    The job is cancelled and awaited, so whatever it does on cancellation is finished before
+    this returns. A cancellation of the caller is passed on the same way and then re-raised.
+    """
+    if cancel is not None and cancel.is_set():
+        return None
+    work = asyncio.create_task(job())
+    watcher = None if cancel is None else asyncio.create_task(cancel.wait())
+    try:
+        await asyncio.wait(
+            {work} if watcher is None else {work, watcher}, return_when=asyncio.FIRST_COMPLETED
+        )
+    finally:
+        if watcher is not None:
+            watcher.cancel()
+        work.cancel()
+        await asyncio.wait({work})
+    return None if work.cancelled() else work.result()
 
 
 @dataclass(frozen=True, slots=True)
@@ -290,6 +416,7 @@ class BatchService:
         finalize: Finalize,
         *,
         logs_dir: Path,
+        stale_after_s: int = DEFAULT_STALE_AFTER_S,
     ) -> None:
         """Take the collaborators the CLI selected; `logs_dir` holds `<run_id>/` workdirs."""
         self._store = store
@@ -297,6 +424,7 @@ class BatchService:
         self._renderer = renderer
         self._finalize = finalize
         self._logs_dir = logs_dir
+        self._stale_after_s = stale_after_s
 
     async def plan(self, spec: BatchSpec) -> BatchPlan:
         """What `run` would do, computed without a provider call and without writing a run.
@@ -306,16 +434,23 @@ class BatchService:
         """
         return (await self._prepare(spec)).plan
 
-    async def run(self, spec: BatchSpec, *, progress: ProgressSink) -> BatchResult:
+    async def run(
+        self, spec: BatchSpec, *, progress: ProgressSink, cancel: asyncio.Event | None = None
+    ) -> BatchResult:
         """Run `spec` to completion and report how it ended; a dry run only plans.
 
         Raises before any run exists when the playlist, hero, template or provider is
         unknown, a prompt does not render, nothing is selected, or the images to generate
         would exceed `max_images`. Once the run exists, per-item failures are recorded and
         reflected in the result instead of raised.
+
+        Setting `cancel` interrupts the run: iterations in flight end `failed` with
+        `error_text = "interrupted"`, those not yet started stay `pending`, finished ones are
+        untouched, and the run ends `paused` (exit `130`). Cancelling the task running this
+        does the same, then raises `CancelledError` as asyncio requires.
         """
         prepared = await self._prepare(spec)
-        plan, provider = prepared.plan, prepared.provider
+        plan = prepared.plan
         if spec.dry_run:
             return BatchResult(plan, None, None, (), 0, 0)
 
@@ -329,27 +464,6 @@ class BatchService:
 
         store = self._store
         reference = prepared.reference
-        run_params: JsonPayload = {
-            "hero": spec.hero,
-            "concurrency": spec.concurrency,
-            "only": None if spec.only is None else sorted(spec.only),
-            "reference": spec.reference,
-            "max_images": spec.max_images,
-            "max_retries": spec.max_retries,
-        }
-        drafts = [
-            IterationDraft(
-                ordinal=row.item.position,
-                idempotency_key=row.key,
-                prompt_text=row.prompt,
-                seed=None,
-                video_id=row.item.target.row_id,
-                part_number=row.item.part_number,
-                part_label=row.item.part_label,
-                prior_attempts=0 if row.existing is None else row.existing.attempts,
-            )
-            for row in work
-        ]
         run_id = new_id()
         created = iter(
             store.create_run(
@@ -359,12 +473,8 @@ class BatchService:
                 profile_id=prepared.profile_id,
                 video_id=None,
                 playlist_id=prepared.playlist.row_id,
-                params_json=canonical_json(run_params),
-                iterations=[
-                    draft
-                    for draft, row in zip(drafts, work, strict=True)
-                    if row.action is PlanAction.CREATE
-                ],
+                params_json=canonical_json(_run_params(spec, reference.iteration_id)),
+                iterations=[_draft(row) for row in work if row.action is PlanAction.CREATE],
                 parent_run_id=reference.parent_run_id,
                 reference_asset_id=reference.asset.id,
             )
@@ -372,16 +482,93 @@ class BatchService:
         # A retried item keeps the iteration (and run) it was created in: its key is unique.
         iteration_ids = [next(created) if row.existing is None else row.existing.id for row in work]
         store.commit()
-        progress.run_started(run_id, len(work))
+        return await self._execute(
+            prepared, spec, run_id, plan.rows, work, iteration_ids, progress, cancel
+        )
 
+    async def resume(
+        self,
+        run_id: str,
+        *,
+        progress: ProgressSink,
+        cancel: asyncio.Event | None = None,
+        concurrency: int | None = None,
+    ) -> BatchResult:
+        """Continue a batch run: retry what it left unfinished or failed, nothing else.
+
+        The run's `BatchSpec` is rebuilt from what it stored, so the same keys come out and
+        the same reference image is used; `concurrency` may override. Resume works on the
+        iterations the run itself created, in place, and ends that same run: no new run is
+        made, and iterations that belong to other runs are not touched. A `running` iteration
+        younger than `stale_after_s` is left alone, an older one is retried.
+
+        `NotFoundError` for an unknown run; `UsageError` for one that is not a batch run or is
+        `completed` or `cancelled`. Interrupts behave as in `run`.
+        """
+        stored = self._store.load_batch(run_id)
+        if stored.status in (RunStatus.COMPLETED, RunStatus.CANCELLED):
+            msg = f"run {run_id} is {stored.status.value} and cannot be resumed"
+            raise UsageError(msg, hint="start a new batch to generate again")
+        spec = _spec_from(stored)
+        if concurrency is not None:
+            spec = replace(spec, concurrency=concurrency)
+        prepared = await self._prepare(spec)
+        owned = [
+            row
+            for row in prepared.plan.rows
+            if row.existing is not None and row.existing.run_id == run_id
+        ]
+        work = [row for row in owned if row.action is PlanAction.RETRY]
+        iteration_ids = [row.existing.id for row in work if row.existing is not None]
+        self._store.reopen_run(run_id)
+        self._store.commit()
+        return await self._execute(
+            prepared, spec, run_id, owned, work, iteration_ids, progress, cancel
+        )
+
+    def cancel(self, run_id: str) -> None:
+        """Abandon a run: it and its unfinished iterations become `cancelled`.
+
+        `UsageError` for a `completed` run, which has nothing left to cancel; cancelling a
+        `cancelled` run changes nothing. Stopping a process that is running it is the
+        caller's job (`run`'s `cancel` event).
+        """
+        status = self._store.run_status(run_id)
+        if status is RunStatus.COMPLETED:
+            msg = f"run {run_id} is completed and cannot be cancelled"
+            raise UsageError(msg, hint="a completed run has nothing left to cancel")
+        if status is not RunStatus.CANCELLED:
+            self._store.cancel_run(run_id)
+            self._store.commit()
+
+    async def _execute(
+        self,
+        prepared: _Prepared,
+        spec: BatchSpec,
+        run_id: str,
+        scope: Sequence[PlanRow],
+        work: Sequence[PlanRow],
+        iteration_ids: Sequence[str],
+        progress: ProgressSink,
+        cancel: asyncio.Event | None,
+    ) -> BatchResult:
+        """Run `work` inside the existing run `run_id` and close the run.
+
+        `scope` is every plan row whose state the run reports: the whole selection for a new
+        run, the run's own iterations for a resume. Counts and status are read back from the
+        stored rows, so they hold for an interrupted run as well.
+        """
+        store = self._store
+        provider = prepared.provider
+        progress.run_started(run_id, len(work))
         workdir = self._logs_dir / run_id
         workdir.mkdir(parents=True, exist_ok=True)
         capabilities = provider.capabilities
         gate = asyncio.Semaphore(max(1, min(spec.concurrency, capabilities.max_concurrency)))
         usable_reference = capabilities.supports_reference_image
-        references = (reference.asset.path,) if usable_reference else ()
+        references = (prepared.reference.asset.path,) if usable_reference else ()
 
-        try:
+        async def items() -> list[Done]:
             async with asyncio.TaskGroup() as group:
                 tasks = [
                     group.create_task(
@@ -400,40 +587,46 @@ class BatchService:
                                 references,
                             ),
                             iteration_id,
-                            draft,
+                            _draft(row),
                         )
                     )
-                    for row, iteration_id, draft in zip(work, iteration_ids, drafts, strict=True)
+                    for row, iteration_id in zip(work, iteration_ids, strict=True)
                 ]
+            return [task.result() for task in tasks]
+
+        try:
+            done = await _until_cancelled(items, cancel)
+        except asyncio.CancelledError:
+            # Ctrl-C under `asyncio.run` cancels the main task: pause the run, then let it go.
+            store.finish_run(run_id, RunStatus.PAUSED, INTERRUPTED)
+            store.commit()
+            raise
         except BaseException as error:
-            # Cancellation, Ctrl-C or a bug: the run must not stay `running` forever.
-            # Pausing and resuming it is P7.2's job.
+            # A bug: the run must not stay `running` forever.
             store.finish_run(run_id, RunStatus.FAILED, failure_text(error))
             store.commit()
             raise
 
-        done = [task.result() for task in tasks]
-        skipped = [row for row in plan.rows if row.action is PlanAction.SKIP]
-        completed = sum(1 for item in done if item.status is RunStatus.COMPLETED) + sum(
-            1 for row in skipped if row.existing and row.existing.status is RunStatus.COMPLETED
-        )
-        failed = sum(1 for item in done if item.status is not RunStatus.COMPLETED) + sum(
-            1 for row in skipped if row.existing and row.existing.status is RunStatus.FAILED
-        )
-        status = RunStatus.COMPLETED if failed == 0 else RunStatus.FAILED
-        store.finish_run(
-            run_id,
-            status,
-            None if failed == 0 else f"{failed} of {len(plan.rows)} items failed",
-        )
+        found = store.find_iterations([row.key for row in scope])
+        states = [found[row.key].status for row in scope]
+        completed = states.count(RunStatus.COMPLETED)
+        failed = states.count(RunStatus.FAILED)
+        if done is None:
+            status, reason = RunStatus.PAUSED, INTERRUPTED
+        elif failed == 0:
+            status, reason = RunStatus.COMPLETED, None
+        else:
+            status, reason = RunStatus.FAILED, f"{failed} of {len(scope)} items failed"
+        store.finish_run(run_id, status, reason)
         store.commit()
         return BatchResult(
-            plan=plan,
+            plan=prepared.plan,
             run_id=run_id,
             status=status,
             iteration_ids=tuple(iteration_ids),
             completed=completed,
             failed=failed,
+            pending=states.count(RunStatus.PENDING),
             reference_ignored=not usable_reference,
         )
 
@@ -486,10 +679,11 @@ class BatchService:
             for item, prompt in zip(selected, prompts, strict=True)
         ]
         found = store.find_iterations(keys)
+        now = datetime.now(UTC)
         rows: list[PlanRow] = []
         for item, prompt, key in zip(selected, prompts, keys, strict=True):
             existing = found.get(key)
-            action, reason = _classify(existing, spec.max_retries)
+            action, reason = _classify(existing, spec.max_retries, self._stale_after_s, now)
             rows.append(PlanRow(item, key, prompt, action, reason, existing))
         return _Prepared(
             playlist, reference, template, provider, profile_id, BatchPlan(tuple(rows))

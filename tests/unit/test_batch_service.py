@@ -7,10 +7,12 @@ demand: those use a thin wrapper around the real `FakeProvider` that still raise
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 from collections import Counter
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -188,6 +190,25 @@ class _Parts:
         return self._inner(raw, layout, title=title, part_number=part_number, part_label=part_label)
 
 
+class _Completions:
+    """A progress sink that records every outcome and signals once `target` have completed."""
+
+    def __init__(self, target: int) -> None:
+        self.target = target
+        self.reached = asyncio.Event()
+        self.finished: list[tuple[int, RunStatus, str | None]] = []
+
+    def run_started(self, run_id: str, total: int) -> None:
+        pass
+
+    def iteration_finished(
+        self, run_id: str, ordinal: int, status: RunStatus, error: str | None
+    ) -> None:
+        self.finished.append((ordinal, status, error))
+        if sum(1 for _, seen, _ in self.finished if seen is RunStatus.COMPLETED) >= self.target:
+            self.reached.set()
+
+
 class _OneProvider:
     """A registry that always hands back the provider it was given."""
 
@@ -210,8 +231,12 @@ class _Probe:
         supports_reference_image: bool = True,
         fail_once: Collection[str] = (),
         explode: bool = False,
+        block_on_call: int | None = None,
     ) -> None:
         self._inner = FakeProvider()
+        #: The call that never returns until the batch is interrupted; `blocked` says it began.
+        self.block_on_call = block_on_call
+        self.blocked = asyncio.Event()
         self._max_concurrency = max_concurrency
         self._supports_reference_image = supports_reference_image
         self._fail_once = set(fail_once)
@@ -240,6 +265,9 @@ class _Probe:
         self.in_flight += 1
         self.peak = max(self.peak, self.in_flight)
         try:
+            if self.calls == self.block_on_call:
+                self.blocked.set()
+                await asyncio.Event().wait()
             if self._explode:
                 msg = "provider blew up"
                 raise RuntimeError(msg)
@@ -266,8 +294,8 @@ def _template(env: Env, name: str, prompt: str) -> str:
     return name
 
 
-async def _hero(env: Env) -> str:
-    """A real hero run for the hero video with its one iteration picked; return the run id."""
+async def _hero(env: Env, n: int = 1) -> str:
+    """A real hero run for the hero video with its first iteration picked; return the run id."""
     service = HeroService(
         env.runs,
         real_registry,
@@ -276,7 +304,7 @@ async def _hero(env: Env) -> str:
         logs_dir=env.logs_dir,
     )
     result = await service.generate(
-        RunSpec(video_id=HERO_VIDEO, template_ref="bold-title", provider_key="fake", n=1),
+        RunSpec(video_id=HERO_VIDEO, template_ref="bold-title", provider_key="fake", n=n),
         progress=NullProgress(),
     )
     env.runs.pick(result.run_id, 1)
@@ -285,7 +313,11 @@ async def _hero(env: Env) -> str:
 
 
 def _service(
-    env: Env, *, registry: ProviderRegistry = real_registry, finalize: Finalize | None = None
+    env: Env,
+    *,
+    registry: ProviderRegistry = real_registry,
+    finalize: Finalize | None = None,
+    **options: Any,
 ) -> BatchService:
     return BatchService(
         env.runs,
@@ -293,6 +325,7 @@ def _service(
         PromptRenderer(env.repos.templates),
         finalize or _finalizer(OutputSettings()),
         logs_dir=env.logs_dir,
+        **options,
     )
 
 
@@ -867,3 +900,328 @@ async def test_an_iteration_running_elsewhere_is_left_alone_and_an_unfinished_on
     assert probe.calls == 4
     assert (result.completed, result.failed) == (2, 0)  # the running one is neither
     assert result.iteration_ids == (rows[1].id,)
+
+
+# --- interrupt, resume and cancel (P7.2) -------------------------------------------------
+
+
+def _batch_run(env: Env) -> Run:
+    return env.session.scalars(select(Run).where(Run.kind == RunKind.BATCH)).one()
+
+
+def _attempts(item: Iteration) -> int:
+    return json.loads(item.provider_response_json)["attempts"]
+
+
+@pytest.mark.parametrize("how", ["event", "task"])
+async def test_a_batch_interrupted_after_seven_of_twenty_resumes_with_exactly_thirteen_calls(
+    env: Env, how: str
+) -> None:
+    """The interrupt is `cancel.set()` or the task's own cancellation, which is what Ctrl-C does
+    under `asyncio.run`; a real OS signal is the CLI's to forward, so it is not raised here."""
+    _store_playlist(env, 20)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    probe = _Probe(block_on_call=8)  # the eighth call is in flight when the interrupt comes
+    service = _service(env, registry=_OneProvider(probe))
+    sink = _Completions(7)
+    cancel = asyncio.Event()
+    batch = asyncio.create_task(
+        service.run(_spec(hero_id, concurrency=1), progress=sink, cancel=cancel)
+    )
+    async with asyncio.timeout(30):
+        await sink.reached.wait()
+        await probe.blocked.wait()
+
+    if how == "event":
+        cancel.set()
+        paused = await batch
+        assert paused.status is RunStatus.PAUSED
+        assert paused.exit_code is ExitCode.INTERRUPTED
+        assert (paused.completed, paused.failed, paused.pending) == (7, 1, 12)
+    else:
+        batch.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await batch
+
+    run = _batch_run(env)
+    assert run.status is RunStatus.PAUSED
+    rows = _iterations(env, run.id)
+    assert [item.status for item in rows[:7]] == [RunStatus.COMPLETED] * 7
+    assert rows[7].status is RunStatus.FAILED
+    assert rows[7].error_text == "interrupted"
+    assert _attempts(rows[7]) == 0  # an interrupted try is not charged against max_retries
+    assert {item.status for item in rows[8:]} == {RunStatus.PENDING}
+    assert (8, RunStatus.FAILED, "interrupted") in sink.finished
+    untouched = {item.id: (item.finished_at, item.updated_at) for item in rows[:7]}
+
+    probe.block_on_call = None
+    calls_before = probe.calls
+    resumed = await service.resume(run.id, progress=NullProgress())
+
+    assert probe.calls - calls_before == 13
+    assert probe.calls == 21
+    assert resumed.run_id == run.id
+    assert (resumed.status, resumed.completed, resumed.failed) == (RunStatus.COMPLETED, 20, 0)
+    assert resumed.exit_code is ExitCode.OK
+    assert resumed.iteration_ids == tuple(item.id for item in rows[7:])
+    assert env.runs.get(run.id).status is RunStatus.COMPLETED
+    assert env.runs.get(run.id).error_text is None
+    assert [item.status for item in _iterations(env, run.id)] == [RunStatus.COMPLETED] * 20
+    assert _attempts(rows[7]) == 1
+    assert {item.id: (item.finished_at, item.updated_at) for item in rows[:7]} == untouched
+    assert _count(env, Run) == 2  # the hero and the one batch: resume made no new run
+    assert _count(env, Iteration) == 21
+
+
+async def test_a_running_iteration_older_than_stale_after_is_retried_and_a_fresh_one_is_not(
+    env: Env,
+) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    probe = _Probe()
+    service = _service(env, registry=_OneProvider(probe), stale_after_s=900)
+    first = await service.run(_spec(hero_id), progress=NullProgress())
+    assert first.run_id is not None
+    rows = _iterations(env, first.run_id)
+    now = datetime.now(UTC)
+    for item, age_s in ((rows[0], 1000), (rows[1], 10)):
+        item.status = RunStatus.RUNNING
+        item.started_at = (now - timedelta(seconds=age_s)).isoformat()
+        item.finished_at = None
+    env.runs.get(first.run_id).status = RunStatus.RUNNING  # the crashed process never closed it
+    env.session.commit()
+
+    plan = await service.plan(_spec(hero_id))
+
+    assert [row.action for row in plan.rows] == [PlanAction.RETRY, PlanAction.SKIP, PlanAction.SKIP]
+    assert plan.rows[0].reason.startswith("stale")
+    assert plan.rows[1].reason == "running in another run"
+
+    resumed = await service.resume(first.run_id, progress=NullProgress())
+
+    assert probe.calls == 4
+    assert resumed.iteration_ids == (rows[0].id,)
+    assert rows[0].status is RunStatus.COMPLETED
+    assert rows[1].status is RunStatus.RUNNING  # a live process may still own it
+
+
+async def test_resume_retries_a_failed_item_in_its_own_run_and_leaves_the_rest_untouched(
+    env: Env,
+) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    probe = _Probe(fail_once={"Episode 2"})
+    service = _service(env, registry=_OneProvider(probe))
+    first = await service.run(_spec(hero_id), progress=NullProgress())
+    assert first.run_id is not None
+    assert env.runs.get(first.run_id).status is RunStatus.FAILED
+    rows = _iterations(env, first.run_id)
+    untouched = {rows[0].id: rows[0].updated_at, rows[2].id: rows[2].updated_at}
+
+    resumed = await service.resume(first.run_id, progress=NullProgress())
+
+    assert resumed.run_id == first.run_id
+    assert (resumed.status, resumed.completed, resumed.failed) == (RunStatus.COMPLETED, 3, 0)
+    assert resumed.exit_code is ExitCode.OK
+    assert resumed.iteration_ids == (rows[1].id,)
+    run = env.runs.get(first.run_id)
+    assert run.status is RunStatus.COMPLETED
+    assert run.error_text is None
+    assert [item.status for item in _iterations(env, first.run_id)] == [RunStatus.COMPLETED] * 3
+    assert probe.calls == 4
+    assert _count(env, Run) == 2
+    assert _count(env, Iteration) == 4
+    assert {rows[0].id: rows[0].updated_at, rows[2].id: rows[2].updated_at} == untouched
+
+
+async def test_resume_with_every_try_used_calls_no_provider_and_the_run_stays_failed(
+    env: Env,
+) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series-fail", _fail_prompt(2))
+    hero_id = await _hero(env)
+    probe = _Probe()
+    service = _service(env, registry=_OneProvider(probe))
+    first = await service.run(
+        _spec(hero_id, template_ref="series-fail", max_retries=2), progress=NullProgress()
+    )
+    assert first.run_id is not None
+
+    await service.resume(first.run_id, progress=NullProgress())  # the second and last try
+    last = await service.resume(first.run_id, progress=NullProgress())
+
+    assert probe.calls == 4
+    assert last.iteration_ids == ()
+    assert (last.status, last.completed, last.failed) == (RunStatus.FAILED, 2, 1)
+    assert last.exit_code is ExitCode.PARTIAL
+    assert env.runs.get(first.run_id).status is RunStatus.FAILED
+
+
+async def test_resume_may_override_the_concurrency_and_keeps_the_stored_provider_settings(
+    env: Env,
+) -> None:
+    _store_playlist(env, 6)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    probe = _Probe()
+    service = _service(env, registry=_OneProvider(probe))
+    cancel = asyncio.Event()
+    cancel.set()
+    paused = await service.run(
+        _spec(hero_id, concurrency=1, provider_params={"delay_ms": 100}),
+        progress=NullProgress(),
+        cancel=cancel,
+    )
+    assert paused.run_id is not None
+
+    await service.resume(paused.run_id, concurrency=3, progress=NullProgress())
+
+    assert probe.peak == 3  # three at once, and `delay_ms` came back from the stored profile
+
+
+async def test_resume_keeps_the_reference_the_run_started_with_when_the_hero_pick_moves(
+    env: Env,
+) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env, n=2)
+    service = _service(env)
+    cancel = asyncio.Event()
+    cancel.set()
+    paused = await service.run(_spec(hero_id), progress=NullProgress(), cancel=cancel)
+    assert paused.run_id is not None
+    hero_rows = _iterations(env, hero_id)
+    assert hero_rows[0].final_asset is not None
+    assert hero_rows[1].final_asset is not None
+    assert hero_rows[0].final_asset.sha256 != hero_rows[1].final_asset.sha256
+    env.runs.pick(hero_id, 2)
+    env.session.commit()
+
+    resumed = await service.resume(paused.run_id, progress=NullProgress())
+
+    assert (resumed.completed, resumed.failed) == (3, 0)
+    assert _count(env, Iteration) == 5  # two hero, three batch: no second set of keys
+    run = env.runs.get(paused.run_id)
+    assert run.reference_asset_id == hero_rows[0].final_asset.id
+    expected = [env.assets.path_for(hero_rows[0].final_asset)]
+    for item in _iterations(env, paused.run_id):
+        sent = json.loads(item.provider_request_json)["reference_images"]
+        assert [Path(path) for path in sent] == expected
+
+
+async def test_an_interrupt_before_anything_starts_pauses_the_run_with_no_provider_call(
+    env: Env,
+) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    probe = _Probe()
+    cancel = asyncio.Event()
+    cancel.set()
+
+    paused = await _service(env, registry=_OneProvider(probe)).run(
+        _spec(hero_id), progress=NullProgress(), cancel=cancel
+    )
+
+    assert probe.calls == 0
+    assert (paused.status, paused.completed, paused.failed, paused.pending) == (
+        RunStatus.PAUSED,
+        0,
+        0,
+        3,
+    )
+    assert paused.exit_code is ExitCode.INTERRUPTED
+    assert {item.status for item in _iterations(env, paused.run_id or "")} == {RunStatus.PENDING}
+
+
+async def test_cancel_refuses_a_completed_run(env: Env) -> None:
+    _store_playlist(env, 2)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    service = _service(env)
+    first = await service.run(_spec(hero_id), progress=NullProgress())
+    assert first.run_id is not None
+
+    with pytest.raises(UsageError, match="completed") as refused:
+        service.cancel(first.run_id)
+
+    assert refused.value.exit_code is ExitCode.USAGE
+    assert env.runs.get(first.run_id).status is RunStatus.COMPLETED
+
+
+async def test_cancel_marks_a_paused_run_and_its_unfinished_iterations_cancelled(env: Env) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    service = _service(env)
+    cancel = asyncio.Event()
+    cancel.set()
+    paused = await service.run(_spec(hero_id), progress=NullProgress(), cancel=cancel)
+    assert paused.run_id is not None
+
+    service.cancel(paused.run_id)
+    service.cancel(paused.run_id)  # nothing left to do, nothing to refuse
+
+    run = env.runs.get(paused.run_id)
+    assert run.status is RunStatus.CANCELLED
+    assert run.finished_at
+    assert {item.status for item in _iterations(env, paused.run_id)} == {RunStatus.CANCELLED}
+    with pytest.raises(UsageError) as refused:
+        await service.resume(paused.run_id, progress=NullProgress())
+    assert refused.value.exit_code is ExitCode.USAGE
+
+
+async def test_cancel_marks_a_running_run_cancelled_and_leaves_finished_iterations_alone(
+    env: Env,
+) -> None:
+    _store_playlist(env, 3)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    service = _service(env)
+    first = await service.run(_spec(hero_id), progress=NullProgress())
+    assert first.run_id is not None
+    rows = _iterations(env, first.run_id)
+    rows[2].status = RunStatus.RUNNING
+    rows[2].finished_at = None
+    env.runs.get(first.run_id).status = RunStatus.RUNNING
+    env.session.commit()
+
+    service.cancel(first.run_id)
+
+    assert env.runs.get(first.run_id).status is RunStatus.CANCELLED
+    assert [item.status for item in _iterations(env, first.run_id)] == [
+        RunStatus.COMPLETED,
+        RunStatus.COMPLETED,
+        RunStatus.CANCELLED,
+    ]
+
+
+async def test_resume_and_cancel_of_an_unknown_run_are_not_found_exit_3(env: Env) -> None:
+    service = _service(env)
+
+    with pytest.raises(NotFoundError) as resume_error:
+        await service.resume("nope", progress=NullProgress())
+    with pytest.raises(NotFoundError) as cancel_error:
+        service.cancel("nope")
+
+    assert resume_error.value.exit_code is ExitCode.NOT_FOUND
+    assert cancel_error.value.exit_code is ExitCode.NOT_FOUND
+
+
+async def test_resume_refuses_a_completed_run_and_a_run_that_is_not_a_batch_with_exit_2(
+    env: Env,
+) -> None:
+    _store_playlist(env, 2)
+    _template(env, "series", PROMPT)
+    hero_id = await _hero(env)
+    service = _service(env)
+    first = await service.run(_spec(hero_id), progress=NullProgress())
+    assert first.run_id is not None
+
+    for run_id in (first.run_id, hero_id):
+        with pytest.raises(UsageError) as refused:
+            await service.resume(run_id, progress=NullProgress())
+        assert refused.value.exit_code is ExitCode.USAGE

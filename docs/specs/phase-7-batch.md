@@ -27,6 +27,8 @@ class BatchService:
         # BatchSpec(playlist_id, hero: Run | Iteration, template_ref, provider_key, concurrency, only: set[int] | None,
         #           dry_run, resume_run_id, reference: Literal["final","raw"], max_images, max_retries)
     def plan(self, spec: BatchSpec) -> BatchPlan         # per item: key, action ∈ {skip, retry, create}, reason
+    async def resume(self, run_id: str, *, progress: ProgressSink, cancel=None, concurrency=None) -> RunResult
+    def cancel(self, run_id: str) -> None                # refuses a completed run
 ```
 
 Hero → batch link (`PLAN.md` §3.1): `batch <playlist> --hero <run|iteration>` creates `run(kind='batch', playlist_id=P, parent_run_id=<hero run id>, reference_asset_id=<picked iteration>.final_asset_id)`. Passing `--reference raw` uses `raw_asset_id` instead. Each batch `iteration` receives the reference asset's absolute path in `GenerationRequest.reference_images`.
@@ -93,6 +95,18 @@ The service lands before its command (P7.3), so these are where the spec was sil
 - The roll-up reports the playlist, not just the batch's own work: a skipped `completed` item counts as completed and a skipped failed item whose tries are used up counts as failed. Exit `0` when nothing failed, `4` when nothing completed, else `6`; a batch has no exit `5`.
 - No seed is sent: the key's `seed` and `part_number` parts are empty strings when absent, as in hero keys. A provider that cannot take a reference image runs prompt-only and the result says so (`reference_ignored`).
 - The per-item pipeline is `hero.run_iteration`; `TemplateRenderer.render` takes keyword-only `part_number` and `part_label`.
+
+## Decisions made in P7.2
+
+The commands that call these (`batch`, `runs resume|cancel`) are P7.3 and P7.4, so P7.2 is service behaviour only and adds no CLI.
+
+- `run(spec, *, progress, cancel=None)` takes the `cancel` event, optional so callers that never interrupt need not make one. `resume(run_id, *, progress, cancel=None, concurrency=None)` replaces `BatchSpec.resume_run_id`: the spec is rebuilt from the stored run, so the field would only repeat it. `cancel(run_id)` is synchronous.
+- Interrupt is `cancel.set()` or cancelling the task that runs `run`, which is what Ctrl-C does under `asyncio.run`. Both pause the run (`error_text = "interrupted"`). An iteration past the semaphore ends `failed` with `error_text = "interrupted"` and the try is **not** charged against `max_retries` (an interrupt is not a provider failure, and two Ctrl-Cs must not exhaust an item); one still waiting for the semaphore stays `pending`; finished ones are untouched. `BatchResult.exit_code` is `130` for a paused result and `BatchResult.pending` counts what is left, for the `Interrupted: … paused (7 completed, 1 failed, 4 pending)` line. The task-cancel path raises `CancelledError` after pausing, as asyncio requires; mapping it to exit `130` is the CLI's. Tests drive both paths; a real OS signal is not raised, because forwarding one is the CLI's (P7.3).
+- **Resume continues the run in place** (P7.1 review Should 1). It plans the run's spec again and retries only the iterations that run itself created: no new run, no new iteration, other runs' iterations untouched. The run is reopened (`running`, end time and reason cleared) and ends `completed` or `failed` from its own iterations, so a retried item no longer leaves a `failed` run behind. A run with every try used up ends `failed` again without a provider call. `completed` and `cancelled` runs, and runs that are not batch runs, are refused (exit `2`); an unknown run is exit `3`. A `running` run is resumable: it is what a crashed process leaves. `max_images` is not applied again: a resume creates nothing new. Still open for P7.3: a plain `batch` re-run retries unfinished and failed items in the run that created them (their key is unique, so there is no other place) and leaves that run's status as it was, whether `failed`, `paused` or `cancelled`, while the re-run itself has no iterations of its own; whether it should point at `runs resume` instead is that command's decision.
+- A run stores the **iteration** its reference image came from (`params_json.hero`), not the run id the user typed, so moving the pick on the hero run cannot change a resume's keys and regenerate finished items.
+- Staleness: `BatchService(stale_after_s=…)` (the command passes `batch.stale_after_s`; the default is 900, as `max_retries` defaults to 2). The plan treats a `running` iteration older than that, or one with no start time, as `failed` (reason `stale, …`, retried within `max_retries`); a younger one is skipped as `running in another run`.
+- `cancel` refuses a `completed` run (exit `2`), does nothing to a `cancelled` one, and otherwise marks the run and its `pending`/`running` iterations `cancelled`; finished iterations stay. It does not stop a live process: the cancel flag file is P7.4.
+- Counts and status are read back from the stored iterations of the run's scope (the whole selection for `run`, the run's own iterations for `resume`), which is what lets a paused run report them. A fresh `running` iteration owned by a live process counts as neither completed nor failed, as in P7.1.
 
 ## Test plan
 

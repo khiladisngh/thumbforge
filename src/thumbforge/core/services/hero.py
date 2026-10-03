@@ -51,6 +51,8 @@ if TYPE_CHECKING:
 
 #: Provider calls per iteration: the first attempt plus two retries (`PLAN.md` §7.2).
 _ATTEMPTS: Final = 3
+#: The `error_text` of an iteration, and the reason of a run, that was cut short by an interrupt.
+INTERRUPTED: Final = "interrupted"
 #: Backoff between provider retries. A module constant so tests can neutralise the clock, as
 #: they do for the metadata source.
 _RETRY_WAIT: Final = wait_exponential_jitter(initial=2.0, exp_base=2.0, max=60.0, jitter=2.0)
@@ -440,7 +442,7 @@ def failure_text(error: BaseException) -> str:
     """A short run-level reason for an error that is not an expected failure."""
     leaf = _leaf(error)
     if isinstance(leaf, asyncio.CancelledError | KeyboardInterrupt):
-        return "interrupted"
+        return INTERRUPTED
     return f"unexpected error: {type(leaf).__name__}"
 
 
@@ -451,7 +453,12 @@ async def run_iteration(
     iteration_id: str,
     draft: IterationDraft,
 ) -> Done:
-    """Generate, store, finalize and record one iteration; never raises a `ThumbforgeError`."""
+    """Generate, store, finalize and record one iteration; never raises a `ThumbforgeError`.
+
+    A cancellation after the iteration started is recorded first (`failed`, `interrupted`, and
+    the try is not charged against the retry budget) and then re-raised. One that arrives
+    while the iteration still waits for the gate leaves it `pending`.
+    """
     layout = context.template.layout
     request = GenerationRequest(
         prompt=draft.prompt_text,
@@ -467,12 +474,15 @@ async def run_iteration(
     raw: AssetInfo | None = None
     final: AssetInfo | None = None
     compliance_failure = False
+    started = False
+    cancelled: asyncio.CancelledError | None = None
     try:
         # The semaphore bounds the provider, the scarce resource; finalizing and storing
         # run outside it so they overlap with the next generation.
         async with context.gate:
             store.mark_iteration_running(iteration_id)
             store.commit()
+            started = True
             result = await _generate(context.provider, request, context.workdir, attempts)
         raw = store.put_raw(result.image_path)
         if result.image_path.parent == context.workdir:
@@ -495,6 +505,12 @@ async def run_iteration(
             error_text = "not compliant: " + ", ".join(report.violations)
     except ThumbforgeError as error:
         status, error_text = RunStatus.FAILED, f"{error.code}: {error.message}"
+    except asyncio.CancelledError as error:
+        if not started:
+            raise
+        cancelled = error
+        status, error_text = RunStatus.FAILED, INTERRUPTED
+        attempts.count = draft.prior_attempts
 
     response: JsonPayload = {"attempts": attempts.count}
     cost_json = None
@@ -524,6 +540,8 @@ async def run_iteration(
     )
     store.commit()
     context.progress.iteration_finished(context.run_id, draft.ordinal, status, error_text)
+    if cancelled is not None:
+        raise cancelled
     return Done(draft.ordinal, status, compliance_failure, final)
 
 

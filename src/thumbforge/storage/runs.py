@@ -15,6 +15,7 @@ reason; waiting out `busy_timeout` would only end in "database is locked".
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import TYPE_CHECKING, cast
 
 from sqlalchemy import select, update
@@ -26,6 +27,7 @@ from thumbforge.core.services.batch import (
     BatchPlaylist,
     BatchReference,
     ExistingIteration,
+    StoredBatch,
 )
 from thumbforge.core.services.hero import AssetInfo, HeroTarget, copy_assets
 from thumbforge.core.services.iterate import IterateSource
@@ -172,6 +174,47 @@ class RunRepository:
         row.error_text = error_text
         row.finished_at = utcnow_iso()
         self._session.flush()
+
+    def run_status(self, run_id: str) -> RunStatus:
+        """The status of the run with this id."""
+        return self.get(run_id).status
+
+    def load_batch(self, run_id: str) -> StoredBatch:
+        """What a batch run needs to be resumed: its status and the pieces of its spec."""
+        run = self.get(run_id)
+        if run.kind is not RunKind.BATCH or run.playlist_id is None:
+            msg = f"run {run.id} is a {run.kind.value} run; only batch runs can be resumed"
+            raise UsageError(msg, hint="`thumb generate` and `thumb iterate` make new runs instead")
+        profile = run.provider_profile
+        return StoredBatch(
+            status=run.status,
+            playlist_id=run.playlist_id,
+            template_ref=f"{run.template.name}@{run.template.version}",
+            provider_key=profile.provider_key,
+            provider_params=cast("dict[str, JsonValue]", json.loads(profile.params_json)),
+            params=cast("dict[str, JsonValue]", json.loads(run.params_json)),
+        )
+
+    def reopen_run(self, run_id: str) -> None:
+        """Put a run back to `running`, clearing its end time and reason."""
+        row = self.get(run_id)
+        row.status = RunStatus.RUNNING
+        row.error_text = None
+        row.finished_at = None
+        self._session.flush()
+
+    def cancel_run(self, run_id: str) -> None:
+        """Mark the run `cancelled`, and every iteration still `pending` or `running` with it."""
+        self._session.execute(
+            update(Iteration)
+            .where(
+                Iteration.run_id == run_id,
+                Iteration.status.in_((RunStatus.PENDING, RunStatus.RUNNING)),
+            )
+            .values(status=RunStatus.CANCELLED)
+            .execution_options(synchronize_session="fetch")
+        )
+        self.finish_run(run_id, RunStatus.CANCELLED, None)
 
     def put_raw(self, path: Path) -> AssetInfo:
         """Store a provider's output as a `raw` asset."""
@@ -329,7 +372,7 @@ class RunRepository:
         if not self._assets.verify(asset):
             msg = f"the reference image {asset.id} is missing or does not match its hash"
             raise AssetError(msg, hint="generate the hero again and pick it")
-        return BatchReference(parent_run_id=run.id, asset=self._info(asset))
+        return BatchReference(parent_run_id=run.id, iteration_id=chosen.id, asset=self._info(asset))
 
     def find_iterations(self, keys: Collection[str]) -> dict[str, ExistingIteration]:
         """The iterations whose idempotency key is in `keys`, by key, with their try counts."""
@@ -338,7 +381,13 @@ class RunRepository:
         ).all()
         return {
             row.idempotency_key: ExistingIteration(
-                id=row.id, status=row.status, attempts=_attempts(row.provider_response_json)
+                id=row.id,
+                run_id=row.run_id,
+                status=row.status,
+                attempts=_attempts(row.provider_response_json),
+                started_at=None
+                if row.started_at is None
+                else datetime.fromisoformat(row.started_at),
             )
             for row in rows
         }
