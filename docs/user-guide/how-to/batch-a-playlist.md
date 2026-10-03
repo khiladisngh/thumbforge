@@ -44,6 +44,6 @@ prints the plan, one row per item with the action it would take (`create`, `retr
 - `3`: the playlist, hero, template or provider was not found.
 - `2`: a bad option such as `--only 5-3`, `--max-images` below the work to do, or a hero run with no picked iteration.
 
-For `6`, `4` and `130`, run the same command again: items that completed are skipped, and failed or unfinished ones are retried (a failed item is retried while it has tries left, 2 by default). See [Resume an interrupted run](resume-an-interrupted-run.md).
+For `6`, `4` and `130`, run `thumbforge runs resume <run>`: items that completed are skipped, and failed or unfinished ones are retried (a failed item is retried while it has tries left, 2 by default). Running the same `batch` command again does the same work in a run of its own. See [Resume an interrupted run](resume-an-interrupted-run.md).
 
 Add `--json` for one JSON object instead of the tables: the run, a summary and every item. Progress is never drawn in `--json` mode.

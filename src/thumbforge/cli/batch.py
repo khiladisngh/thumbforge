@@ -35,8 +35,8 @@ from thumbforge.cli._render import emit, get_app_context, kv, table
 from thumbforge.cli._runs import (
     EMPTY,
     LogProgress,
+    batch_service,
     compliance_cell,
-    finalizer,
     open_run_store,
     provider_config,
     run_payload,
@@ -46,11 +46,9 @@ from thumbforge.cli._runs import (
 from thumbforge.cli._youtube import lookup_key
 from thumbforge.core.enums import RunStatus
 from thumbforge.core.errors import UsageError
-from thumbforge.core.services.batch import BatchPlan, BatchService, BatchSpec, PlanAction
+from thumbforge.core.services.batch import BatchPlan, BatchSpec, PlanAction
 from thumbforge.core.services.hero import NullProgress
 from thumbforge.logging import get_logger
-from thumbforge.providers import registry
-from thumbforge.templates.loader import PromptRenderer
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -60,7 +58,7 @@ if TYPE_CHECKING:
 
     from thumbforge.cli._runs import RunStore
     from thumbforge.core.json import JsonPayload
-    from thumbforge.core.services.batch import BatchResult
+    from thumbforge.core.services.batch import BatchResult, BatchService
     from thumbforge.settings import Settings
 
 log = get_logger(__name__)
@@ -155,7 +153,7 @@ def _labels(plan: BatchPlan) -> dict[int, str]:
 
 
 @contextmanager
-def _cancel_on_sigint(cancel: asyncio.Event, loop: asyncio.AbstractEventLoop) -> Generator[None]:
+def cancel_on_sigint(cancel: asyncio.Event, loop: asyncio.AbstractEventLoop) -> Generator[None]:
     """Set `cancel` on Ctrl-C for the duration of the block, then put the old handler back.
 
     A plain `signal.signal` handler rather than `loop.add_signal_handler`, which Windows does
@@ -182,7 +180,7 @@ async def _drive(
 ) -> BatchResult:
     """Run `spec`, with Ctrl-C wired to the service's cancel event."""
     cancel = asyncio.Event()
-    with _cancel_on_sigint(cancel, asyncio.get_running_loop()):
+    with cancel_on_sigint(cancel, asyncio.get_running_loop()):
         if spec.dry_run:
             return await service.run(spec, progress=NullProgress(), cancel=cancel)
         labels = _labels(await service.plan(spec)) if show_progress else {}
@@ -230,10 +228,13 @@ def _plan_view(result: BatchResult) -> tuple[JsonPayload, RenderableType]:
     return payload, renderable
 
 
-def _run_view(
+def batch_view(
     store: RunStore, settings: Settings, result: BatchResult, reference: str
 ) -> tuple[JsonPayload, RenderableType]:
-    """The run and one row per selected item, read back from what was stored."""
+    """The run and one row per selected item, read back from what was stored.
+
+    Shared with `runs resume`; `reference` is `final` or `raw`, as the run was started.
+    """
     if result.run_id is None:  # pragma: no cover - only a dry run has no run
         msg = "a batch that ran has a run id"
         raise ValueError(msg)
@@ -378,18 +379,11 @@ def batch(
     show_progress = console.is_terminal and not app_ctx.json_mode
 
     with open_run_store(settings) as store:
-        service = BatchService(
-            store.runs,
-            registry,
-            PromptRenderer(store.repos.templates),
-            finalizer(settings.output),
-            logs_dir=settings.state_dir / "logs" / "runs",
-            stale_after_s=settings.batch.stale_after_s,
-        )
+        service = batch_service(store, settings)
         # One `asyncio.run` per invocation: the CLI is the only sync/async boundary.
         result = asyncio.run(_drive(service, spec, console, show_progress=show_progress))
         payload, renderable = (
-            _plan_view(result) if dry_run else _run_view(store, settings, result, reference)
+            _plan_view(result) if dry_run else batch_view(store, settings, result, reference)
         )
 
     if result.reference_ignored:

@@ -1,6 +1,7 @@
 """Wiring and the shared run view for `thumb generate` and `runs show` (ROADMAP P6.1).
 
-`batch` (P7.3) shares the progress sink, the final-render binding and the run object.
+`batch` (P7.3) shares the progress sink, the final-render binding and the run object; the
+`runs` commands (P7.4) share the batch service wiring and the list view.
 
 `core.services.hero` declares Protocols; the concrete store is chosen here, which is the
 injection point `PLAN.md` §2.2 describes. The view reads the **stored** rows, never what the
@@ -21,18 +22,21 @@ from rich.console import Group
 from rich.markup import escape
 
 from thumbforge.cli._render import kv, table
-from thumbforge.core.enums import RunStatus
+from thumbforge.core.enums import RunKind, RunStatus
 from thumbforge.core.errors import TemplateError
 from thumbforge.core.json import JsonPayload, JsonValue
+from thumbforge.core.services.batch import BatchService
 from thumbforge.imaging.finalize import render_final
 from thumbforge.logging import get_logger
+from thumbforge.providers import registry
 from thumbforge.storage.assets import AssetStore
 from thumbforge.storage.db import get_engine, session_factory, session_scope
 from thumbforge.storage.repositories import Repositories
 from thumbforge.storage.runs import RunRepository
+from thumbforge.templates.loader import PromptRenderer
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Mapping
+    from collections.abc import Generator, Mapping, Sequence
     from pathlib import Path
 
     from rich.console import RenderableType
@@ -72,6 +76,18 @@ def open_run_store(settings: Settings) -> Generator[RunStore]:
             yield RunStore(Repositories(session), RunRepository(session, assets))
     finally:
         engine.dispose()
+
+
+def batch_service(store: RunStore, settings: Settings) -> BatchService:
+    """The batch service over `store`, as `batch` and `runs resume|cancel` use it."""
+    return BatchService(
+        store.runs,
+        registry,
+        PromptRenderer(store.repos.templates),
+        finalizer(settings.output),
+        logs_dir=settings.state_dir / "logs" / "runs",
+        stale_after_s=settings.batch.stale_after_s,
+    )
 
 
 def parse_vars(pairs: list[str]) -> dict[str, str]:
@@ -173,6 +189,13 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
         "Provider": escape(run.provider_profile.name),
         "Video": EMPTY if run.video is None else escape(run.video.youtube_id),
     }
+    counts = iteration_counts(run)
+    if run.kind is RunKind.BATCH:
+        header["Playlist"] = EMPTY if run.playlist is None else escape(run.playlist.title)
+        header["Items"] = (
+            f"{counts['completed']} completed, {counts['failed']} failed, "
+            f"{counts['pending']} pending of {counts['total']}"
+        )
     children = sorted(child.id for child in run.child_runs)
     if run.parent_run_id is not None:
         header["Parent run"] = run.parent_run_id
@@ -187,6 +210,7 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
 
     payload: JsonPayload = {
         "run": run_payload(run, data_dir),
+        "summary": counts,
         "iterations": [_iteration_payload(item, data_dir) for item in iterations],
     }
     renderable = Group(
@@ -199,6 +223,56 @@ def run_view(run: Run, data_dir: Path) -> tuple[JsonPayload, RenderableType]:
     return payload, renderable
 
 
+def runs_view(runs: Sequence[Run]) -> tuple[JsonPayload, RenderableType]:
+    """The JSON payload and the Rich table for `runs list`, one row per run in the order given."""
+    entries: list[JsonValue] = []
+    rows: list[list[str]] = []
+    for run in runs:
+        counts = iteration_counts(run)
+        entries.append(
+            {
+                "id": run.id,
+                "kind": run.kind.value,
+                "status": run.status.value,
+                "template": f"{run.template.name}@{run.template.version}",
+                "provider": run.provider_profile.name,
+                "video": None if run.video is None else run.video.youtube_id,
+                "parent_run_id": run.parent_run_id,
+                "started_at": run.started_at,
+                "finished_at": run.finished_at,
+                "counts": counts,
+            }
+        )
+        rows.append(
+            [
+                run.id,
+                run.kind.value,
+                status_cell(run.status),
+                escape(f"{run.template.name}@{run.template.version}"),
+                escape(run.provider_profile.name),
+                f"{counts['completed']}/{counts['total']}",
+                str(counts["failed"]),
+            ]
+        )
+    payload: JsonPayload = {"runs": entries}
+    return payload, table(["Run", "Kind", "Status", "Template", "Provider", "Done", "Failed"], rows)
+
+
+def iteration_counts(run: Run) -> JsonPayload:
+    """How many iterations a run has, and how many are completed, failed and still pending.
+
+    The same shape `batch` prints as its `summary`; a `cancelled` or `running` iteration counts
+    only toward the total.
+    """
+    states = [item.status for item in run.iterations]
+    return {
+        "total": len(states),
+        "completed": states.count(RunStatus.COMPLETED),
+        "failed": states.count(RunStatus.FAILED),
+        "pending": states.count(RunStatus.PENDING),
+    }
+
+
 def run_payload(run: Run, data_dir: Path) -> JsonPayload:
     """The JSON object for a run's own fields, shared by `runs show` and `batch`."""
     return {
@@ -208,6 +282,7 @@ def run_payload(run: Run, data_dir: Path) -> JsonPayload:
         "template": f"{run.template.name}@{run.template.version}",
         "provider": run.provider_profile.name,
         "video": None if run.video is None else run.video.youtube_id,
+        "playlist": None if run.playlist is None else run.playlist.youtube_id,
         "parent_run_id": run.parent_run_id,
         "child_run_ids": sorted(child.id for child in run.child_runs),
         "reference_asset": _asset_payload(run.reference_asset, data_dir),

@@ -14,8 +14,9 @@ The per-item pipeline is `hero.run_iteration`: a batch item is generated, stored
 recorded exactly as a hero iteration is. Every collaborator arrives as a Protocol, so this module
 imports no adapter package and, like `hero`, logs nothing.
 
-Not here yet: the `runs` commands (P7.4), which call `resume` and `cancel`. The `batch` command
-and its progress display (P7.3) live in `cli/batch.py`; `BatchResult.error` is what it raises.
+The `batch` command and its progress display (P7.3) live in `cli/batch.py`, and `runs resume` and
+`runs cancel` (P7.4) in `cli/runs.py`, which call `resume` and `cancel`; `BatchResult.error` is
+what they raise.
 """
 
 from __future__ import annotations
@@ -263,8 +264,8 @@ class BatchResult:
     def error(self) -> ThumbforgeError | None:
         """The error the CLI raises once it has printed the result, or `None` on success.
 
-        Re-running the same command is the way to continue until `runs resume` exists (P7.4):
-        it retries failed and unfinished items inside the run that created them.
+        Re-running the same command continues too: it retries failed and unfinished items
+        inside the run that created them. `runs resume` finishes that run itself.
         """
         total = len(self.plan.rows)
         run_id = self.run_id or ""

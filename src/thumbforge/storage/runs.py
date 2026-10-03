@@ -15,10 +15,11 @@ reason; waiting out `busy_timeout` would only end in "database is locked".
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, cast
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 
 from thumbforge.core.enums import AssetKind, RunKind, RunStatus
 from thumbforge.core.errors import AssetError, NotFoundError, UsageError
@@ -51,6 +52,15 @@ if TYPE_CHECKING:
     from thumbforge.core.models import ComplianceReport
     from thumbforge.core.services.hero import IterationDraft, IterationOutcome
     from thumbforge.storage.assets import AssetStore
+
+
+@dataclass(frozen=True, slots=True)
+class RunDeletion:
+    """What `RunRepository.delete_run` removed."""
+
+    iterations: int
+    #: The image files unlinked; empty unless the caller asked for assets to go.
+    assets: tuple[Path, ...]
 
 
 def _attempts(response_json: str) -> int:
@@ -249,6 +259,58 @@ class RunRepository:
             raise NotFoundError(msg, hint="run ids are printed by `thumbforge thumb generate`")
         return row
 
+    def list_runs(
+        self, *, kind: RunKind | None = None, status: RunStatus | None = None, limit: int
+    ) -> list[Run]:
+        """The newest `limit` runs, newest first, optionally of one kind and one status."""
+        query = select(Run).order_by(Run.created_at.desc(), Run.id.desc()).limit(limit)
+        if kind is not None:
+            query = query.where(Run.kind == kind)
+        if status is not None:
+            query = query.where(Run.status == status)
+        return list(self._session.scalars(query))
+
+    def delete_run(self, run_id: str, *, assets: bool) -> RunDeletion:
+        """Delete a run and its iterations; with `assets`, the images nothing else uses too.
+
+        `UsageError` while another run names this one as its parent (a refinement, or a batch
+        whose hero it is) or uses one of its images as its reference: that run still needs it.
+        Assets are content-addressed, so two runs that made the same image share one row and
+        one file; a row and file go only when no remaining iteration or run refers to it.
+
+        Unlike the rest of the repository this commits, because a file may only be unlinked
+        once the rows that named it are gone for good.
+        """
+        run = self.get(run_id)
+        iterations = list(run.iterations)
+        owned = {
+            asset_id
+            for item in iterations
+            for asset_id in (item.raw_asset_id, item.final_asset_id)
+            if asset_id is not None
+        }
+        dependents = sorted(
+            self._session.scalars(
+                select(Run.id).where(
+                    Run.id != run.id,
+                    or_(Run.parent_run_id == run.id, Run.reference_asset_id.in_(owned)),
+                )
+            )
+        )
+        if dependents:
+            msg = f"run {run.id} is still used by run {', '.join(dependents)}"
+            raise UsageError(
+                msg, hint="delete those runs first with `thumbforge runs delete <run>`"
+            )
+        candidates = owned if run.reference_asset_id is None else {*owned, run.reference_asset_id}
+        self._session.delete(run)
+        self._session.flush()
+        files = self._drop_unreferenced(candidates) if assets else []
+        self._session.commit()
+        for path in files:
+            path.unlink(missing_ok=True)
+        return RunDeletion(iterations=len(iterations), assets=tuple(files))
+
     def pick(self, run_id: str, target: int | str) -> Iteration:
         """Make `target` the run's one picked iteration; its siblings are un-picked.
 
@@ -443,6 +505,26 @@ class RunRepository:
                 return picked
             current = current.parent_run
         return None
+
+    def _drop_unreferenced(self, candidates: set[str]) -> list[Path]:
+        """Delete the asset rows among `candidates` that nothing refers to; their file paths."""
+        used = {
+            *self._session.scalars(
+                select(Iteration.raw_asset_id).where(Iteration.raw_asset_id.in_(candidates))
+            ),
+            *self._session.scalars(
+                select(Iteration.final_asset_id).where(Iteration.final_asset_id.in_(candidates))
+            ),
+            *self._session.scalars(
+                select(Run.reference_asset_id).where(Run.reference_asset_id.in_(candidates))
+            ),
+        }
+        rows = self._session.scalars(select(Asset).where(Asset.id.in_(candidates - used))).all()
+        paths = sorted(self._assets.path_for(row) for row in rows)
+        for row in rows:
+            self._session.delete(row)
+        self._session.flush()
+        return paths
 
     def _iteration(self, iteration_id: str) -> Iteration:
         row = self._session.get(Iteration, iteration_id)
