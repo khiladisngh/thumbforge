@@ -52,7 +52,7 @@ def cost_report(run: Run) -> CostReport
 
 ### Completion
 
-`thumbforge --install-completion` and `--show-completion` are Typer's builtin options; docs cover PowerShell profile placement on Windows.
+`thumbforge --install-completion` and `--show-completion` are Typer's builtin flags. They take no shell argument: the shell is detected from the parent process, so the command is run from inside the shell to set up. The user-guide page `docs/user-guide/how-to/shell-completion.md` documents, per shell, where the script lands, how to reload and how to undo (PowerShell: the profile named by `$PROFILE`). `tests/unit/test_cli_completion.py` drives the `_THUMBFORGE_COMPLETE` protocol the installed scripts use against the real app.
 
 ## Behaviour
 
@@ -67,7 +67,7 @@ def cost_report(run: Run) -> CostReport
   - Note (P8.1): the ytdlp fixture keeps only the first 12 items of a playlist that is much longer live (183 in spike S11) and changes over time, so `tests/integration/test_youtube_api_live.py` asserts at least 12 items with contiguous positions rather than the fixture's exact ids; the fixture-level "same 12 videos" check is `tests/contract/test_source_contract.py`. Only the `channel` table has a `source` column, so `source = api` is persisted on the channel row; `VideoMeta`/`PlaylistMeta` carry it in memory.
 - Without the extra, `thumbforge fetch <url> --source api` exits `1` and prints the install hint; with the extra but no key, exits `1` with the `set-key` hint.
 - `thumbforge runs cost <fake run>` prints `tokens_in 0`, `no_cost_data 4` for a 4-iteration hero run.
-- `thumbforge --install-completion powershell` appends to the PowerShell profile and `thumbforge th<TAB>` completes to `thumb` in a fresh shell (manual check, recorded in the PR).
+- `thumbforge --install-completion`, run from PowerShell, appends to the PowerShell profile and `thumbforge th<TAB>` completes to `thumb` in a fresh shell; the same holds for bash and zsh with their own rc files (manual check, recorded in the commit message).
 - `uv tool install .` from a checkout puts `thumbforge` on PATH and `thumbforge --version` prints `thumbforge 0.1.0`.
 - Tagging `v0.1.0` runs `release.yml` to a green `build` job with `dist/thumbforge-0.1.0-py3-none-any.whl` attached to the GitHub release.
 

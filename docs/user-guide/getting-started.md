@@ -271,4 +271,5 @@ Every command exits `0` on success. The full table (usage errors, not found, pro
 
 - Read the concepts: [Hero](concepts/hero.md), [Series and playlists](concepts/series-and-playlists.md), [Templates](concepts/templates.md), [Providers](concepts/providers.md).
 - [Generate a hero](how-to/generate-a-hero.md) and [Pick and refine](how-to/pick-and-refine.md) go deeper on the commands used above.
+- [Shell completion](how-to/shell-completion.md) adds Tab completion for commands and options in bash, zsh, fish and PowerShell.
 - `thumbforge --help` and `thumbforge <command> --help` list every option.

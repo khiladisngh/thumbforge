@@ -30,6 +30,7 @@ nav = [
       { "Pick and refine" = "user-guide/how-to/pick-and-refine.md" },
       { "Batch a playlist" = "user-guide/how-to/batch-a-playlist.md" },
       { "Resume an interrupted run" = "user-guide/how-to/resume-an-interrupted-run.md" },
+      { "Shell completion" = "user-guide/how-to/shell-completion.md" },
       { "Write a custom template" = "user-guide/how-to/write-a-custom-template.md" },
     ] },
     { "Reference" = [

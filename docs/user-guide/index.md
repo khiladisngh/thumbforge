@@ -11,6 +11,7 @@ Thumbforge is pre-alpha. These commands exist and work now:
 - **Part numbers** — `thumbforge playlist renumber` assigns the "Part N" numbers, optionally leaving a trailer or an outro unnumbered.
 - **Providers** — `thumbforge provider list|check|models|set-key` shows which image providers are installed, checks that they are ready, and stores their API keys in the system keyring.
 - **Templates** — `thumbforge template validate` checks a layout file; `thumbforge template render` prints the prompt a template produces for a stored video, without calling any provider.
+- **Shell completion** — `thumbforge --install-completion` sets up Tab completion in bash, zsh, fish and PowerShell; see [Shell completion](how-to/shell-completion.md).
 
 ## What lands in v0.1.0
 
@@ -22,7 +23,7 @@ Thumbforge is pre-alpha. These commands exist and work now:
     - the final image: fit to 16:9, text overlay and the YouTube compliance check — [Phase 5 spec](../specs/phase-5-imaging.md);
     - generating, picking, refining and exporting a hero (`thumb generate|pick|show|export|iterate`) — [Phase 6 spec](../specs/phase-6-hero.md);
     - batching a whole playlist, with resume and cancel (`batch`, `runs list|show|resume|cancel|delete`) — [Phase 7 spec](../specs/phase-7-batch.md);
-    - an optional YouTube Data API source, shell completion and a cost report — [Phase 8 spec](../specs/phase-8-polish.md).
+    - an optional YouTube Data API source and a cost report — [Phase 8 spec](../specs/phase-8-polish.md).
 
     The [specs overview](../specs/README.md) shows which phases are implemented.
 
@@ -30,5 +31,5 @@ Thumbforge is pre-alpha. These commands exist and work now:
 
 - [Getting started](getting-started.md) — install, then a first run with the commands that exist today.
 - Concepts — [Hero](concepts/hero.md), [Series and playlists](concepts/series-and-playlists.md), [Templates](concepts/templates.md), [Providers](concepts/providers.md).
-- How-to guides — [Generate a hero](how-to/generate-a-hero.md), [Pick and refine](how-to/pick-and-refine.md), [Batch a playlist](how-to/batch-a-playlist.md), [Resume an interrupted run](how-to/resume-an-interrupted-run.md), [Write a custom template](how-to/write-a-custom-template.md).
+- How-to guides — [Generate a hero](how-to/generate-a-hero.md), [Pick and refine](how-to/pick-and-refine.md), [Batch a playlist](how-to/batch-a-playlist.md), [Resume an interrupted run](how-to/resume-an-interrupted-run.md), [Write a custom template](how-to/write-a-custom-template.md), [Shell completion](how-to/shell-completion.md).
 - Reference — [CLI reference](reference/cli.md).
