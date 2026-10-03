@@ -25,7 +25,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         UPDATE_GOLDEN,
         action="store_true",
         default=False,
-        help="Write golden images from the current output instead of comparing against them.",
+        help="Write golden files from the current output instead of comparing against them.",
     )
 
 
@@ -58,6 +58,35 @@ def assert_golden(request: pytest.FixtureRequest) -> Callable[[Image.Image, Path
             if actual.tobytes() != expected.tobytes():
                 bbox = ImageChops.difference(actual, expected).getbbox()
                 pytest.fail(f"{golden_path.name}: pixels differ inside {bbox}")
+
+    return check
+
+
+@pytest.fixture
+def assert_golden_text(request: pytest.FixtureRequest) -> Callable[[str, Path], None]:
+    """Compare text with its committed golden file, or rewrite it with ``--update-golden``.
+
+    The file holds the text plus one trailing newline, the form ``end-of-file-fixer`` keeps.
+    """
+    update = bool(request.config.getoption(UPDATE_GOLDEN))
+
+    def check(actual: str, golden_path: Path) -> None:
+        stored = actual + "\n"
+        if update:
+            golden_path.parent.mkdir(parents=True, exist_ok=True)
+            golden_path.write_text(stored, encoding="utf-8", newline="\n")
+            return
+        if not golden_path.is_file():
+            pytest.fail(
+                f"golden {golden_path} is missing; create it with "
+                f"`uv run pytest -m golden {UPDATE_GOLDEN}` and review it before committing"
+            )
+        expected = golden_path.read_text(encoding="utf-8")
+        if stored != expected:
+            pytest.fail(
+                f"{golden_path.name} differs from the rendered text:\n"
+                f"--- golden\n{expected}--- actual\n{stored}"
+            )
 
     return check
 

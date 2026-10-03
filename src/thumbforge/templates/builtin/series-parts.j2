@@ -1,0 +1,10 @@
+One thumbnail in a recurring series look for YouTube, {{ width }}x{{ height }} pixels, landscape.
+{% if part_number %}
+This is Part {{ part_number }}{% if part_label %} ("{{ part_label }}"){% endif %}{% if playlist %} of "{{ playlist.title }}"{% endif %}.
+{% elif playlist %}
+It belongs to the series "{{ playlist.title }}".
+{% endif %}
+Subject: a single clear visual metaphor for "{{ video.title }}", centred in the frame.
+Keep the series' look the same from part to part: deep navy background, warm yellow accents, soft studio lighting, the same camera angle and the same flat illustration style; only the subject changes.
+Composition: {{ negative_space }}
+Do not draw any text, lettering, numbers or logos anywhere in the image; the title and the Part badge are overlaid afterwards.

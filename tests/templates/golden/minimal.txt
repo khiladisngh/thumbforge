@@ -1,0 +1,5 @@
+A clean, restrained image for a YouTube thumbnail, 1920x1080 pixels, landscape.
+One simple subject that hints at "Ownership explained" (from "Rust from scratch"), placed off-centre towards the upper right.
+Soft, even light and a muted palette of two or three colours; plenty of calm, empty space and no busy detail.
+Composition: Keep the lower-left corner calm and empty so the small overlaid title sits on a quiet background.
+Do not draw any text, lettering, numbers or logos anywhere in the image; the title is overlaid afterwards.

@@ -1,0 +1,6 @@
+One thumbnail in a recurring series look for YouTube, 1920x1080 pixels, landscape.
+This is Part 7 of "Rust from scratch".
+Subject: a single clear visual metaphor for "Ownership explained", centred in the frame.
+Keep the series' look the same from part to part: deep navy background, warm yellow accents, soft studio lighting, the same camera angle and the same flat illustration style; only the subject changes.
+Composition: Keep the bottom third of the frame uncluttered for the overlaid title and the top-right corner clear for the Part badge.
+Do not draw any text, lettering, numbers or logos anywhere in the image; the title and the Part badge are overlaid afterwards.

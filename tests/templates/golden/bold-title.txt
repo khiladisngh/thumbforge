@@ -1,0 +1,5 @@
+A punchy, high-contrast hero shot for a YouTube thumbnail, 1920x1080 pixels, landscape.
+The video is "Ownership explained", from the series "Rust from scratch": show one bold subject that captures that idea at a glance.
+Saturated colour, strong rim light and dramatic depth; the subject large and sharp against a simple background.
+Composition: Keep the lower half of the frame uncluttered and fairly dark so the large title overlaid there stays readable.
+Do not draw any text, lettering, numbers or logos anywhere in the image; the title is overlaid afterwards.

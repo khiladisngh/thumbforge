@@ -10,7 +10,7 @@ A template pairs a Jinja2 **prompt** (what the provider is asked to paint) with 
 
 - **P4.1** `core/layout.py` — Pydantic `LayoutSpec`; `templates/schema.py` — TOML loading into it. The model lives in `core` because `imaging` (Phase 5) and `core.services` (Phase 6) consume it, and neither may import `templates`.
 - **P4.2** `templates/render.py` — Jinja2 environment (`StrictUndefined`, `autoescape=False`), render context.
-- **P4.3** `templates/builtin/{bold-title,minimal,series-parts}.{toml,j2}`.
+- **P4.3** `templates/builtin/{bold-title,minimal,series-parts}.{toml,j2}` (package data, in the wheel) and `templates/builtins.py` — `BUILTIN_NAMES` and `builtin_files(name) -> (toml_path, j2_path)`; an unknown name is `NotFoundError`. No loading into the database (P4.4).
 - **P4.4** `templates/loader.py`, `cli/template.py`, versioning in `TemplateRepository`.
 
 ## Non-goals
@@ -57,6 +57,12 @@ badge = { fill = "#E53935", padding_px = 24, radius_px = 16 }
 [negative_space]
 hint = "leave the lower-left third uncluttered"   # injected into the prompt via {{ negative_space }}
 ```
+
+The TOML above illustrates the schema; it is not a shipped file. The shipped values live in `src/thumbforge/templates/builtin/*.toml`:
+
+- `bold-title` — 160 px (floor 96) upper-case title bottom-left in a 1728×440 box, 8 px black stroke, Part badge disabled; the prompt asks for a punchy, high-contrast hero shot with the lower half kept clear.
+- `minimal` — 96 px (floor 64) title, case unchanged, bottom-left in a 1200×216 box at `x = 96, y = 800`, 4 px stroke, Part badge disabled; the prompt asks for one restrained subject with calm space in the lower-left corner.
+- `series-parts` — 128 px (floor 72) title-case title bottom-centre, `PART {n}` badge top-right on `#FFD400`; the prompt names `Part {{ part_number }}` of the playlist and fixes one look across the series, with the bottom third and top-right corner kept clear.
 
 ```python
 class LayoutSpec(BaseModel, frozen=True, extra="forbid"):

@@ -94,7 +94,7 @@ venv = ".venv"
 asyncio_mode = "auto"
 markers = [
   "integration: hits the network or a real provider; opt in with -m integration",
-  "golden: image snapshot comparison",
+  "golden: image or prompt-text snapshot comparison",
 ]
 testpaths = ["tests"]
 addopts = "-m 'not integration'"

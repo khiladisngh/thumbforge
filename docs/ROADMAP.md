@@ -52,8 +52,8 @@ Spec: `docs/specs/phase-4-templates.md`
 
 - P4.1 Layout spec schema — deps: P1.5 — AC: Pydantic `LayoutSpec` in `core/layout.py` (canvas, title box, part badge, font, colours, safe margins; in `core` because `imaging` and `core.services` consume it) and TOML loading in `templates/schema.py`; `template validate PATH` reports schema errors with exit `2`.
 - P4.2 Prompt rendering — deps: P4.1 — AC: Jinja2 environment with `StrictUndefined`, `autoescape=False`; context = video/playlist/part/vars; missing variable → `TemplateError`; `template render NAME --video <id> [--part N]` prints the prompt.
-- P4.3 Builtin templates — deps: P4.2 — AC: `bold-title`, `minimal`, `series-parts` shipped under `templates/builtin/`; loaded as `is_builtin=1` version 1 on `db init`.
-- P4.4 Template commands + versioning — deps: P4.3, P1.3 — AC: `template list|show|new|import`; importing a changed spec creates version+1; `spec_hash` stable for identical content.
+- P4.3 Builtin templates — deps: P4.2 — AC: `bold-title`, `minimal`, `series-parts` shipped as `NAME.toml` + `NAME.j2` package data under `templates/builtin/` and included in the wheel, located by `templates/builtins.py`; each layout loads with `load_layout`, overlays the fixture title without truncation, and its prompt renders to a committed golden in `tests/templates/golden/`.
+- P4.4 Template commands + versioning — deps: P4.3, P1.3 — AC: builtins loaded into the database as `is_builtin=1` version 1 on `db init`; `template list|show|new|import`; importing a changed spec creates version+1; `spec_hash` stable for identical content.
 
 ## Phase 5 — Imaging
 

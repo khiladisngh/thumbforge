@@ -1,0 +1,32 @@
+[template]
+name = "series-parts"
+description = "Title bottom-centre with a yellow PART badge top-right, one look across a series"
+
+[canvas]
+width = 1920
+height = 1080
+safe_margin_px = 64
+
+[title]
+enabled = true
+font = "Inter-Bold"
+max_lines = 2
+size_px = 128
+min_size_px = 72
+color = "#FFFFFF"
+stroke_px = 6
+stroke_color = "#101010"
+anchor = "bottom-center"
+box = { x = 160, y = 680, w = 1600, h = 336 }
+case = "title"
+
+[part]
+enabled = true
+format = "PART {n}"
+font = "Inter-Bold"
+size_px = 72
+anchor = "top-right"
+badge = { fill = "#FFD400", padding_px = 24, radius_px = 16 }
+
+[negative_space]
+hint = "Keep the bottom third of the frame uncluttered for the overlaid title and the top-right corner clear for the Part badge."

@@ -1,0 +1,29 @@
+[template]
+name = "minimal"
+description = "Small, quiet title bottom-left over a clean, restrained image with lots of space"
+
+[canvas]
+width = 1920
+height = 1080
+safe_margin_px = 64
+
+[title]
+enabled = true
+font = "Inter-Bold"
+max_lines = 2
+size_px = 96
+min_size_px = 64
+color = "#FFFFFF"
+stroke_px = 4
+stroke_color = "#000000"
+anchor = "bottom-left"
+box = { x = 96, y = 800, w = 1200, h = 216 }
+case = "none"
+
+[part]
+enabled = false
+font = "Inter-Bold"
+size_px = 72
+
+[negative_space]
+hint = "Keep the lower-left corner calm and empty so the small overlaid title sits on a quiet background."

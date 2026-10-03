@@ -16,7 +16,7 @@ src/thumbforge/
   settings.py   pydantic-settings (TOML + env THUMBFORGE_*), platformdirs paths
   credentials.py provider API keys: env THUMBFORGE_PROVIDERS__<KEY>__API_KEY, then keyring. Only writer of a secret
   logging.py    structlog configuration
-tests/          unit/ contract/ integration/ golden/ fixtures/
+tests/          unit/ contract/ integration/ golden/ templates/golden/ fixtures/
 docs/           ARCHITECTURE.md ROADMAP.md CONVENTIONS.md TESTING.md GLOSSARY.md adr/ specs/ spikes/
 graphify-out/   generated codebase knowledge graph (committed; cache/ and cost.json ignored)
 ```
@@ -33,7 +33,7 @@ Dependency rule: `cli → core, storage, providers, sources, templates, imaging,
 | Type check                                               | `uv run pyright`                                                       |
 | Unit + contract tests                                    | `uv run pytest -q`                                                     |
 | Opt-in live tests                                        | `uv run pytest -m integration`                                         |
-| Golden image tests                                       | `uv run pytest -m golden`                                              |
+| Golden snapshot tests                                    | `uv run pytest -m golden`                                              |
 | Import contracts                                         | `uv run lint-imports`                                                  |
 | New migration                                            | `uv run alembic revision --autogenerate -m "<message>"`                |
 | Docs preview                                             | `uv run zensical serve`                                                |
@@ -74,7 +74,7 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 ## Definition of done
 
 - Spec or issue linked in the PR.
-- Tests added at the right layer: unit (no network, FakeProvider / recorded fixtures), contract (every provider), `integration` marker for live systems, `golden` for image output.
+- Tests added at the right layer: unit (no network, FakeProvider / recorded fixtures), contract (every provider), `integration` marker for live systems, `golden` for image and prompt-text snapshots.
 - `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, `uv run pytest -q`, `uv run lint-imports`, `uv run zensical build` all green locally and in CI.
 - Docs updated in the same PR when behaviour or structure changed: `docs/ARCHITECTURE.md`, the phase spec, `AGENTS.md`, ADR if a decision changed.
 - Knowledge graph refreshed when source structure changed: `graphify extract . --code-only && graphify cluster-only . --no-label`, then commit `graphify-out/`. Installed once with `uv tool install graphifyy`. CI runs an advisory drift check (`scripts/check_graph_drift.py`); regeneration is manual, not hooked.

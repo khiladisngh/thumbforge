@@ -1,0 +1,29 @@
+[template]
+name = "bold-title"
+description = "Large upper-case title bottom-left over a punchy, high-contrast hero shot"
+
+[canvas]
+width = 1920
+height = 1080
+safe_margin_px = 64
+
+[title]
+enabled = true
+font = "Inter-Bold"
+max_lines = 2
+size_px = 160
+min_size_px = 96
+color = "#FFFFFF"
+stroke_px = 8
+stroke_color = "#000000"
+anchor = "bottom-left"
+box = { x = 96, y = 560, w = 1728, h = 440 }
+case = "upper"
+
+[part]
+enabled = false
+font = "Inter-Bold"
+size_px = 72
+
+[negative_space]
+hint = "Keep the lower half of the frame uncluttered and fairly dark so the large title overlaid there stays readable."
