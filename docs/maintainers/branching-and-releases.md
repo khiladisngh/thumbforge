@@ -43,9 +43,22 @@ PY
 
 ## Releases
 
-1. Bump `[project] version` in `pyproject.toml` in one commit (`chore(release): v0.1.0`) and push it to `main`.
+1. Bump `[project] version` in `pyproject.toml` and regenerate `CHANGELOG.md` in one commit (`chore(release): v0.1.0`), then push it to `main`. `release.yml` fails when the tag and the version differ, so the bump comes first:
+
+   ```
+   uv version 0.1.0
+   uvx git-cliff --tag v0.1.0 --output CHANGELOG.md
+   ```
+
 2. Once the remote run is green: `git tag v0.1.0 && git push origin v0.1.0`.
-3. `release.yml` checks the tag matches the version, runs `uv build`, generates release notes with `git-cliff` from Conventional Commits, creates the GitHub release with the wheel and sdist attached, and publishes to PyPI via trusted publishing (environment `pypi`; configure the publisher on PyPI before the first release).
+3. `release.yml` checks the tag matches the version, runs `uv build`, generates release notes with `git-cliff` from Conventional Commits (`cliff.toml`), creates the GitHub release with the wheel and sdist attached, and publishes to PyPI via trusted publishing (environment `pypi`).
+
+### Before the first release
+
+Only the repository owner can do these; the workflow cannot:
+
+1. **PyPI:** under Account settings, Publishing, add a pending publisher for a new project: name `thumbforge`, owner `khiladisngh`, repository `thumbforge`, workflow `release.yml`, environment `pypi`. The name was unclaimed on PyPI on 2026-10-03.
+2. **GitHub:** under Settings, Environments, create the `pypi` environment. Adding yourself as a required reviewer makes every publish wait for an explicit approval. No secret is needed: trusted publishing uses the workflow's OIDC token.
 
 ## Docs
 
