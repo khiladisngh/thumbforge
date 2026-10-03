@@ -2,20 +2,17 @@
 
 Generate consistent, spec-compliant YouTube thumbnails from a hero image and a playlist — from the terminal.
 
-- **Hero first.** Generate several candidates for one video, compare, pick, refine.
-- **Batch second.** Use the picked hero as the style reference for every video in a playlist, with deterministic titles and "Part N" badges rendered by Pillow.
-- **Pluggable providers.** Antigravity CLI first; any provider can be added through the `thumbforge.providers` entry-point group.
-- **Local database.** Channels, playlists, videos, templates, runs, iterations and assets live in SQLite; images are content-addressed on disk.
+- **Hero first.** Generate several candidates for one video, compare them, pick one and refine it.
+- **Batch second.** Use the picked hero as the style reference for every video in a playlist. Titles and "Part N" badges are drawn by Thumbforge itself, so they are exact and identical in style on every thumbnail.
+- **Pluggable providers.** Image generation is a plugin; a deterministic `fake` provider works offline.
+- **Local and resumable.** Videos, playlists, templates and runs live in a local SQLite database; images are stored by content hash, and an interrupted batch resumes without redoing finished items.
 
-## Status
+Thumbforge is pre-alpha: metadata fetching, part numbering, provider checks and template prompts work today; thumbnail generation lands in v0.1.0.
 
-Pre-alpha. The project is being built spec-first, primarily by coding agents. Start with:
+## Where to start
 
-- [Architecture](ARCHITECTURE.md) — package layout, dependency rule, data model
-- [Roadmap](ROADMAP.md) — phases and PR-sized tasks
-- [Conventions](CONVENTIONS.md) and [Testing](TESTING.md)
-- [ADRs](adr/0000-template.md) — every stack decision
-- [Specs](specs/README.md) — one per phase
-- [Branching & releases](BRANCHING.md)
+- [**User guide**](user-guide/index.md) — install Thumbforge, run it for the first time, and learn the concepts: heroes, series, templates and providers.
+- [**Developers**](developers/index.md) — set up the repository and read the architecture, conventions, testing rules, phase specs and spike results.
+- [**Maintainers**](maintainers/index.md) — release process, CI, the roadmap, open questions and decision records.
 
 Source: [github.com/khiladisngh/thumbforge](https://github.com/khiladisngh/thumbforge). MIT licensed.

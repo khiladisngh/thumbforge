@@ -12,7 +12,7 @@ Generate consistent, spec-compliant YouTube thumbnails from a hero image and a p
 - **Pluggable providers.** Antigravity CLI first; add your own via the `thumbforge.providers` entry-point group. A deterministic `fake` provider keeps tests offline.
 - **Local database.** Channels, playlists, videos, templates, runs, iterations and assets in SQLite; images content-addressed on disk; interrupted batches resume without regenerating finished items.
 
-> **Status: pre-alpha.** Phase 0 (infrastructure) is complete; no thumbnail generation exists yet. See the [roadmap](docs/ROADMAP.md).
+> **Status: pre-alpha.** Fetching playlist metadata, numbering parts, checking providers and rendering template prompts work today; thumbnail generation lands in v0.1.0. See the [user guide](https://khiladisngh.github.io/thumbforge/user-guide/) and the [roadmap](docs/ROADMAP.md).
 
 ## Install (once released)
 
@@ -32,7 +32,7 @@ thumbforge batch <playlist-id> --hero <run-id> --template series-parts
 
 ## Documentation
 
-Published at **https://khiladisngh.github.io/thumbforge/** — architecture, roadmap, ADRs, specs.
+Published at **https://khiladisngh.github.io/thumbforge/**, in three sections: a user guide, developer docs (architecture, conventions, testing, specs) and maintainer docs (release process, CI, roadmap, decision records).
 
 - [`PLAN.md`](PLAN.md) — full project plan
 - [`AGENTS.md`](AGENTS.md) — instructions for coding agents (this repo is built spec-first by agents)

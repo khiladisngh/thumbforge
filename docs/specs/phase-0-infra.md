@@ -13,8 +13,8 @@ Deliverables, grouped by task:
 - **P0.1 bootstrap** — `pyproject.toml`, `uv.lock`, `src/thumbforge/__init__.py`, `src/thumbforge/__main__.py`, `.editorconfig`, `.gitignore`, `LICENSE` (MIT, decision D5), `README.md`.
 - **P0.2 quality tooling** — `.pre-commit-config.yaml`, `.prettierrc`, `.prettierignore`, `[tool.*]` tables, `tests/conftest.py`, `tests/test_version.py`.
 - **P0.3 agent instructions** — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`.
-- **P0.4 docs** — `docs/index.md`, `docs/ARCHITECTURE.md`, `docs/CONVENTIONS.md`, `docs/TESTING.md`, `docs/GLOSSARY.md`, `docs/ROADMAP.md`, `docs/adr/0000-template.md`, ADRs 0001–0016, `zensical.toml`.
-- **P0.5 GitHub** — `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/{feature,bug,spike}.yml`, `.github/CODEOWNERS`, `.github/labels.yml`, `.github/workflows/{ci,docs,release}.yml`, `docs/BRANCHING.md`.
+- **P0.4 docs** — `docs/index.md`, `docs/developers/architecture.md`, `docs/developers/conventions.md`, `docs/developers/testing.md`, `docs/developers/glossary.md`, `docs/ROADMAP.md`, `docs/adr/0000-template.md`, ADRs 0001–0016, `zensical.toml`.
+- **P0.5 GitHub** — `.github/PULL_REQUEST_TEMPLATE.md`, `.github/ISSUE_TEMPLATE/{feature,bug,spike}.yml`, `.github/CODEOWNERS`, `.github/labels.yml`, `.github/workflows/{ci,docs,release}.yml`, `docs/maintainers/branching-and-releases.md`.
 - **P0.6 graphify** — `graphify-out/` committed, `.agents/skills/` committed, hooks per spike S9.
 - **P0.7 specs** — `docs/specs/README.md`, `phase-0-infra.md`, `phase-1-skeleton.md` (this tree).
 
@@ -47,10 +47,10 @@ Deliverables, grouped by task:
 | `AGENTS.md`                                                  | Canonical instructions for coding agents                                                                                                          | P0.3      |
 | `CLAUDE.md`, `GEMINI.md`                                     | Single line: `Read AGENTS.md; it is the canonical instruction file.`                                                                              | P0.3      |
 | `docs/index.md`                                              | Docs site landing page; links to every top-level doc                                                                                              | P0.4      |
-| `docs/ARCHITECTURE.md`                                       | `PLAN.md` §2 (layout, dependency rule, data-flow diagram) extracted                                                                               | P0.4      |
-| `docs/CONVENTIONS.md`                                        | Code conventions (mirrors `AGENTS.md` Conventions, longer form)                                                                                   | P0.4      |
-| `docs/TESTING.md`                                            | Test layers, markers, fixture recording procedure                                                                                                 | P0.4      |
-| `docs/GLOSSARY.md`                                           | hero, iteration, run, asset, template, provider profile, idempotency key, part number                                                             | P0.4      |
+| `docs/developers/architecture.md`                            | `PLAN.md` §2 (layout, dependency rule, data-flow diagram) extracted                                                                               | P0.4      |
+| `docs/developers/conventions.md`                             | Code conventions (mirrors `AGENTS.md` Conventions, longer form)                                                                                   | P0.4      |
+| `docs/developers/testing.md`                                 | Test layers, markers, fixture recording procedure                                                                                                 | P0.4      |
+| `docs/developers/glossary.md`                                | hero, iteration, run, asset, template, provider profile, idempotency key, part number                                                             | P0.4      |
 | `docs/ROADMAP.md`                                            | Phase/task list                                                                                                                                   | P0.4      |
 | `docs/adr/0000-template.md`, `0001`–`0016`                   | Decision records                                                                                                                                  | P0.4      |
 | `docs/specs/`                                                | This directory                                                                                                                                    | P0.7      |
@@ -58,11 +58,11 @@ Deliverables, grouped by task:
 | `.github/PULL_REQUEST_TEMPLATE.md`                           | PR checklist below                                                                                                                                | P0.5      |
 | `.github/ISSUE_TEMPLATE/feature.yml`, `bug.yml`, `spike.yml` | Issue forms                                                                                                                                       | P0.5      |
 | `.github/CODEOWNERS`                                         | `* @<owner>` (D5)                                                                                                                                 | P0.5      |
-| `.github/labels.yml`                                         | Label list below; applied by a manual `gh label` script documented in `docs/BRANCHING.md`                                                         | P0.5      |
+| `.github/labels.yml`                                         | Label list below; applied by a manual `gh label` script documented in `docs/maintainers/branching-and-releases.md`                                | P0.5      |
 | `.github/workflows/ci.yml`                                   | Lint/type/test/docs on PR and push                                                                                                                | P0.5      |
 | `.github/workflows/docs.yml`                                 | Build + deploy docs to GitHub Pages                                                                                                               | P0.5      |
 | `.github/workflows/release.yml`                              | Tag → build → PyPI (proposal)                                                                                                                     | P0.5      |
-| `docs/BRANCHING.md`                                          | Branch protection, labels script, release procedure                                                                                               | P0.5      |
+| `docs/maintainers/branching-and-releases.md`                 | Branch protection, labels script, release procedure                                                                                               | P0.5      |
 | `graphify-out/graph.html`, `GRAPH_REPORT.md`, `graph.json`   | Knowledge graph (committed); `cost.json` ignored                                                                                                  | P0.6      |
 | `.agents/skills/`                                            | Written by `graphify install --project --platform agents`                                                                                         | P0.6      |
 
@@ -172,19 +172,17 @@ site_name = "Thumbforge"
 site_url = "https://<owner>.github.io/thumbforge/"   # D5
 docs_dir = "docs"
 site_dir = "site"
+strict = true   # warnings, including broken links and anchors, fail the build
 
 nav = [
   { "Home" = "index.md" },
-  { "Architecture" = "ARCHITECTURE.md" },
-  { "Roadmap" = "ROADMAP.md" },
-  { "Conventions" = "CONVENTIONS.md" },
-  { "Testing" = "TESTING.md" },
-  { "Glossary" = "GLOSSARY.md" },
-  { "Branching & releases" = "BRANCHING.md" },
-  { "ADRs" = "adr/" },
-  { "Specs" = "specs/" },
+  { "User guide" = [ "user-guide/index.md", … ] },
+  { "Developers" = [ "developers/index.md", "developers/architecture.md", …, "specs/README.md", … ] },
+  { "Maintainers" = [ "maintainers/index.md", "maintainers/branching-and-releases.md", "ROADMAP.md", …, "adr/index.md", … ] },
 ]
 ```
+
+The nav is grouped by audience (users, developers, maintainers); the complete list lives in `zensical.toml`, and every page under `docs/` must appear in it. `docs/specs/`, `docs/spikes/`, `docs/adr/` and `docs/ROADMAP.md` keep their paths whatever their nav group, because source docstrings and tooling reference them. A moved page gets an entry in `[project.plugins.redirects.redirect_maps]`. The theme uses system fonts (`font = false`) and brand colours from `docs/stylesheets/extra.css`.
 
 Mermaid rendering of ADR/spec diagrams is spike S14; if a `pymdownx.superfences` custom fence is required it is added under `[project.markdown_extensions]` in the same PR that closes S14.
 
@@ -361,7 +359,7 @@ Version source is `[project] version` in `pyproject.toml`; the tag must equal `v
 
 ### graphify integration (P0.6)
 
-Steps, executed in this order and recorded in `docs/BRANCHING.md`:
+Steps, executed in this order and recorded in `docs/maintainers/branching-and-releases.md`:
 
 1. `uv tool install graphifyy` (pin exact version once spike S9 records it).
 2. `graphify install --project --platform agents` → writes `.agents/skills/` and appends a section to `AGENTS.md`.
@@ -387,8 +385,8 @@ Per file/task:
 - **P0.2** — `pre-commit run --all-files` exits `0`; `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright` each exit `0`; `uv run pytest --cov --cov-fail-under=80` exits `0` with `tests/test_version.py` passing; `.prettierrc` contains exactly the JSON above; `.prettierignore` contains exactly the four entries above.
 - **P0.3** — `AGENTS.md` exists with the sections listed in `PLAN.md`'s plan (Project map, Commands, Before you start, Conventions, Definition of done, How to pick up a task, Never do); `CLAUDE.md` and `GEMINI.md` are the single pointer line.
 - **P0.4** — `uv run zensical build` exits `0` with no `WARNING` lines; `site/adr/0016-zensical-docs-site/index.html` and `site/specs/phase-0-infra/index.html` exist; every ADR 0001–0016 is present with `Status:` set.
-- **P0.5** — `ci.yml` runs green on both matrix legs on the bootstrap PR; `docs.yml` deploys on the first merge to `main` and the Pages URL serves `index.html`; `release.yml` passes `actionlint` but is not exercised; `gh label list` shows every label from `labels.yml` after running the script in `docs/BRANCHING.md`; branch protection matches the list above (verified via `gh api repos/<owner>/thumbforge/branches/main/protection`).
-- **P0.6** — `graphify-out/graph.json` and `GRAPH_REPORT.md` are committed; `graphify query "where is the provider registry"` returns an answer referencing `docs/ARCHITECTURE.md`; `git check-ignore graphify-out/cost.json` exits `0`.
+- **P0.5** — `ci.yml` runs green on both matrix legs on the bootstrap PR; `docs.yml` deploys on the first merge to `main` and the Pages URL serves `index.html`; `release.yml` passes `actionlint` but is not exercised; `gh label list` shows every label from `labels.yml` after running the script in `docs/maintainers/branching-and-releases.md`; branch protection matches the list above (verified via `gh api repos/<owner>/thumbforge/branches/main/protection`).
+- **P0.6** — `graphify-out/graph.json` and `GRAPH_REPORT.md` are committed; `graphify query "where is the provider registry"` returns an answer referencing `docs/developers/architecture.md`; `git check-ignore graphify-out/cost.json` exits `0`.
 - **P0.7** — `docs/specs/README.md`, `phase-0-infra.md`, `phase-1-skeleton.md` exist and are in the docs nav.
 
 ## Test plan

@@ -8,6 +8,134 @@ repo_url = "https://github.com/khiladisngh/thumbforge"
 edit_uri = "edit/main/docs/"
 docs_dir = "docs"
 site_dir = "site"
+# Warnings (broken links and anchors included) abort the build, so the CI gate fails on them.
+strict = true
+extra_css = ["stylesheets/extra.css"]
+
+# Paths need not mirror the nav: specs/, spikes/, adr/ and ROADMAP.md stay put because
+# source docstrings and tooling reference them.
+nav = [
+  { "Home" = "index.md" },
+  { "User guide" = [
+    "user-guide/index.md",
+    { "Getting started" = "user-guide/getting-started.md" },
+    { "Concepts" = [
+      { "Hero" = "user-guide/concepts/hero.md" },
+      { "Series and playlists" = "user-guide/concepts/series-and-playlists.md" },
+      { "Templates" = "user-guide/concepts/templates.md" },
+      { "Providers" = "user-guide/concepts/providers.md" },
+    ] },
+    { "How-to guides" = [
+      { "Generate a hero" = "user-guide/how-to/generate-a-hero.md" },
+      { "Pick and refine" = "user-guide/how-to/pick-and-refine.md" },
+      { "Batch a playlist" = "user-guide/how-to/batch-a-playlist.md" },
+      { "Resume an interrupted run" = "user-guide/how-to/resume-an-interrupted-run.md" },
+      { "Write a custom template" = "user-guide/how-to/write-a-custom-template.md" },
+    ] },
+    { "Reference" = [
+      { "CLI reference" = "user-guide/reference/cli.md" },
+    ] },
+  ] },
+  { "Developers" = [
+    "developers/index.md",
+    { "Architecture" = "developers/architecture.md" },
+    { "Conventions" = "developers/conventions.md" },
+    { "Testing" = "developers/testing.md" },
+    { "Specs" = [
+      "specs/README.md",
+      { "Phase 0 — Infra" = "specs/phase-0-infra.md" },
+      { "Phase 1 — Skeleton" = "specs/phase-1-skeleton.md" },
+      { "Phase 2 — YouTube fetch" = "specs/phase-2-youtube-fetch.md" },
+      { "Phase 3 — Providers" = "specs/phase-3-providers.md" },
+      { "Phase 4 — Templates" = "specs/phase-4-templates.md" },
+      { "Phase 5 — Imaging" = "specs/phase-5-imaging.md" },
+      { "Phase 6 — Hero" = "specs/phase-6-hero.md" },
+      { "Phase 7 — Batch" = "specs/phase-7-batch.md" },
+      { "Phase 8 — Polish" = "specs/phase-8-polish.md" },
+    ] },
+    { "Spikes" = [
+      { "Antigravity CLI" = "spikes/antigravity.md" },
+      { "graphify" = "spikes/graphify.md" },
+      { "Terminal preview" = "spikes/terminal-preview.md" },
+      { "Tooling" = "spikes/tooling.md" },
+      { "yt-dlp" = "spikes/ytdlp.md" },
+    ] },
+    { "Glossary" = "developers/glossary.md" },
+  ] },
+  { "Maintainers" = [
+    "maintainers/index.md",
+    { "Release process" = "maintainers/branching-and-releases.md" },
+    { "CI and local checks" = "maintainers/ci.md" },
+    { "Roadmap" = "ROADMAP.md" },
+    { "Open questions" = "maintainers/open-questions.md" },
+    { "Decision records" = [
+      "adr/index.md",
+      { "ADR template" = "adr/0000-template.md" },
+      { "0001 Python and uv" = "adr/0001-python-and-uv.md" },
+      { "0002 Typer and Rich CLI" = "adr/0002-typer-rich-cli.md" },
+      { "0003 Settings: TOML and platformdirs" = "adr/0003-settings-toml-platformdirs.md" },
+      { "0004 SQLite, SQLAlchemy, Alembic" = "adr/0004-sqlite-sqlalchemy-alembic.md" },
+      { "0005 yt-dlp metadata source" = "adr/0005-ytdlp-metadata-source.md" },
+      { "0006 Jinja2 prompts, TOML layouts" = "adr/0006-jinja2-prompts-toml-layouts.md" },
+      { "0007 Pillow imaging" = "adr/0007-pillow-imaging.md" },
+      { "0008 Deterministic text overlay" = "adr/0008-deterministic-text-overlay.md" },
+      { "0009 Quality tooling" = "adr/0009-quality-tooling.md" },
+      { "0010 Provider plugins" = "adr/0010-provider-plugin-architecture.md" },
+      { "0011 Content-addressed assets" = "adr/0011-content-addressed-assets.md" },
+      { "0012 Idempotency and resumable runs" = "adr/0012-idempotency-and-resumable-runs.md" },
+      { "0013 Antigravity CLI adapter" = "adr/0013-antigravity-cli-adapter.md" },
+      { "0014 Secrets: env and keyring" = "adr/0014-secrets-env-keyring.md" },
+      { "0015 structlog logging" = "adr/0015-structlog-logging.md" },
+      { "0016 zensical docs site" = "adr/0016-zensical-docs-site.md" },
+      { "0017 Logging verbosity and redaction" = "adr/0017-logging-verbosity-and-redaction.md" },
+      { "0018 Shared models live in core" = "adr/0018-shared-models-live-in-core.md" },
+    ] },
+  ] },
+]
+
+[project.theme]
+# System fonts only: no requests to a third-party font CDN.
+font = false
+features = [
+  "navigation.tabs",
+  "navigation.tabs.sticky",
+  "navigation.sections",
+  "navigation.indexes",
+  "navigation.path",
+  "navigation.top",
+  "toc.follow",
+  "content.code.copy",
+]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "custom"
+accent = "custom"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[project.plugins.redirects.redirect_maps]
+"ARCHITECTURE.md" = "developers/architecture.md"
+"CONVENTIONS.md" = "developers/conventions.md"
+"TESTING.md" = "developers/testing.md"
+"GLOSSARY.md" = "developers/glossary.md"
+"BRANCHING.md" = "maintainers/branching-and-releases.md"
 
 [project.markdown_extensions]
 admonition = {}
@@ -17,6 +145,11 @@ tables = {}
 toc = { permalink = true }
 "pymdownx.details" = {}
 "pymdownx.tabbed" = { alternate_style = true }
+
+[project.markdown_extensions."pymdownx.snippets"]
+# Lets maintainers/open-questions.md include the repo-root OPEN_QUESTIONS.md, which stays the single source.
+base_path = ["."]
+check_paths = true
 
 [project.markdown_extensions."pymdownx.superfences"]
 custom_fences = [

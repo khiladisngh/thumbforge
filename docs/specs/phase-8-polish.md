@@ -9,7 +9,7 @@ ADRs: `docs/adr/0005-ytdlp-metadata-source.md`, `docs/adr/0002-typer-rich-cli.md
 Round out the tool for daily use: optional YouTube Data API metadata source, installation and shell completion docs, cost reporting, and the README.
 
 - **P8.1** `sources/youtube_api.py` (`YouTubeDataApiSource`) behind the `api` extra (decision D7).
-- **P8.2** `uv tool install thumbforge` documentation and first-run walkthrough (`docs/GETTING_STARTED.md`).
+- **P8.2** `uv tool install thumbforge` documentation and first-run walkthrough (`docs/user-guide/getting-started.md`).
 - **P8.3** shell completion (`thumbforge --install-completion`, Typer builtin) documented and smoke-tested on PowerShell, bash, zsh.
 - **P8.4** `runs cost <run>` report and a `cost` column in `runs show`.
 - **P8.5** `README.md` final content, CHANGELOG via `git-cliff`, first tag `v0.1.0` (release workflow from `phase-0-infra.md`).

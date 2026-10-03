@@ -44,7 +44,7 @@ reviews:
   path_instructions:
     - path: "src/thumbforge/**/*.py"
       instructions: |
-        Enforce the conventions in AGENTS.md and docs/CONVENTIONS.md.
+        Enforce the conventions in AGENTS.md and docs/developers/conventions.md.
 
         Layering (also enforced by import-linter): `cli` may import core, storage, providers,
         sources, templates, imaging. `core` must import no other internal package. Every other

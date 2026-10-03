@@ -1,14 +1,14 @@
-# Branching, protection, labels, releases
+# Branching and release process
 
 ## Branches
 
-- `main` is always releasable. Nobody pushes to it directly.
-- Work branches: `feat/P3.2-fake-provider`, `infra/P0.5-github`, `fix/<issue>-<slug>`, `spike/S1-agy-image-tool`, `docs/<slug>`.
-- Squash-merge only; the squash title is a Conventional Commit.
+- `main` is always releasable. Work lands on it directly: no pull requests, and history stays linear (rebase, never a merge commit, never a force-push).
+- One roadmap task is one Conventional Commit. Optional work branches in a worktree: `feat/P3.2-fake-provider`, `infra/P0.5-github`, `fix/<issue>-<slug>`, `spike/S1-agy-image-tool`, `docs/<slug>`; rebase onto `origin/main` and push with `git push origin HEAD:main`.
+- Before the push, run both local CI legs (`scripts/ci-local.sh`, `scripts/ci-local.cmd`) and read your own diff. After it, check the remote run.
 
 ## Branch protection (`main`)
 
-Applied with the GitHub CLI (requires admin on the repo):
+The repository admin bypasses these rules for the direct push to `main`; they still stop everyone else and force pushes. Applied with the GitHub CLI (requires admin on the repo):
 
 ```
 gh api -X PUT repos/khiladisngh/thumbforge/branches/main/protection \
@@ -43,8 +43,8 @@ PY
 
 ## Releases
 
-1. Bump `[project] version` in `pyproject.toml` on a PR (`chore(release): v0.1.0`).
-2. After merge: `git tag v0.1.0 && git push origin v0.1.0`.
+1. Bump `[project] version` in `pyproject.toml` in one commit (`chore(release): v0.1.0`) and push it to `main`.
+2. Once the remote run is green: `git tag v0.1.0 && git push origin v0.1.0`.
 3. `release.yml` checks the tag matches the version, runs `uv build`, generates release notes with `git-cliff` from Conventional Commits, creates the GitHub release with the wheel and sdist attached, and publishes to PyPI via trusted publishing (environment `pypi`; configure the publisher on PyPI before the first release).
 
 ## Docs

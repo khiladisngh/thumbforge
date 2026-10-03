@@ -39,5 +39,5 @@ graphify-out/cache/
 .pytest_tmp/
 
 # Local scratch: CI log dumps. Other scratch belongs in .pytest_tmp/ (ignored above);
-# see the "Knowledge graph" section of docs/CONVENTIONS.md.
+# see the "Knowledge graph" section of docs/developers/conventions.md.
 *.log

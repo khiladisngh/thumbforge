@@ -1,0 +1,25 @@
+/* Brand colours for primary = "custom" / accent = "custom" (zensical.toml).
+   One accent, ember orange. Body links use the accent; both link colours meet
+   WCAG AA (4.5:1) against their scheme's page background. */
+
+:root > * {
+  --md-primary-fg-color: #17140f;
+  --md-primary-fg-color--light: #2b261d;
+  --md-primary-fg-color--dark: #0d0b08;
+  --md-primary-bg-color: #f6f3ee;
+  --md-primary-bg-color--light: #f6f3eeb3;
+  --md-accent-fg-color: #c2410c;
+  --md-accent-fg-color--transparent: #c2410c1a;
+  --md-typeset-a-color: #c2410c;
+}
+
+[data-md-color-scheme="slate"] > * {
+  --md-primary-fg-color: #17140f;
+  --md-primary-fg-color--light: #2b261d;
+  --md-primary-fg-color--dark: #0d0b08;
+  --md-primary-bg-color: #f6f3ee;
+  --md-primary-bg-color--light: #f6f3eeb3;
+  --md-accent-fg-color: #ff8a52;
+  --md-accent-fg-color--transparent: #ff8a521a;
+  --md-typeset-a-color: #ff8a52;
+}

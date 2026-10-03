@@ -45,22 +45,22 @@ Nine tables: `channel`, `playlist`, `video`, `playlist_item`, `template`, `provi
 
 ## Key decisions
 
-| Topic                              | ADR                                                |
-| ---------------------------------- | -------------------------------------------------- |
-| Python 3.14 + uv                   | [0001](adr/0001-python-and-uv.md)                  |
-| Typer + Rich                       | [0002](adr/0002-typer-rich-cli.md)                 |
-| Settings (TOML, platformdirs)      | [0003](adr/0003-settings-toml-platformdirs.md)     |
-| SQLite + SQLAlchemy + Alembic      | [0004](adr/0004-sqlite-sqlalchemy-alembic.md)      |
-| yt-dlp metadata                    | [0005](adr/0005-ytdlp-metadata-source.md)          |
-| Jinja2 prompts, TOML layouts       | [0006](adr/0006-jinja2-prompts-toml-layouts.md)    |
-| Pillow                             | [0007](adr/0007-pillow-imaging.md)                 |
-| Deterministic text overlay         | [0008](adr/0008-deterministic-text-overlay.md)     |
-| ruff / pyright / pytest / prettier | [0009](adr/0009-quality-tooling.md)                |
-| Provider plugins                   | [0010](adr/0010-provider-plugin-architecture.md)   |
-| Content-addressed assets           | [0011](adr/0011-content-addressed-assets.md)       |
-| Idempotency + resumable runs       | [0012](adr/0012-idempotency-and-resumable-runs.md) |
-| Antigravity adapter                | [0013](adr/0013-antigravity-cli-adapter.md)        |
-| Secrets                            | [0014](adr/0014-secrets-env-keyring.md)            |
-| structlog                          | [0015](adr/0015-structlog-logging.md)              |
-| zensical docs                      | [0016](adr/0016-zensical-docs-site.md)             |
-| Shared models live in `core`       | [0018](adr/0018-shared-models-live-in-core.md)     |
+| Topic                              | ADR                                                   |
+| ---------------------------------- | ----------------------------------------------------- |
+| Python 3.14 + uv                   | [0001](../adr/0001-python-and-uv.md)                  |
+| Typer + Rich                       | [0002](../adr/0002-typer-rich-cli.md)                 |
+| Settings (TOML, platformdirs)      | [0003](../adr/0003-settings-toml-platformdirs.md)     |
+| SQLite + SQLAlchemy + Alembic      | [0004](../adr/0004-sqlite-sqlalchemy-alembic.md)      |
+| yt-dlp metadata                    | [0005](../adr/0005-ytdlp-metadata-source.md)          |
+| Jinja2 prompts, TOML layouts       | [0006](../adr/0006-jinja2-prompts-toml-layouts.md)    |
+| Pillow                             | [0007](../adr/0007-pillow-imaging.md)                 |
+| Deterministic text overlay         | [0008](../adr/0008-deterministic-text-overlay.md)     |
+| ruff / pyright / pytest / prettier | [0009](../adr/0009-quality-tooling.md)                |
+| Provider plugins                   | [0010](../adr/0010-provider-plugin-architecture.md)   |
+| Content-addressed assets           | [0011](../adr/0011-content-addressed-assets.md)       |
+| Idempotency + resumable runs       | [0012](../adr/0012-idempotency-and-resumable-runs.md) |
+| Antigravity adapter                | [0013](../adr/0013-antigravity-cli-adapter.md)        |
+| Secrets                            | [0014](../adr/0014-secrets-env-keyring.md)            |
+| structlog                          | [0015](../adr/0015-structlog-logging.md)              |
+| zensical docs                      | [0016](../adr/0016-zensical-docs-site.md)             |
+| Shared models live in `core`       | [0018](../adr/0018-shared-models-live-in-core.md)     |

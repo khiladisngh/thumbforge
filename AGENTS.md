@@ -17,7 +17,8 @@ src/thumbforge/
   credentials.py provider API keys: env THUMBFORGE_PROVIDERS__<KEY>__API_KEY, then keyring. Only writer of a secret
   logging.py    structlog configuration
 tests/          unit/ contract/ integration/ golden/ templates/golden/ fixtures/
-docs/           ARCHITECTURE.md ROADMAP.md CONVENTIONS.md TESTING.md GLOSSARY.md adr/ specs/ spikes/
+docs/           site sources (nav in zensical.toml): index.md, user-guide/, developers/ (architecture, conventions,
+                testing, glossary), maintainers/ (branching-and-releases, ci, open-questions), ROADMAP.md, adr/, specs/, spikes/
 graphify-out/   generated codebase knowledge graph (committed; cache/ and cost.json ignored)
 ```
 
@@ -47,7 +48,7 @@ Never use `pip`, `poetry`, `npm` inside the repo, or `python -m` without `uv run
 
 1. Read `graphify-out/GRAPH_REPORT.md` for the current map of the codebase.
 2. Ask the graph before grepping: `graphify query "<question>"`, `graphify explain "<symbol>"`, `graphify path A B`.
-3. Read `docs/ARCHITECTURE.md` and the spec linked from your task (`docs/specs/phase-N-*.md`).
+3. Read `docs/developers/architecture.md` and the spec linked from your task (`docs/specs/phase-N-*.md`).
 4. Check `OPEN_QUESTIONS.md` — if your task depends on an open spike or decision, stop and say so.
 
 ## How to pick up a task
@@ -85,7 +86,7 @@ History is linear only: rebase, never create a merge commit, never force-push.
 - Spec or roadmap task referenced in the commit body.
 - Tests added at the right layer: unit (no network, FakeProvider / recorded fixtures), contract (every provider), `integration` marker for live systems, `golden` for image and prompt-text snapshots.
 - `uv run ruff check .`, `uv run ruff format --check .`, `uv run pyright`, `uv run pytest --cov --cov-fail-under=80`, `uv run lint-imports`, `uv run zensical build` all green locally (`scripts/ci-local.sh` and `scripts/ci-local.cmd`) and in the remote CI run after the push.
-- Docs updated in the same commit when behaviour or structure changed: `docs/ARCHITECTURE.md`, the phase spec, `AGENTS.md`, ADR if a decision changed.
+- Docs updated in the same commit when behaviour or structure changed: `docs/developers/architecture.md`, the phase spec, the user guide (`docs/user-guide/`) when a command changes, `AGENTS.md`, ADR if a decision changed.
 - Knowledge graph refreshed when source structure changed: `graphify extract . --code-only && graphify cluster-only . --no-label`, then commit `graphify-out/`. Installed once with `uv tool install graphifyy`. CI runs an advisory drift check (`scripts/check_graph_drift.py`); regeneration is manual, not hooked.
 - Local review of the diff done before the push; findings fixed or consciously deferred.
 
@@ -93,8 +94,9 @@ History is linear only: rebase, never create a merge commit, never force-push.
 
 - Architecture decisions → new ADR in `docs/adr/` using `0000-template.md`; never edit an Accepted ADR's decision — supersede it.
 - Behaviour → the phase spec under `docs/specs/`.
-- Terms → `docs/GLOSSARY.md`.
+- Terms → `docs/developers/glossary.md`.
 - Spike results → `docs/spikes/<topic>.md` and close the item in `OPEN_QUESTIONS.md`.
+- New page under `docs/` → add it to `nav` in `zensical.toml`; moved page → add an entry under `[project.plugins.redirects.redirect_maps]`. The build is `strict`, so a broken link or anchor fails CI.
 
 ## Never do
 
