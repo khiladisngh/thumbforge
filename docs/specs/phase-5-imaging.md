@@ -29,8 +29,10 @@ def fit_to(img: Image.Image, width: int, height: int) -> Image.Image
     # scale so the target is fully covered, then centre-crop to exactly width×height; converts to RGB
 
 # imaging/fonts.py
-def resolve_font(name: str, size_px: int) -> ImageFont.FreeTypeFont
-    # lookup order: <config_dir>/fonts/<name>.ttf, bundled imaging/fonts/<name>.ttf, bundled Inter-Bold.ttf fallback (logged at WARNING)
+def resolve_font(name: str, size_px: int, *, config_dir: Path | None = None) -> ImageFont.FreeTypeFont
+    # lookup order: <config_dir>/fonts/<name>.ttf, bundled imaging/fonts/<name>.ttf, bundled Inter-Bold.ttf fallback (logged at WARNING, event fonts.fallback)
+    # config_dir defaults to platformdirs.user_config_dir("thumbforge"); a name that is not a bare file stem skips straight to the fallback
+    # fonts load with the BASIC layout engine so output does not depend on libraqm
 
 # imaging/overlay.py
 def overlay(img: Image.Image, layout: LayoutSpec, *, title: str, part_number: int | None, part_label: str | None) -> Image.Image
@@ -73,14 +75,14 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 1. `fit_to` never distorts: scale = `max(width/w, height/h)`, then crop; a source already at the target size is returned unchanged (same object not guaranteed, pixels identical).
 2. `overlay` is deterministic: same input image, layout, text and bundled font → byte-identical output on every OS. Only bundled fonts are used in tests.
 3. Title layout: text is upper-cased per `layout.title.case`, wrapped by words into ≤ `max_lines` at `size_px`; if it does not fit, size decreases by 4 px until `min_size_px`; if it still does not fit, the last line is ellipsised and a `WARNING` is logged.
-4. Part badge: rendered only when `layout.part.enabled` and `part_number is not None`; `part_label` replaces `{label}`; missing label with `{label}` in format falls back to `{n}` formatting.
+4. Part badge: rendered only when `layout.part.enabled` and `part_number is not None`; `{n}` and `{label}` are filled by plain string replacement, never `str.format`, because layouts are user data. `part_label` replaces `{label}`; when it is missing or empty, `{label}` is removed and the whitespace collapsed (`"{label} {n}"` → `"7"`). With `part.badge` the text sits on a rounded rectangle and is black or white by the fill's luminance; without it the text takes the title's colour and stroke. The badge is placed by `part.anchor` inside the canvas inset by `canvas.safe_margin_px`.
 5. `render_final` returns the encoded bytes and the report even when the report is not `ok`, so the caller can store the non-compliant asset for inspection before raising `ComplianceError` (exit `5`; P6.1).
 6. JPEG encode: `quality=[output] quality`, `subsampling=0`, `optimize=True`; PNG: `optimize=True`. Metadata stripped.
 
 ## Acceptance criteria
 
 - `fit_to(Image.new("RGB", (1376, 768)), 1920, 1080).size == (1920, 1080)`; `fit_to(Image.new("RGB", (4000, 1000)), 1920, 1080)` crops the sides and is `(1920, 1080)`.
-- Golden: overlaying `tests/fixtures/imaging/flat-grey.png` with the `bold-title` layout and title `Ownership explained` produces bytes equal to `tests/golden/overlay/bold-title-ownership.png`; same for `series-parts` with `part_number=7`.
+- Golden: overlaying `tests/fixtures/imaging/flat-grey.png` with the `bold-title` layout and title `Ownership explained` produces pixels equal to `tests/golden/overlay/bold-title-ownership.png`; same for `series-parts` with `part_number=7`.
 - A 40-word title with `max_lines = 3` renders at `min_size_px` with an ellipsis and logs `overlay.title_truncated`.
 - `check` on a 1920×1080 JPEG of 1.5 MB returns `ok=True`; on 1919×1080 returns `ok=True` (±1 px); on 1918×1080 returns `ok=False` with `aspect` in `violations`; on 1280×720 PNG `ok=True`; on 1024×576 `ok=False` with `width`; on a 3 MB JPEG `ok=False` with `size` unless `max_bytes=52_428_800`; on a CMYK JPEG `ok=False` with `color`.
 - `render_final` on a raw image that encodes to more than 2,097,152 bytes at quality 90 lowers quality until it fits and returns a report with `ok=True`.
@@ -89,7 +91,7 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 ## Test plan
 
 - Unit: `fit_to` size matrix; `resolve_font` fallback order with `tmp_path` config dir; `check` matrix above using synthetic images from Pillow; `render_final` quality loop with a noise image.
-- Golden (`-m golden`): overlay snapshots for the three builtin layouts; regenerated only via `uv run pytest -m golden --update-golden` and reviewed in the PR diff.
+- Golden (`-m golden`): overlay snapshots for the `bold-title` and `series-parts` layouts, built in the test module; compared on exact decoded pixels; regenerated only via `uv run pytest -m golden --update-golden` and reviewed in the PR diff.
 - Contract / integration: none.
 
 ## Open spikes

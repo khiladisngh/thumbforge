@@ -2,12 +2,12 @@
 
 ## Layers
 
-| Layer       | Location             | Rules                                                                                                                                                                             |
-| ----------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Unit        | `tests/unit/`        | No network, no real providers, no real `agy`. Use `FakeProvider` and recorded yt-dlp fixtures (`tests/fixtures/ytdlp/*.json`). Fast (< 1 s each).                                 |
-| Contract    | `tests/contract/`    | `test_provider_contract.py` is parametrised over every provider in the registry; a provider that cannot pass it cannot ship. Real providers are skipped unless `-m integration`.  |
-| Integration | `tests/integration/` | Marked `integration`; hit live YouTube, the real Antigravity CLI, or testcontainers database environments. Excluded by default (`addopts = "-m 'not integration'"`). Run with `uv run pytest -m integration`. |
-| Golden      | `tests/golden/`      | Marked `golden`; text overlay and layout rendering compared against committed PNGs with a small pixel tolerance. Only bundled fonts are used so output is stable across machines. |
+| Layer       | Location             | Rules                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unit        | `tests/unit/`        | No network, no real providers, no real `agy`. Use `FakeProvider` and recorded yt-dlp fixtures (`tests/fixtures/ytdlp/*.json`). Fast (< 1 s each).                                                                                                                                                                                                                                                                                           |
+| Contract    | `tests/contract/`    | `test_provider_contract.py` is parametrised over every provider in the registry; a provider that cannot pass it cannot ship. Real providers are skipped unless `-m integration`.                                                                                                                                                                                                                                                            |
+| Integration | `tests/integration/` | Marked `integration`; hit live YouTube, the real Antigravity CLI, or testcontainers database environments. Excluded by default (`addopts = "-m 'not integration'"`). Run with `uv run pytest -m integration`.                                                                                                                                                                                                                               |
+| Golden      | `tests/golden/`      | Marked `golden`; text overlay output compared against committed PNGs in `tests/golden/overlay/`. The comparison is exact on decoded pixels (size, mode, `tobytes()`), not on the PNG file, whose compressed bytes may differ per OS. A missing golden fails. Regenerate with `uv run pytest -m golden --update-golden` and open the PNGs to review them before committing. Only bundled fonts are used so output is stable across machines. |
 
 ## Commands
 
@@ -15,6 +15,7 @@
 uv run pytest -q                       # unit + contract (default)
 uv run pytest -m integration           # live systems, opt-in
 uv run pytest -m golden                # image snapshots
+uv run pytest -m golden --update-golden  # rewrite goldens, then review the PNGs
 uv run pytest --cov --cov-fail-under=80
 ```
 

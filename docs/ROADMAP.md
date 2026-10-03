@@ -60,7 +60,7 @@ Spec: `docs/specs/phase-4-templates.md`
 Spec: `docs/specs/phase-5-imaging.md`
 
 - P5.1 Fit/crop — deps: P1.5 — AC: `imaging/fit.py` resizes/crops any input to the configured 16:9 target (default 1920×1080) with centre crop; unit tests on synthetic images.
-- P5.2 Text overlay + golden tests — deps: P4.1, P5.1 — AC: `imaging/overlay.py` renders title and "Part N" badge from the layout spec with the bundled OFL font; `golden`-marked snapshot tests compare against `tests/golden/*.png` with a pixel tolerance.
+- P5.2 Text overlay + golden tests — deps: P4.1, P5.1 — AC: `imaging/overlay.py` renders title and "Part N" badge from the layout spec with the bundled OFL font; `golden`-marked snapshot tests compare against `tests/golden/overlay/*.png` with exact pixels.
 - P5.3 Compliance check + final render — deps: P5.2 — AC: `imaging/compliance.py` `check` enforces 16:9 ±1 px, width ≥ 1280, JPEG/PNG, ≤ 2 MB default (`--max-bytes` up to 50 MB), sRGB and returns a `ComplianceReport` (`core/models.py`); `imaging/finalize.py` `render_final` runs fit → overlay → encode, lowering JPEG quality (floor 60) until within `max_bytes`, and returns the bytes with the report. Storing the report in `asset.compliance_report_json` and raising `ComplianceError` (exit `5`) belong to P6.1.
 - P5.4 Rich preview — deps: P5.1, spike S10 — AC: `cli/_render.py` grid preview via `rich-pixels`; degrades to a table when the terminal cannot render.
 
