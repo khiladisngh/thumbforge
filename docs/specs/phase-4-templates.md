@@ -79,11 +79,10 @@ class Template(BaseModel, frozen=True):
 ### Prompt rendering
 
 ```python
-class TemplateRenderer:
-    def render(self, template: Template, ctx: RenderContext) -> str
+def render_prompt(prompt_template: str, ctx: RenderContext, *, name: str) -> str
 ```
 
-`RenderContext(video: VideoMeta, playlist: PlaylistMeta | None, part_number: int | None, part_label: str | None, channel: ChannelMeta | None, vars: dict[str, str], negative_space: str, width: int, height: int)`. Jinja2 `Environment(undefined=StrictUndefined, autoescape=False, trim_blocks=True, lstrip_blocks=True)`; a missing variable is a `TemplateError` (exit `2`) naming the variable and template. `--var key=value` populates `vars`.
+`RenderContext` is a frozen dataclass: `RenderContext(video: VideoMeta, playlist: PlaylistMeta | None, part_number: int | None, part_label: str | None, channel: ChannelMeta | None, vars: dict[str, str], negative_space: str, width: int, height: int)`. Jinja2 `Environment(undefined=StrictUndefined, autoescape=False, trim_blocks=True, lstrip_blocks=True)`; a missing variable is a `TemplateError` (exit `2`) naming the variable and template. `--var key=value` populates `vars`; a value may be empty, a pair without `=` exits `2`. The error names the dotted path, e.g. `undefined variable 'vars.tone' in bold-title`; a Jinja syntax error is also a `TemplateError` and names the template and line.
 
 Builtin prompts state the size and the negative-space hint and must not ask the model to paint text (ADR 0008).
 
@@ -105,6 +104,7 @@ Builtin prompts state the size and the negative-space hint and must not ask the 
 3. `NAME` without `@VERSION` resolves to the highest version; `NAME@2` resolves exactly; unknown → exit `3`.
 4. `template validate` reports every schema error at once (Pydantic error list) and, once P4.2 adds Jinja2, Jinja syntax errors with line numbers; exit `2` on any.
 5. `template render bold-title --video dQw4w9WgXcQ --part 3` prints the prompt to stdout; with `--json` prints `{"template": "bold-title@1", "prompt": "..."}`.
+   Until P4.4 adds the database loader, `NAME` reads `<config_dir>/templates/NAME.toml` + `NAME.j2` (unknown → exit `3`) and the JSON `template` is the bare `NAME`. A video in exactly one playlist supplies `playlist`, `part_number` and `part_label`; `--part` overrides the number.
 6. `template new NAME --from minimal` copies both builtin files to `<config_dir>/templates/`; refuses to overwrite (exit `2`).
 
 ## Acceptance criteria
