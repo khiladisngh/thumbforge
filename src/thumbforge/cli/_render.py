@@ -14,9 +14,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import typer
-from rich.console import Console, RenderableType
+from PIL import Image
+from rich.console import Console, Group, RenderableType
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
+from rich_pixels import Pixels
 
 from thumbforge.core.errors import SettingsError
 from thumbforge.core.json import JsonValue
@@ -110,3 +113,71 @@ def emit(
         ctx.console.print_json(json.dumps(data, allow_nan=False))
         return
     ctx.console.print(render() if render is not None else data, soft_wrap=soft_wrap)
+
+
+_EXPORT_HINT = "Copy images out with: thumbforge thumb export <run|iteration> --to PATH"
+
+
+def _can_draw_pixels(console: Console) -> bool:
+    """Whether ``console`` can show the coloured block characters a tile is made of."""
+    return (
+        console.is_terminal
+        and console.color_system is not None
+        and not console.no_color
+        and not console.is_dumb_terminal
+        and not console.legacy_windows
+        and console.encoding.startswith("utf")
+    )
+
+
+def preview(ctx: AppContext, paths: Sequence[Path], columns: int = 2) -> None:
+    """Draw ``paths`` as block-character thumbnails, ``columns`` tiles per row.
+
+    Each tile is as wide as its grid cell, keeps the image's aspect ratio and carries the file
+    name as a caption. The grid is a ``Table.grid``: ``rich.columns.Columns`` does not place
+    ``Pixels`` tiles side by side.
+
+    Falls back to a numbered path table plus the export hint when the console cannot draw
+    colour (not a terminal, no colour, a non-UTF-8 encoding, dumb or legacy Windows console)
+    or when any path cannot be decoded; a preview never raises for a bad image. Prints nothing
+    in ``--json`` mode.
+    """
+    if columns < 1:
+        msg = f"columns must be at least 1, got {columns}"
+        raise ValueError(msg)
+    if ctx.json_mode or not paths:
+        return
+    console = ctx.console
+    tile_width = max((console.width - (columns - 1)) // columns, 8)
+    tiles: list[RenderableType] = []
+    try:
+        if _can_draw_pixels(console):
+            for path in paths:
+                with Image.open(path) as image:
+                    width, height = image.size
+                    tile_height = max(round(tile_width * height / width), 1)
+                    # rich-pixels packs two pixel rows per text line; an even height avoids a
+                    # half-empty last line.
+                    tile_height += tile_height % 2
+                    # Shrink here, not in rich-pixels, whose nearest-neighbour resize breaks up
+                    # small text; LANCZOS matches imaging.fit.
+                    small = image.convert("RGB").resize(  # pyright: ignore[reportUnknownMemberType]
+                        (tile_width, tile_height), Image.Resampling.LANCZOS
+                    )
+                pixels = Pixels.from_image(small)
+                caption = Text(path.name, style="dim", no_wrap=True, overflow="ellipsis")
+                tiles.append(Group(pixels, caption))
+    except OSError, Image.DecompressionBombError:
+        tiles = []
+    if not tiles:
+        rows = [(str(index), str(path)) for index, path in enumerate(paths, start=1)]
+        console.print(table(["#", "path"], rows))
+        console.print(Text(_EXPORT_HINT, style="dim"))
+        return
+    grid = Table.grid(padding=(0, 1))
+    for _ in range(columns):
+        grid.add_column(width=tile_width, no_wrap=True)
+    for start in range(0, len(tiles), columns):
+        row = tiles[start : start + columns]
+        grid.add_row(*row, *[""] * (columns - len(row)))
+    console.print(grid)

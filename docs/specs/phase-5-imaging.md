@@ -68,7 +68,7 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 
 ### Preview
 
-`_render.preview(paths: list[Path], columns: int = 2) -> None` renders each image with `rich_pixels.Pixels.from_image_path` scaled to the terminal width; in `--json` mode it is a no-op. Used by `thumb show`, `thumb generate`, `batch` summary.
+`_render.preview(ctx: AppContext, paths: Sequence[Path], columns: int = 2) -> None` draws each image as a `rich_pixels.Pixels` tile, `columns` tiles per row, laid out with `Table.grid(padding=(0, 1))` (`rich.columns.Columns` stacks `Pixels` tiles instead of placing them side by side, spike S10). Each tile is as wide as its cell, `max((console.width - (columns - 1)) // columns, 8)`, keeps the image's aspect ratio (resampled with `LANCZOS`, like `fit_to`), and carries the file name as a dim caption; a short last row is padded with empty cells. `ctx` comes first, like `emit`: in `--json` mode, or with no paths, it prints nothing. `columns < 1` raises `ValueError`. When the console cannot show colour blocks (not a terminal, no colour system, a non-UTF-8 encoding, `--no-color`/`NO_COLOR`, dumb terminal, legacy Windows console) or any path cannot be opened or decoded, it prints a numbered `#`/`path` table and a dim `thumbforge thumb export` hint instead; it never raises for a bad image. Used by `thumb show`, `thumb generate`, `batch` summary.
 
 ## Behaviour
 
@@ -97,4 +97,4 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 ## Open spikes
 
 - **S3** Antigravity output size/format — decides whether upscaling from 1376×768 is the normal path for the default 1920×1080 output.
-- **S10** terminal image preview with `rich-pixels` in Windows Terminal — if unusable, `preview` prints the asset paths and the `thumb export` hint instead.
+- **S10** terminal image preview with `rich-pixels` — **closed** (except legibility in Windows Terminal; `docs/spikes/terminal-preview.md`): tiles and the `Table.grid` layout verified under a Linux pty; legibility in Windows Terminal remains the manual `thumb show` check above.

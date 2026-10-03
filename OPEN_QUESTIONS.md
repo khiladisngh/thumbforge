@@ -49,7 +49,7 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
 - Verify: `uv tool install graphifyy && graphify extract . --code-only && graphify cluster-only . --no-label`
 - Result: working seamlessly under Windows with uv; generated `graphify-out/` committed to repo.
 
-### S10 — terminal image preview with `rich-pixels` in Windows Terminal
+### S10 — terminal image preview with `rich-pixels` in Windows Terminal — **closed** (except legibility in Windows Terminal), see `docs/spikes/terminal-preview.md`
 
 - Verify (run in Windows Terminal, the primary development terminal):
     ```
@@ -62,6 +62,7 @@ Two lists: **Spikes** (facts to verify by running something; each has a copy-pas
     lay two `Pixels` tiles side by side in a smoke test, so P5.4 must verify the real grid
     layout rather than assume it.
 - Changes: the `_render.preview()` helper and P5.4. If unusable, `preview` prints the asset paths plus the `thumb export` hint and `thumb show` falls back to a table (ADR 0002).
+- Result: **tiles render, and `Table.grid` gives a real two-column grid.** Under a Linux pty at 100 columns (not Windows Terminal) the command above printed 14 lines × 48 columns of `▄` in truecolor (`38;2;200;40;40;48;2;200;40;40`). `preview()` with a red and a blue tile printed 14 pixel lines shared by both colours plus a caption line, while `rich.columns.Columns` stacked the same tiles (red lines 0–13, blue 14–27), so the grid uses `Table.grid`. The path-table fallback with the `thumb export` hint was confirmed under `TERM=dumb NO_COLOR=1`. **Not verified:** legibility of a real thumbnail in Windows Terminal; that stays the manual `thumb show` acceptance check (Phase 5 spec, P6.x).
 
 ### S11 — yt-dlp flat playlist fields under `extract_flat` — **closed**, see `docs/spikes/ytdlp.md`
 
