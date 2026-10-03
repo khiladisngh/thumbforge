@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import re
 import signal
 import sqlite3
 from contextlib import closing
@@ -44,6 +45,7 @@ PLAYLIST = "PLseries0001"
 EPISODES = 5
 #: Wide enough that Rich never wraps a title or an error inside the summary table.
 WIDE = {"COLUMNS": "200"}
+ANSI = re.compile(r"\x1b\[[0-9;]*m")
 
 
 class _Recording(FakeProvider):
@@ -326,7 +328,8 @@ def test_an_unknown_reference_kind_exits_2(data_dir: Path) -> None:
     result = _batch(data_dir, _hero(data_dir), "--reference", "sepia")
 
     assert result.exit_code == ExitCode.USAGE
-    assert "--reference" in result.output
+    # Typer styles its usage errors when it thinks it is on CI, and the codes split the option.
+    assert "--reference" in ANSI.sub("", result.output)
     assert _Recording.requests == []
 
 
