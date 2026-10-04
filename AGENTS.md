@@ -12,7 +12,7 @@ src/thumbforge/
   sources/      MetadataSource implementations; ytdlp.py (default); youtube_api.py (optional extra). The Protocol itself lives in core/sources.py, because core.services consumes it
   storage/      SQLAlchemy 2.0 models, repositories, Alembic migrations, content-addressed AssetStore
   templates/    TOML loading into core.layout.LayoutSpec, Jinja2 prompt rendering, builtin templates, versioning + builtin sync (loader.py)
-  imaging/      Pillow fit/crop, text overlay, YouTube compliance check, final render (finalize.py), bundled font
+  imaging/      Pillow fit/crop, text overlay (Latin through the layout's font; Devanagari shaped with HarfBuzz and drawn from a bundled fallback font, ADR 0019), YouTube compliance check, final render (finalize.py), bundled fonts
   settings.py   pydantic-settings (TOML + env THUMBFORGE_*), platformdirs paths
   credentials.py provider API keys: env THUMBFORGE_PROVIDERS__<KEY>__API_KEY, then keyring. Only writer of a secret
   logging.py    structlog configuration
@@ -21,6 +21,7 @@ docs/           site sources (nav in zensical.toml): index.md, user-guide/, deve
                 testing, glossary), maintainers/ (branching-and-releases, ci, open-questions), ROADMAP.md, adr/, specs/, spikes/,
                 static/ (landing page CSS, font subset, favicon, docs header logo, NOTICE.txt)
 overrides/      home.html: the standalone landing page template (no JavaScript); docs/index.md selects it in its front matter
+typings/        type stubs for dependencies that ship none (uharfbuzz); pyright reads them, they are not packaged
 graphify-out/   generated codebase knowledge graph (committed; cache/ and cost.json ignored)
 ```
 

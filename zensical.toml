@@ -91,6 +91,7 @@ nav = [
       { "0016 zensical docs site" = "adr/0016-zensical-docs-site.md" },
       { "0017 Logging verbosity and redaction" = "adr/0017-logging-verbosity-and-redaction.md" },
       { "0018 Shared models live in core" = "adr/0018-shared-models-live-in-core.md" },
+      { "0019 Complex-script titles" = "adr/0019-complex-script-titles.md" },
     ] },
   ] },
 ]

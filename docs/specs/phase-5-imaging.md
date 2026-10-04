@@ -2,7 +2,7 @@
 
 Status: Implemented (P5.1–P5.4)
 ROADMAP tasks: P5.1, P5.2, P5.3, P5.4
-ADRs: `docs/adr/0007-pillow-imaging.md`, `docs/adr/0008-deterministic-text-overlay.md`, `docs/adr/0002-typer-rich-cli.md`, `docs/adr/0018-shared-models-live-in-core.md`
+ADRs: `docs/adr/0007-pillow-imaging.md`, `docs/adr/0008-deterministic-text-overlay.md`, `docs/adr/0002-typer-rich-cli.md`, `docs/adr/0018-shared-models-live-in-core.md`, `docs/adr/0019-complex-script-titles.md`
 
 ## Scope
 
@@ -12,6 +12,7 @@ Turn raw provider art into a final, YouTube-compliant thumbnail: fit/crop to the
 - **P5.2** `imaging/overlay.py`, `imaging/fonts.py`, bundled font under `imaging/fonts/`; golden tests.
 - **P5.3** `imaging/compliance.py`, `imaging/finalize.py`.
 - **P5.4** `cli/_render.py` preview helper via `rich-pixels`.
+- **Devanagari titles** (after P5.4, ADR 0019) `imaging/face.py`, `imaging/runs.py`, `imaging/shaping.py`, `imaging/glyphfont.py`, bundled `NotoSansDevanagari-Bold.ttf`; goldens for Hindi titles.
 
 ## Non-goals
 
@@ -33,6 +34,13 @@ def resolve_font(name: str, size_px: int, *, config_dir: Path | None = None) -> 
     # lookup order: <config_dir>/fonts/<name>.ttf, bundled imaging/fonts/<name>.ttf, bundled Inter-Bold.ttf fallback (logged at WARNING, event fonts.fallback)
     # config_dir defaults to platformdirs.user_config_dir("thumbforge"); a name that is not a bare file stem skips straight to the fallback
     # fonts load with the BASIC layout engine so output does not depend on libraqm
+def font_path(name: str, *, config_dir: Path | None = None) -> Path    # the same lookup, returning the file
+
+# imaging/face.py (ADR 0019)
+def resolve_face(name: str, size_px: int, *, text: str, config_dir: Path | None = None) -> Face
+    # the layout's font for `text`, plus the bundled Devanagari fallback only when `text` has characters the font lacks that the fallback covers;
+    # Face offers size, getlength, getmetrics, font_variant and draw_line, so a Latin-only title measures and draws exactly like the plain Pillow font
+    # characters neither font covers are drawn as the layout font's missing-glyph box, with one WARNING (event fonts.uncovered, field count, never the text)
 
 # imaging/overlay.py
 def overlay(img: Image.Image, layout: LayoutSpec, *, title: str, part_number: int | None, part_label: str | None) -> Image.Image
@@ -74,16 +82,18 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 
 1. `fit_to` never distorts: scale = `max(width/w, height/h)`, then crop; a source already at the target size is returned unchanged (same object not guaranteed, pixels identical).
 2. `overlay` is deterministic: same input image, layout, text and bundled font → byte-identical output on every OS. Only bundled fonts are used in tests.
-3. Title layout: text is upper-cased per `layout.title.case`, wrapped by words into ≤ `max_lines` at `size_px`; if it does not fit, size decreases by 4 px until `min_size_px`; if it still does not fit, the last line is ellipsised and a `WARNING` is logged.
+3. Title layout: text is upper-cased per `layout.title.case`, wrapped by words into ≤ `max_lines` at `size_px`; if it does not fit, size decreases by 4 px until `min_size_px`; if it still does not fit, the last line is ellipsised and a `WARNING` is logged. An ellipsis never follows a dangling virama or joiner.
 4. Part badge: rendered only when `layout.part.enabled` and `part_number is not None`; `{n}` and `{label}` are filled by plain string replacement, never `str.format`, because layouts are user data. `part_label` replaces `{label}`; when it is missing or empty, `{label}` is removed and the whitespace collapsed (`"{label} {n}"` → `"7"`). With `part.badge` the text sits on a rounded rectangle and is black or white by the fill's luminance; without it the text takes the title's colour and stroke. The badge is placed by `part.anchor` inside the canvas inset by `canvas.safe_margin_px`.
 5. `render_final` fits the raw to `layout.canvas` (overlay coordinates are canvas pixels), overlays, then fits to `[output] width/height` (a plain copy when they match, a `LANCZOS` rescale otherwise). A canvas with a different aspect ratio than the output raises `TemplateError` (the final fit would crop the overlay), hint "use a canvas with the same aspect ratio as [output] width/height". A JPEG over `max_bytes` is re-encoded 5 quality lower at a time, never below 60; a starting quality at or below 60 is kept, and PNG is encoded once. It returns the encoded bytes and the report even when the report is not `ok`, so the caller can store the non-compliant asset for inspection before raising `ComplianceError` (exit `5`; P6.1). `violations` holds the codes `aspect`, `width`, `format`, `size`, `color`, in that order; an ICC profile counts as sRGB when its description contains `sRGB`, and an unreadable one is a violation.
 6. JPEG encode: `quality=[output] quality`, `subsampling=0`, `optimize=True`; PNG: `optimize=True`. Metadata stripped, including what Pillow would copy from the raw (a PNG's ICC profile). Pillow holds an optimized JPEG in one buffer of `width×height` bytes below quality 95 (2,073,600 at 1920×1080, under the 2 MiB default), so the encode raises `PIL.ImageFile.MAXBLOCK` to at least `2×width×height` for the save and restores it afterwards.
+7. Fallback font (ADR 0019): when the title has characters the layout's font lacks and `NotoSansDevanagari-Bold` covers, the title is split into runs by the font that covers each character (joiners and combining marks stay with the character they attach to). Latin runs use the layout's font; Devanagari runs are shaped with HarfBuzz (OpenType shaper, script `Deva`, language `hi`, left to right: never the machine's locale) and each glyph is drawn through Pillow's BASIC engine at its HarfBuzz position, so the pixels stay identical on every OS and no libraqm is involved. Runs sit on one baseline; line height is the larger ascent plus the larger descent of the two fonts; wrapping, shrinking, `max_lines`, `min_size_px`, anchor and case work as for Latin. Strokes are drawn for every glyph first and fills second, so a stroke never covers a neighbouring glyph. The Part badge text still uses its own font alone.
 
 ## Acceptance criteria
 
 - `fit_to(Image.new("RGB", (1376, 768)), 1920, 1080).size == (1920, 1080)`; `fit_to(Image.new("RGB", (4000, 1000)), 1920, 1080)` crops the sides and is `(1920, 1080)`.
 - Golden: overlaying `tests/fixtures/imaging/flat-grey.png` with the `bold-title` layout and title `Ownership explained` produces pixels equal to `tests/golden/overlay/bold-title-ownership.png`; same for `series-parts` with `part_number=7`.
 - A 40-word title with `max_lines = 3` renders at `min_size_px` with an ellipsis and logs `overlay.title_truncated`.
+- Golden: `render_final` with the `bold-title` layout and the bilingual title `Mahabharat Bhag 01 - Hindi Audiobook | महाभारत भाग 01 - हिंदी ऑडियोबुक` equals `tests/golden/overlay/bold-title-bhag-01.png`, and with `series-parts` (parts 2 and 3) equals `series-parts-bhag-02-part-2.png` and `series-parts-bhag-03-part-3.png`; the same pixels on Windows and Linux. Latin-only titles still equal the goldens made before the fallback font.
 - `check` on a 1920×1080 JPEG of 1.5 MB returns `ok=True`; on 1919×1080 returns `ok=True` (±1 px); on 1918×1080 returns `ok=False` with `aspect` in `violations`; on 1280×720 PNG `ok=True`; on 1024×576 `ok=False` with `width`; on a 3 MB JPEG `ok=False` with `size` unless `max_bytes=52_428_800`; on a CMYK JPEG `ok=False` with `color`.
 - `render_final` on a raw image that encodes to more than 2,097,152 bytes at quality 90 lowers quality until it fits and returns a report with `ok=True`.
 - `thumbforge thumb show <run>` in Windows Terminal draws a block-character preview (manual check, spike S10); with `--json` it prints only JSON.
@@ -91,7 +101,7 @@ Default output is 1920×1080 (decision D2; `[output] width/height`), upscaled wi
 ## Test plan
 
 - Unit: `fit_to` size matrix; `resolve_font` fallback order with `tmp_path` config dir; `check` matrix above using synthetic images from Pillow; `render_final` quality loop with a noise image.
-- Golden (`-m golden`): overlay snapshots for the `bold-title` and `series-parts` layouts, built in the test module; compared on exact decoded pixels; regenerated only via `uv run pytest -m golden --update-golden` and reviewed in the PR diff.
+- Golden (`-m golden`): overlay snapshots for the `bold-title` and `series-parts` layouts, built in the test module, plus real finals of Hindi titles from the built-in layouts; compared on exact decoded pixels; regenerated only via `uv run pytest -m golden --update-golden` and reviewed in the PR diff.
 - Contract / integration: none.
 
 ## Open spikes

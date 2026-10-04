@@ -12,7 +12,7 @@ src/thumbforge/
   sources/    MetadataSource implementations; ytdlp.py (default); youtube_api.py (optional extra)
   storage/    SQLAlchemy 2.0 models, repositories, Alembic migrations, content-addressed AssetStore
   templates/  TOML loading into core.layout.LayoutSpec, Jinja2 prompt rendering, builtin templates, versioning + builtin sync (loader.py)
-  imaging/    Pillow fit/crop, text overlay, YouTube compliance check, final render (finalize.py), bundled font
+  imaging/    Pillow fit/crop, text overlay (HarfBuzz-shaped fallback font for Devanagari, ADR 0019), YouTube compliance check, final render (finalize.py), bundled fonts
   settings.py pydantic-settings (TOML + THUMBFORGE_* env), platformdirs paths
   logging.py  structlog configuration
 ```
@@ -64,3 +64,4 @@ Nine tables: `channel`, `playlist`, `video`, `playlist_item`, `template`, `provi
 | structlog                          | [0015](../adr/0015-structlog-logging.md)              |
 | zensical docs                      | [0016](../adr/0016-zensical-docs-site.md)             |
 | Shared models live in `core`       | [0018](../adr/0018-shared-models-live-in-core.md)     |
+| Complex-script titles              | [0019](../adr/0019-complex-script-titles.md)          |

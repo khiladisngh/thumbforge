@@ -7,16 +7,18 @@ image, layout, text and font give the same pixels on every OS.
 
 from __future__ import annotations
 
+import unicodedata
 from typing import TYPE_CHECKING, Final
 
 from PIL import ImageDraw
 
 from thumbforge.core.layout import Anchor, TextCase
+from thumbforge.imaging.face import Face, resolve_face
 from thumbforge.imaging.fonts import resolve_font
 from thumbforge.logging import get_logger
 
 if TYPE_CHECKING:
-    from PIL import Image, ImageFont
+    from PIL import Image
 
     from thumbforge.core.layout import LayoutSpec, TitleBlock
 
@@ -24,6 +26,8 @@ log = get_logger(__name__)
 
 ELLIPSIS: Final = "…"
 _SIZE_STEP_PX: Final = 4
+_VIRAMA_CLASS: Final = 9
+_JOINERS: Final = "\u200c\u200d"
 
 #: Where each anchor sits on each axis: 0 = left/top, 1 = centre, 2 = right/bottom.
 _ALIGN: Final[dict[Anchor, tuple[int, int]]] = {
@@ -61,7 +65,7 @@ def overlay(
     return out
 
 
-def _layout_title(title: str, block: TitleBlock) -> tuple[ImageFont.FreeTypeFont, list[str]]:
+def _layout_title(title: str, block: TitleBlock) -> tuple[Face, list[str]]:
     """Pick the font size and line breaks for `title` inside ``block.box``.
 
     The box is inset by ``stroke_px`` on every side. Sizes go from ``size_px`` down in 4 px
@@ -72,7 +76,7 @@ def _layout_title(title: str, block: TitleBlock) -> tuple[ImageFont.FreeTypeFont
     """
     words = _cased(title, block.case)
     width = block.box.w - 2 * block.stroke_px
-    font = resolve_font(block.font, block.size_px)
+    font = resolve_face(block.font, block.size_px, text=" ".join(words))
     for size in [*range(block.size_px, block.min_size_px, -_SIZE_STEP_PX), block.min_size_px]:
         if size != font.size:
             font = font.font_variant(size=size)
@@ -99,17 +103,17 @@ def _cased(title: str, case: TextCase) -> list[str]:
             return [word[:1].upper() + word[1:] for word in words]
 
 
-def _line_height(font: ImageFont.FreeTypeFont) -> int:
+def _line_height(font: Face) -> int:
     ascent, descent = font.getmetrics()
     return ascent + descent
 
 
-def _line_budget(font: ImageFont.FreeTypeFont, block: TitleBlock) -> int:
+def _line_budget(font: Face, block: TitleBlock) -> int:
     height = block.box.h - 2 * block.stroke_px
     return max(1, min(block.max_lines, height // _line_height(font)))
 
 
-def _wrap(words: list[str], font: ImageFont.FreeTypeFont, width: int) -> list[str]:
+def _wrap(words: list[str], font: Face, width: int) -> list[str]:
     """Greedy word wrap; a word wider than `width` still gets a line of its own."""
     lines: list[str] = []
     line = ""
@@ -124,9 +128,7 @@ def _wrap(words: list[str], font: ImageFont.FreeTypeFont, width: int) -> list[st
     return lines
 
 
-def _truncate(
-    words: list[str], font: ImageFont.FreeTypeFont, width: int, max_lines: int
-) -> list[str]:
+def _truncate(words: list[str], font: Face, width: int, max_lines: int) -> list[str]:
     """Fill `max_lines` lines, cutting over-wide words in place, ellipsising the last line.
 
     The first ``max_lines - 1`` wrapped lines are kept; one that is over width is a single word
@@ -145,14 +147,21 @@ def _truncate(
     return [*kept, last if font.getlength(last) <= width else _ellipsize(rest, font, width)]
 
 
-def _ellipsize(words: list[str], font: ImageFont.FreeTypeFont, width: int) -> str:
+def _ellipsize(words: list[str], font: Face, width: int) -> str:
     """Drop trailing words, then characters of a lone word, until ``text + "…"`` fits."""
     while len(words) > 1 and font.getlength(" ".join(words) + ELLIPSIS) > width:
         words = words[:-1]
     text = " ".join(words)
     while text and font.getlength(text + ELLIPSIS) > width:
         text = text[:-1]
-    return text + ELLIPSIS
+    return _without_dangling_marks(text) + ELLIPSIS
+
+
+def _without_dangling_marks(text: str) -> str:
+    """Drop a trailing virama or joiner: cut there, it would bind to the ellipsis."""
+    while text and (unicodedata.combining(text[-1]) == _VIRAMA_CLASS or text[-1] in _JOINERS):
+        text = text[:-1]
+    return text
 
 
 def _draw_title(draw: ImageDraw.ImageDraw, title: str, block: TitleBlock) -> None:
@@ -164,14 +173,15 @@ def _draw_title(draw: ImageDraw.ImageDraw, title: str, block: TitleBlock) -> Non
     height = box.h - 2 * block.stroke_px
     top = box.y + block.stroke_px + (height - line_height * len(lines)) * v_align // 2
     for i, line in enumerate(lines):
-        draw.text(
-            (x, top + i * line_height),
+        font.draw_line(
+            draw,
+            x,
+            top + i * line_height,
             line,
-            font=font,
+            h_align=h_align,
             fill=block.color,
             stroke_width=block.stroke_px,
             stroke_fill=block.stroke_color,
-            anchor="lmr"[h_align] + "a",
         )
 
 

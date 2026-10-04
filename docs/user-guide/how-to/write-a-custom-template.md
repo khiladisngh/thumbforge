@@ -23,6 +23,12 @@ thumbforge template validate <config-dir>/templates/my-series.toml
 
 `validate` lists every layout error at once, and checks the sibling `.j2` for Jinja syntax.
 
+## Fonts
+
+`font` in `[title]` and `[part]` is the name of a TrueType file without its extension. To use your own, copy `MyFont.ttf` into the `fonts` folder of your per-user configuration directory (the folder that holds the default `config.toml`; create `fonts` if it is missing) and set `font = "MyFont"`. A font of that name there wins over a bundled one, and a name Thumbforge cannot find falls back to Inter Bold with a `fonts.fallback` warning.
+
+Two fonts are bundled, both under the SIL Open Font License 1.1: `Inter-Bold` for Latin and `NotoSansDevanagari-Bold` for Devanagari. Latin and Devanagari titles are supported out of the box: whatever your layout's font cannot draw, Hindi for instance, is drawn with Noto Sans Devanagari Bold and shaped correctly, so a bilingual title such as `Bhag 01 | भाग 01` renders in one line. Keep `font = "Inter-Bold"` (or your own Latin font) for the title; `NotoSansDevanagari-Bold` is the fallback and is not meant to be picked directly. Other scripts still fall back with a `fonts.uncovered` warning and may show empty boxes. See [Templates](../concepts/templates.md#fonts).
+
 ## Import, preview and use
 
 ```
