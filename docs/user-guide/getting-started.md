@@ -1,11 +1,11 @@
 # Getting started
 
-This page installs Thumbforge and walks through a first run: set up, fetch a video, generate thumbnail candidates with the offline `fake` provider, then pick one and export it. The sample output comes from real runs; ids, timestamps and paths on your machine will differ.
+This page installs Thumbforge and walks through a first run: set up, fetch a video, generate thumbnail candidates with the offline `fake` provider, then pick one and export it, and finally batch a playlist. The sample output comes from real runs; ids, timestamps and paths on your machine will differ.
 
 ## Requirements
 
 - [uv](https://docs.astral.sh/uv/), the Python package and tool manager. Thumbforge needs Python 3.14; uv downloads it for you if it is not installed.
-- Network access for `thumbforge fetch`, which reads public YouTube metadata. No YouTube API key is needed.
+- Network access for `thumbforge fetch`, which reads public YouTube metadata. No YouTube API key is needed (the Data API source is an optional extra; see [Series and playlists](concepts/series-and-playlists.md#fetching-a-playlist)).
 
 ## Install
 
@@ -131,18 +131,18 @@ Provider  fake@0.1.0:<fingerprint>
 Video     jNQXAC9IVRw
 Started   <timestamp>
 Finished  <timestamp>
-┏━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┓
-┃ # ┃ Status    ┃ Size      ┃ Compliant ┃ Key          ┃ Asset / Error ┃
-┡━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━┩
-│ 1 │ completed │ 1920x1080 │ ✔         │ <key>        │ <asset>       │
-│ 2 │ completed │ 1920x1080 │ ✔         │ <key>        │ <asset>       │
-│ 3 │ completed │ 1920x1080 │ ✔         │ <key>        │ <asset>       │
-└───┴───────────┴───────────┴───────────┴──────────────┴───────────────┘
+┏━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━━━━━━━━┓
+┃ # ┃ Status    ┃ Size      ┃ Compliant ┃ Key          ┃ Cost ┃ Asset / Error ┃
+┡━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━━━━━━━━┩
+│ 1 │ completed │ 1920x1080 │ ✔         │ <key>        │ —    │ <asset>       │
+│ 2 │ completed │ 1920x1080 │ ✔         │ <key>        │ —    │ <asset>       │
+│ 3 │ completed │ 1920x1080 │ ✔         │ <key>        │ —    │ <asset>       │
+└───┴───────────┴───────────┴───────────┴──────────────┴──────┴───────────────┘
 Copy images out with: thumbforge thumb export <run|iteration> --to PATH
 Pick one with: thumbforge thumb pick <run> <ordinal>
 ```
 
-This makes three candidates (the default is four) from the `bold-title` template and prints one row per candidate. `Compliant` is whether the final image passes YouTube's thumbnail rules. On a terminal that can draw images you also get a preview of each candidate; elsewhere you get a table of file paths. The `fake` provider returns the same image for the same prompt and seed, so the candidates are placeholders, not artwork. Copy the run id (the `<run>` in the commands below) from the first line.
+This makes three candidates (the default is four) from the `bold-title` template and prints one row per candidate. `Compliant` is whether the final image passes YouTube's thumbnail rules, and `Cost` is what the provider reported using (`—` for `fake`). On a terminal that can draw images you also get a preview of each candidate; elsewhere you get a table of file paths. The `fake` provider returns the same image for the same prompt and seed, so the candidates are placeholders, not artwork. Copy the run id (the `<run>` in the commands below) from the first line.
 
 ### 6. Pick one and export it
 
@@ -253,13 +253,43 @@ thumbforge playlist renumber <playlist-id> --start 1 --skip-ids <trailer-video-i
 
 The table it prints shows each video's old and new part number; a `—` marks a video left without one. Skipped videos are not counted, so the remaining parts stay consecutive, and part numbers you set survive a later `--refresh`. See [Series and playlists](concepts/series-and-playlists.md).
 
+## Batch the series
+
+With a hero picked (step 6), one command makes a thumbnail for every video in the playlist, in the hero's style, with each video's own title and "Part N" badge:
+
+```
+$ thumbforge batch <playlist-id> --hero <run> --template series-parts --dry-run --only 1-3
+┏━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━┓
+┃ Part ┃ Title          ┃ Key      ┃ Action ┃ Reason ┃
+┡━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━┩
+│ 1    │ <title>        │ <key>    │ create │ new    │
+│ 2    │ <title>        │ <key>    │ create │ new    │
+│ 3    │ <title>        │ <key>    │ create │ new    │
+└──────┴────────────────┴──────────┴────────┴────────┘
+3 to generate, 0 to retry, 0 to skip. Nothing was generated (--dry-run).
+$ thumbforge batch <playlist-id> --hero <run> --template series-parts --only 1-3
+Batch run <batch-run>
+Playlist    <playlist-title>
+Template    series-parts@1
+Provider    fake@0.1.0:<fingerprint>
+Reference   <asset> (final)
+Parent run  <run>
+Status      completed
+Items       3 completed, 0 failed, 0 pending of 3
+…
+```
+
+`--dry-run` prints the plan and calls no provider; `--only 1-3` limits the batch to those part numbers. The second command prints a header and a table with one row per item (part, title, status, size, compliance, asset and, for a failure, the error). On a terminal a progress line per finished item appears while it runs. If you press Ctrl+C, or some items fail, `thumbforge runs resume <batch-run>` finishes the rest without generating the completed ones again, and `thumbforge runs cost <run>` totals what a provider reported using. See [Batch a playlist](how-to/batch-a-playlist.md) and [Resume an interrupted run](how-to/resume-an-interrupted-run.md).
+
 ## Exit codes
 
-Every command exits `0` on success. The full table (usage errors, not found, provider errors, compliance failures, partial batches, interruption) is in [`PLAN.md` §5.1](https://github.com/khiladisngh/thumbforge/blob/main/PLAN.md#51-exit-codes).
+Every command exits `0` on success. The [CLI reference](reference/cli.md#exit-codes) lists the others: usage errors, not found, provider errors, compliance failures, partial batches and interruption.
 
 ## Next steps
 
 - Read the concepts: [Hero](concepts/hero.md), [Series and playlists](concepts/series-and-playlists.md), [Templates](concepts/templates.md), [Providers](concepts/providers.md).
 - [Generate a hero](how-to/generate-a-hero.md) and [Pick and refine](how-to/pick-and-refine.md) go deeper on the commands used above.
+- [Batch a playlist](how-to/batch-a-playlist.md) and [Resume an interrupted run](how-to/resume-an-interrupted-run.md) cover the whole series.
+- [Write a custom template](how-to/write-a-custom-template.md) makes the look your own.
 - [Shell completion](how-to/shell-completion.md) adds Tab completion for commands and options in bash, zsh, fish and PowerShell.
-- `thumbforge --help` and `thumbforge <command> --help` list every option.
+- The [CLI reference](reference/cli.md), `thumbforge --help` and `thumbforge <command> --help` list every command and option.

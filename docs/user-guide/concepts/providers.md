@@ -1,10 +1,14 @@
 # Providers
 
-A **provider** is the part of Thumbforge that turns a prompt into an image. Providers are plugins: Thumbforge ships with some built in, and anyone can publish another as a separate Python package. The rest of Thumbforge — templates, text overlay, runs, resume — works the same whichever provider you choose.
+A **provider** is the part of Thumbforge that turns a prompt into an image. Providers are plugins: Thumbforge ships with two built in, `fake` and `antigravity`, and anyone can publish another as a separate Python package. The rest of Thumbforge — templates, text overlay, runs, resume — works the same whichever provider you choose.
 
 ## The `fake` provider
 
 `fake` is always installed. It needs no network, no account and no key, and it is **deterministic**: the same request always produces exactly the same image, coloured by a hash of the prompt. It is useless for real thumbnails and ideal for trying Thumbforge, testing a template, or rehearsing a batch without spending anything.
+
+## The `antigravity` provider
+
+`antigravity` drives the Antigravity command-line program (`agy`), so that program has to be installed and signed in; `thumbforge provider check antigravity` reports whether it is. It takes a negative prompt and an aspect ratio, runs up to two generations at once (one image each) and returns JPEG; it takes no seed, and a reference image only as words in the prompt. Its settings sit in the `[providers.antigravity]` section of the configuration file: `binary` (default `agy`), `model`, `effort` (`low`, `medium` or `high`; `low` by default), `timeout_s` (600) and `skip_permissions` (off). `thumbforge provider models antigravity` lists the models it offers.
 
 ## Seeing what is installed
 
@@ -22,15 +26,15 @@ Providers differ. Each one declares what it supports: a reference image, a fixed
 
 ## API keys
 
-A provider that needs a key gets it from the environment variable `THUMBFORGE_PROVIDERS__<KEY>__API_KEY` (provider key in upper case) or, failing that, from your system keyring. `thumbforge provider set-key KEY` prompts for a key and stores it in the keyring. Keys are never written to the configuration file, the database or the logs.
+A provider that needs a key gets it from the environment variable `THUMBFORGE_PROVIDERS__<KEY>__API_KEY` (provider key in upper case) or, failing that, from your system keyring. `thumbforge provider set-key KEY` prompts for a key and stores it in the keyring. Keys are never written to the configuration file, the database or the logs. The same command also stores the key for the optional YouTube Data API metadata source, under the name `api`; see [Series and playlists](series-and-playlists.md#fetching-a-playlist).
 
 ## Adding a provider
 
 A provider plugin registers itself under the `thumbforge.providers` entry-point group of its Python package; installing that package next to Thumbforge makes it appear in `provider list`. [ADR 0010](../../adr/0010-provider-plugin-architecture.md) and the [Phase 3 spec](../../specs/phase-3-providers.md#interfaces) describe the interface a plugin implements.
 
-!!! note "Coming in v0.1.0"
+## Choosing a provider for a run
 
-    Choosing a provider for a run (`--provider KEY` on `thumbforge thumb generate` and `thumbforge batch`) arrives with roadmap tasks P6.1 and P7.3; see the [Phase 6 spec](../../specs/phase-6-hero.md#behaviour).
+`--provider KEY` on `thumbforge thumb generate` and `thumbforge batch` selects the provider for that run; without it, `[general] default_provider` applies (`fake` unless you change it). `thumb iterate` keeps the provider of the run it refines. Every run records the provider, its version and its settings, and never a key.
 
 ## Going deeper
 

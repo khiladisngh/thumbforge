@@ -26,9 +26,17 @@ The layout is TOML with five sections: `[template]` (name and description), `[ca
 
 `thumbforge template validate PATH` checks a layout and lists every problem at once. `thumbforge template render NAME --video <id>` prints the finished prompt for one of your videos without calling a provider, which is the quickest way to see what a template asks for.
 
-!!! note "Coming in v0.1.0"
+## Built-in templates, and your own
 
-    Built-in templates (`bold-title`, `minimal`, `series-parts`) and template management (`thumbforge template list|show|new|import`) are planned in roadmap tasks P4.3 and P4.4 and defined in the [Phase 4 spec](../../specs/phase-4-templates.md#behaviour). Templates will then be stored as numbered versions: importing a changed template creates a new version and never alters the old one, so earlier runs stay reproducible. Until then, templates are read from the `templates/` folder next to your configuration file. See [Write a custom template](../how-to/write-a-custom-template.md).
+Three templates are built in and stored by `thumbforge db init`:
+
+| Template       | Look                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------ |
+| `bold-title`   | Large upper-case title bottom-left over a punchy, high-contrast image; no badge.     |
+| `minimal`      | Small, quiet title bottom-left over a restrained image with a lot of empty space.    |
+| `series-parts` | Title bottom-centre with a "PART N" badge top-right: one look across a whole series. |
+
+Templates live in the database as numbered versions: importing a changed template creates a new version and never alters the old one, so earlier runs stay reproducible. `thumbforge template list` shows every version, `template show NAME` prints one, `template new NAME` copies one to editable files next to your configuration file, and `template import PATH` stores the files as a new version. A run takes `--template NAME` (the latest version) or `--template NAME@VERSION`. The default is `[general] default_template`. See [Write a custom template](../how-to/write-a-custom-template.md).
 
 ## Going deeper
 

@@ -4,7 +4,7 @@ Stop a long batch with Ctrl+C, or lose it to a crash or a provider outage, and c
 
 ## Stop a batch
 
-Press Ctrl+C while `thumbforge batch` runs. The item being generated is marked failed with the error `interrupted` (that try does not count against its retries), items that had not started stay `pending`, finished items are untouched, and the run is `paused`. The command prints the counts, for example `paused (7 completed, 1 failed, 4 pending)`, and exits `130`.
+Press Ctrl+C while `thumbforge batch` runs. The items being generated at that moment are marked failed with the error `interrupted` (that try does not count against their retries), items that had not started stay `pending`, finished items are untouched, and the run is `paused`. The command prints the counts, for example `paused (7 completed, 1 failed, 4 pending)`, and exits `130`.
 
 ## Continue it
 
