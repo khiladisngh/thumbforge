@@ -9,27 +9,19 @@ This page installs Thumbforge and walks through a first run: set up, fetch a vid
 
 ## Install
 
-Once Thumbforge is published to PyPI, installing it is one command:
+Install Thumbforge from PyPI:
 
 ```
 uv tool install thumbforge
 ```
 
-!!! note "Not on PyPI yet"
+To build it from a checkout of the repository instead:
 
-    Thumbforge is not published to PyPI yet, so `uv tool install thumbforge` does not work today; the first release (roadmap task P8.5) publishes it. Until then install from GitHub:
-
-    ```
-    uv tool install git+https://github.com/khiladisngh/thumbforge
-    ```
-
-    or from a checkout of the repository:
-
-    ```
-    git clone https://github.com/khiladisngh/thumbforge
-    cd thumbforge
-    uv tool install .
-    ```
+```
+git clone https://github.com/khiladisngh/thumbforge
+cd thumbforge
+uv tool install .
+```
 
 `uv tool install` puts the `thumbforge` command on your `PATH` in its own isolated environment. Check that it resolves:
 
@@ -37,7 +29,6 @@ uv tool install thumbforge
 $ thumbforge --version
 thumbforge 0.1.0
 ```
-
 
 If your shell says `thumbforge` is not found, the directory printed by `uv tool dir --bin` is not on your `PATH`. Run `uv tool update-shell` and open a new terminal. To remove Thumbforge again, run `uv tool uninstall thumbforge`.
 

@@ -12,17 +12,17 @@ Generate consistent, spec-compliant YouTube thumbnails from a hero image and a p
 - **Pluggable providers.** Antigravity CLI first; add your own via the `thumbforge.providers` entry-point group. A deterministic `fake` provider keeps tests offline.
 - **Local database.** Channels, playlists, videos, templates, runs, iterations and assets in SQLite; images content-addressed on disk; interrupted batches resume without regenerating finished items.
 
-> **Status: pre-release.** `v0.1.0` has not been tagged or published yet, so Thumbforge is not on PyPI. Install it from GitHub as shown below. The [changelog](https://github.com/khiladisngh/thumbforge/blob/main/CHANGELOG.md) lists what is on `main`.
-
 ## Install
 
-Thumbforge needs [uv](https://docs.astral.sh/uv/) and Python 3.14 (uv downloads Python if it is missing). Install from GitHub:
+Thumbforge needs [uv](https://docs.astral.sh/uv/) and Python 3.14 (uv downloads Python if it is missing). Install it from PyPI:
 
 ```
-uv tool install git+https://github.com/khiladisngh/thumbforge
+uv tool install thumbforge
 ```
 
-or from a checkout:
+To read YouTube metadata through the Data API instead of yt-dlp (optional; it needs an API key), install the `api` extra: `uv tool install "thumbforge[api]"`.
+
+Or build it from a checkout:
 
 ```
 git clone https://github.com/khiladisngh/thumbforge
@@ -35,8 +35,6 @@ Check it:
 ```
 thumbforge --version
 ```
-
-> **Once v0.1.0 is published** (not yet): `uv tool install thumbforge`.
 
 ## Quick start
 
