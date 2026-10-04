@@ -11,7 +11,7 @@ To keep this out of your real database, set the scratch configuration and data d
 ```
 $ uv tool install thumbforge
 $ thumbforge --version
-thumbforge 0.1.0
+thumbforge 0.1.1
 ```
 
 ## 2. Set up and check
@@ -88,7 +88,7 @@ Fetched     <timestamp>
 Playlists   1
 ```
 
-The `Thumbnail` line is the address of the video's current thumbnail on YouTube. Thumbforge 0.1.0 has no command that downloads or shows it: open the address in a browser, or save it with `curl`. See [Getting started](../getting-started.md#work-with-a-playlist).
+The `Thumbnail` line is the address of the video's current thumbnail on YouTube. Thumbforge 0.1.1 has no command that downloads or shows it: open the address in a browser, or save it with `curl`. See [Getting started](../getting-started.md#work-with-a-playlist).
 
 ## 6. Generate candidates for the first video
 
@@ -98,7 +98,7 @@ Run <run>
 Kind      hero
 Status    completed
 Template  bold-title@1
-Provider  fake@0.1.0:<fingerprint>
+Provider  fake@0.1.1:<fingerprint>
 Video     P_VKXcoLvO0
 Started   <timestamp>
 Finished  <timestamp>
@@ -143,7 +143,7 @@ Run <refined-run>
 Kind        iterate
 Status      completed
 Template    bold-title@1
-Provider    fake@0.1.0:<fingerprint>
+Provider    fake@0.1.1:<fingerprint>
 Video       P_VKXcoLvO0
 Parent run  <run>
 Reference   <asset>
@@ -180,7 +180,7 @@ $ thumbforge batch PLzR-P7aCk914xnDyG-7_U0Bq0SunTERrI --hero <refined-run> --tem
 Batch run <batch-run>
 Playlist    <playlist title>
 Template    series-parts@1
-Provider    fake@0.1.0:<fingerprint>
+Provider    fake@0.1.1:<fingerprint>
 Reference   <asset> (final)
 Parent run  <refined-run>
 Status      completed
@@ -197,9 +197,9 @@ $ thumbforge runs list
 ┏━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━┓
 ┃ Run         ┃ Kind    ┃ Status    ┃ Template   ┃ Provider    ┃ Done ┃ Failed ┃
 ┡━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━┩
-│ <batch-run… │ batch   │ completed │ series-pa… │ fake@0.1.0… │ 3/3  │ 0      │
-│ <refined-r… │ iterate │ completed │ bold-titl… │ fake@0.1.0… │ 2/2  │ 0      │
-│ <run>       │ hero    │ completed │ bold-titl… │ fake@0.1.0… │ 4/4  │ 0      │
+│ <batch-run… │ batch   │ completed │ series-pa… │ fake@0.1.1… │ 3/3  │ 0      │
+│ <refined-r… │ iterate │ completed │ bold-titl… │ fake@0.1.1… │ 2/2  │ 0      │
+│ <run>       │ hero    │ completed │ bold-titl… │ fake@0.1.1… │ 4/4  │ 0      │
 └─────────────┴─────────┴───────────┴────────────┴─────────────┴──────┴────────┘
 $ thumbforge runs show <batch-run>
 …

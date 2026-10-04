@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.1 (2026-10-04)
+
+### Features
+
+- **imaging:** Render Devanagari titles with shaping and a bundled fallback font (ccd363b)
+
+### Bug fixes
+
+- **ci:** Keep dist/.gitignore out of release assets (ecae27a)
+
+### Documentation
+
+- Install from PyPI (e50d057)
+- **user-guide:** Bring the guide in line with the shipped CLI (a540249)
+- Bring the home page, specs index and maintainer pages up to date (471f6f3)
+- Document playlist fetch, batch selection and log locations (46f7a7c)
+- **user-guide:** Add a try-it-on-a-playlist walkthrough (98472dc)
 ## 0.1.0 (2026-10-04)
 
 ### Features

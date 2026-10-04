@@ -77,8 +77,8 @@ $ thumbforge runs list
 ┏━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━┳━━━━━━━━┓
 ┃ Run         ┃ Kind    ┃ Status    ┃ Template   ┃ Provider    ┃ Done ┃ Failed ┃
 ┡━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━╇━━━━━━━━┩
-│ <batch-run… │ batch   │ completed │ series-pa… │ fake@0.1.0… │ 0/0  │ 0      │
-│ <batch-run… │ batch   │ completed │ series-pa… │ fake@0.1.0… │ 3/3  │ 0      │
+│ <batch-run… │ batch   │ completed │ series-pa… │ fake@0.1.1… │ 0/0  │ 0      │
+│ <batch-run… │ batch   │ completed │ series-pa… │ fake@0.1.1… │ 3/3  │ 0      │
 …
 ```
 

@@ -24,7 +24,7 @@ Run <run>
 Kind      hero
 Status    completed
 Template  bold-title@1
-Provider  fake@0.1.0:<fingerprint>
+Provider  fake@0.1.1:<fingerprint>
 Video     <video-id>
 Started   <timestamp>
 Finished  <timestamp>

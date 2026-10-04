@@ -1,6 +1,6 @@
 [project]
 name = "thumbforge"
-version = "0.1.0"
+version = "0.1.1"
 description = "Generate consistent, spec-compliant YouTube thumbnails from a hero image and a playlist."
 readme = "README.md"
 license = "MIT"

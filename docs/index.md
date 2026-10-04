@@ -11,7 +11,7 @@ Generate consistent, spec-compliant YouTube thumbnails from a hero image and a p
 - **Pluggable providers.** Image generation is a plugin; a deterministic `fake` provider works offline.
 - **Local and resumable.** Videos, playlists, templates and runs live in a local SQLite database; images are stored by content hash, and an interrupted batch resumes without redoing finished items.
 
-Thumbforge 0.1.0 is on PyPI: `uv tool install thumbforge`. It fetches playlists, numbers the parts, generates and refines a hero, and batches the whole playlist in its style; an interrupted batch resumes where it stopped.
+Thumbforge 0.1.1 is on PyPI: `uv tool install thumbforge`. It fetches playlists, numbers the parts, generates and refines a hero, and batches the whole playlist in its style; an interrupted batch resumes where it stopped.
 
 ## Where to start
 
