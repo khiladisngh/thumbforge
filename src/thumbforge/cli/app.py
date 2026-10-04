@@ -28,7 +28,7 @@ from thumbforge.cli import template as template_cli
 from thumbforge.cli import thumb as thumb_cli
 from thumbforge.cli import video as video_cli
 from thumbforge.cli._errors import handle_errors
-from thumbforge.cli._render import AppContext
+from thumbforge.cli._render import AppContext, use_utf8_output
 from thumbforge.core.errors import SettingsError
 from thumbforge.logging import configure_logging, get_logger, level_from_flags
 from thumbforge.settings import Settings, load_settings
@@ -152,4 +152,5 @@ app.command("batch")(batch_cli.batch)
 
 
 def main() -> None:
+    use_utf8_output()
     app()

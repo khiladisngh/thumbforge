@@ -7,7 +7,10 @@ themselves.
 
 from __future__ import annotations
 
+import codecs
+import io
 import json
+import sys
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -52,6 +55,24 @@ class AppContext:
             msg = "settings were not loaded"
             raise SettingsError(msg)
         return self.settings
+
+
+def use_utf8_output() -> None:
+    """Make redirected stdout and stderr UTF-8, so output text can never fail to encode.
+
+    A stream that is not a console is encoded with the locale code page (cp1252 on Windows) and
+    raises ``UnicodeEncodeError`` on a Devanagari title or the ``✔`` of a run table: Rich writes
+    text to it unchanged, and on Windows it takes its legacy renderer for any redirected stream.
+    ``errors="replace"`` keeps even a lone surrogate from raising. A console is left alone: it
+    already uses UTF-8 on Windows, and elsewhere its encoding is the terminal's own.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        if (
+            isinstance(stream, io.TextIOWrapper)
+            and not stream.isatty()
+            and codecs.lookup(stream.encoding).name != "utf-8"
+        ):
+            stream.reconfigure(encoding="utf-8", errors="replace")
 
 
 def get_app_context(ctx: typer.Context) -> AppContext:

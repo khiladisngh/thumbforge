@@ -323,6 +323,7 @@ Items       3 completed, 0 failed, 0 pending of 3
 - **Running the same `batch` again makes a new run with no images in it**, and `runs resume` refuses a run that is already `completed` (exit `2`). See [Batch a playlist](how-to/batch-a-playlist.md#running-it-again).
 - **Logs ignore `--config` and `--data-dir`.** They go to the per-user state directory. See [Files and logs](reference/cli.md#files-and-logs).
 - **`thumb show` prints file paths, not a picture grid, when the terminal cannot draw it**, for example when the output is piped. See step 6 above.
+- **Output that is piped or redirected is always UTF-8**, whatever the system code page, so a title in Hindi or the `✔` in a run table survives `> out.txt`; read the file as UTF-8. A terminal is unchanged.
 - **There is no command for the video's current thumbnail.** `video show` prints its address only. See [Work with a playlist](#work-with-a-playlist).
 
 ## Exit codes
