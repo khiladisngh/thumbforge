@@ -19,6 +19,7 @@ nav = [
   { "User guide" = [
     "user-guide/index.md",
     { "Getting started" = "user-guide/getting-started.md" },
+    { "Walkthrough" = "user-guide/walkthrough.md" },
     { "Concepts" = [
       { "Hero" = "user-guide/concepts/hero.md" },
       { "Series and playlists" = "user-guide/concepts/series-and-playlists.md" },

@@ -12,6 +12,12 @@ Generate consistent, spec-compliant YouTube thumbnails from a hero image and a p
 - **Pluggable providers.** Antigravity CLI first; add your own via the `thumbforge.providers` entry-point group. A deterministic `fake` provider keeps tests offline.
 - **Local database.** Channels, playlists, videos, templates, runs, iterations and assets in SQLite; images content-addressed on disk; interrupted batches resume without regenerating finished items.
 
+## Walkthrough
+
+[![Thumbforge walkthrough: the poster frame of a 2½-minute video](https://raw.githubusercontent.com/khiladisngh/thumbforge/main/docs/assets/walkthrough/poster.jpg)](https://khiladisngh.github.io/thumbforge/user-guide/walkthrough/)
+
+A 2½-minute recording of the whole flow on a real playlist, from install to export: [watch it in the docs](https://khiladisngh.github.io/thumbforge/user-guide/walkthrough/).
+
 ## Install
 
 Thumbforge needs [uv](https://docs.astral.sh/uv/) and Python 3.14 (uv downloads Python if it is missing). Install it from PyPI:
