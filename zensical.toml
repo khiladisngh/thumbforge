@@ -26,7 +26,8 @@ nav = [
       { "Providers" = "user-guide/concepts/providers.md" },
     ] },
     { "How-to guides" = [
-      { "Generate a hero" = "user-guide/how-to/generate-a-hero.md" },
+      { "Try it on a playlist" = "user-guide/how-to/try-it-on-a-playlist.md" },
+      { "Generate a hero" ="user-guide/how-to/generate-a-hero.md" },
       { "Pick and refine" = "user-guide/how-to/pick-and-refine.md" },
       { "Batch a playlist" = "user-guide/how-to/batch-a-playlist.md" },
       { "Resume an interrupted run" = "user-guide/how-to/resume-an-interrupted-run.md" },

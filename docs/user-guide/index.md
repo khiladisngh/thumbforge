@@ -18,5 +18,5 @@ This guide is for people who install Thumbforge and run it: creators who publish
 
 - [Getting started](getting-started.md) — install, then a first run from fetching a video to batching a playlist.
 - Concepts — [Hero](concepts/hero.md), [Series and playlists](concepts/series-and-playlists.md), [Templates](concepts/templates.md), [Providers](concepts/providers.md).
-- How-to guides — [Generate a hero](how-to/generate-a-hero.md), [Pick and refine](how-to/pick-and-refine.md), [Batch a playlist](how-to/batch-a-playlist.md), [Resume an interrupted run](how-to/resume-an-interrupted-run.md), [Write a custom template](how-to/write-a-custom-template.md), [Shell completion](how-to/shell-completion.md).
+- How-to guides — [Try it on a playlist](how-to/try-it-on-a-playlist.md) (a twelve-step walkthrough with the offline provider), [Generate a hero](how-to/generate-a-hero.md), [Pick and refine](how-to/pick-and-refine.md), [Batch a playlist](how-to/batch-a-playlist.md), [Resume an interrupted run](how-to/resume-an-interrupted-run.md), [Write a custom template](how-to/write-a-custom-template.md), [Shell completion](how-to/shell-completion.md).
 - Reference — [CLI reference](reference/cli.md), with every command and the exit codes.

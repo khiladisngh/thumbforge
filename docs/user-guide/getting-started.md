@@ -332,6 +332,7 @@ Every command exits `0` on success. The [CLI reference](reference/cli.md#exit-co
 ## Next steps
 
 - Read the concepts: [Hero](concepts/hero.md), [Series and playlists](concepts/series-and-playlists.md), [Templates](concepts/templates.md), [Providers](concepts/providers.md).
+- [Try it on a playlist](how-to/try-it-on-a-playlist.md) repeats this page on a real playlist, step by step.
 - [Generate a hero](how-to/generate-a-hero.md) and [Pick and refine](how-to/pick-and-refine.md) go deeper on the commands used above.
 - [Batch a playlist](how-to/batch-a-playlist.md) and [Resume an interrupted run](how-to/resume-an-interrupted-run.md) cover the whole series.
 - [Write a custom template](how-to/write-a-custom-template.md) makes the look your own.
