@@ -31,7 +31,7 @@ Runs on **every push to `main`** (there is no path filter, so a code-only merge 
 
 Runs when a tag matching `v*.*.*` is pushed.
 
-- `build` (`ubuntu-latest`, full history): fails unless the tag equals `v` plus the version reported by `uv version --short`; runs `uv build`; generates release notes with `git-cliff` (`cliff.toml`, `--latest --strip header`); creates the GitHub release with those notes and the files in `dist/` attached; uploads `dist/` as a workflow artifact.
+- `build` (`ubuntu-latest`, full history): fails unless the tag equals `v` plus the version reported by `uv version --short`; runs `uv build --no-create-gitignore` (so `dist/` holds only the wheel and the sdist, and no stray `.gitignore` is attached to the release); generates release notes with `git-cliff` (`cliff.toml`, `--latest --strip header`); creates the GitHub release with those notes and the files in `dist/` attached; uploads `dist/` as a workflow artifact.
 - `publish`: downloads the artifact and publishes it to PyPI with `pypa/gh-action-pypi-publish` from the `pypi` environment (trusted publishing; the publisher must be configured on PyPI before the first tag).
 
 The steps around it — version bump commit, tagging — are in [Release process](branching-and-releases.md#releases).

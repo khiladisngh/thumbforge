@@ -23,7 +23,7 @@ jobs:
             echo "tag ${GITHUB_REF_NAME} does not match pyproject version ${version}" >&2
             exit 1
           fi
-      - run: uv build
+      - run: uv build --no-create-gitignore
       - uses: orhun/git-cliff-action@v4
         id: cliff
         with:
