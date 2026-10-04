@@ -4,7 +4,7 @@ A spec is the contract for one phase (or one PR-sized task inside it). It says w
 
 ## Rule
 
-Every task in `docs/ROADMAP.md` links to a spec section. A spec must exist and be merged before the PR that implements it is opened; a PR without a spec link is returned. Specs are updated in the same PR when implementation deviates — the spec is never allowed to drift from the code it describes.
+Every task in `docs/ROADMAP.md` links to a spec section. A spec must exist before the commit that implements it. Specs are updated in the same commit when implementation deviates — the spec is never allowed to drift from the code it describes.
 
 ## Index
 
@@ -15,10 +15,10 @@ Every task in `docs/ROADMAP.md` links to a spec section. A spec must exist and b
 | `phase-2-youtube-fetch.md` | 2 — YouTube fetch     | Implemented |
 | `phase-3-providers.md`     | 3 — Providers         | Implemented |
 | `phase-4-templates.md`     | 4 — Templates         | Implemented |
-| `phase-5-imaging.md`       | 5 — Imaging           | Proposed    |
-| `phase-6-hero.md`          | 6 — Hero + iterations | Proposed    |
-| `phase-7-batch.md`         | 7 — Batch             | Proposed    |
-| `phase-8-polish.md`        | 8 — Polish            | Proposed    |
+| `phase-5-imaging.md`       | 5 — Imaging           | Implemented |
+| `phase-6-hero.md`          | 6 — Hero + iterations | Implemented |
+| `phase-7-batch.md`         | 7 — Batch             | Implemented |
+| `phase-8-polish.md`        | 8 — Polish            | Implemented |
 
 ## Template
 

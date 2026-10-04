@@ -1,6 +1,6 @@
 # Phase 7 — Batch
 
-Status: Proposed
+Status: Implemented (P7.1–P7.4)
 ROADMAP tasks: P7.1, P7.2, P7.3, P7.4
 ADRs: `docs/adr/0012-idempotency-and-resumable-runs.md`, `docs/adr/0015-structlog-logging.md`, `docs/adr/0011-content-addressed-assets.md`
 

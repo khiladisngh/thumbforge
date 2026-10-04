@@ -1,6 +1,6 @@
 # Phase 6 — Hero and iterations
 
-Status: Proposed
+Status: Implemented (P6.1–P6.3)
 ROADMAP tasks: P6.1, P6.2, P6.3
 ADRs: `docs/adr/0012-idempotency-and-resumable-runs.md`, `docs/adr/0011-content-addressed-assets.md`, `docs/adr/0010-provider-plugin-architecture.md`, `docs/adr/0018-shared-models-live-in-core.md`
 
@@ -55,7 +55,7 @@ Commands (`PLAN.md` §5.2):
 | `thumbforge thumb show <run>`                         | `--columns 2`                                                                                                                      | preview grid with ordinals, picked marker, compliance status                                                             | 0, 3          |
 | `thumbforge thumb export <run\|iteration>`            | `--to DIR`, `--raw`                                                                                                                | copies the final (or raw) asset of every completed iteration of a run, or of one iteration, into DIR                     | 0, 2, 3       |
 
-`thumbforge runs show <run>` (minimal, P6.1; P7.4 adds `list|resume|cancel|delete`) prints the run header and the iteration table of a stored run, or the same as `--json` with each iteration's full idempotency key, assets and compliance report; exit `3` for an unknown run. The header shows the run's lineage: `Parent run` and `Reference` (the first 12 characters of the reference asset's hash) on a child, `Child runs` on a parent; `--json` carries `run.parent_run_id`, `run.child_run_ids` (oldest first) and `run.reference_asset` (an asset object, or `null`).
+`thumbforge runs show <run>` (built minimally in P6.1; P7.4 added `runs list|resume|cancel|delete`, P8.4 `runs cost`) prints the run header and the iteration table of a stored run, or the same as `--json` with each iteration's full idempotency key, assets and compliance report; exit `3` for an unknown run. The header shows the run's lineage: `Parent run` and `Reference` (the first 12 characters of the reference asset's hash) on a child, `Child runs` on a parent; `--json` carries `run.parent_run_id`, `run.child_run_ids` (oldest first) and `run.reference_asset` (an asset object, or `null`).
 
 ## Behaviour
 

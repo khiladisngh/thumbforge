@@ -1,6 +1,6 @@
 # Phase 8 — Polish
 
-Status: Proposed
+Status: Implemented (P8.1–P8.5)
 ROADMAP tasks: P8.1, P8.2, P8.3, P8.4, P8.5
 ADRs: `docs/adr/0005-ytdlp-metadata-source.md`, `docs/adr/0002-typer-rich-cli.md`, `docs/adr/0014-secrets-env-keyring.md`, `docs/adr/0001-python-and-uv.md`
 

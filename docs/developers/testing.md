@@ -31,4 +31,4 @@ Defend an observable contract: behaviour, boundaries, invariants, state transiti
 
 ## CI
 
-`ci.yml` runs ruff, pyright, pytest with coverage (fail under 80 %), and `zensical build` on Ubuntu and Windows for Python 3.14.
+`ci.yml` runs ruff, pyright, `lint-imports`, pytest with coverage (fail under 80 %), and `zensical build` on Ubuntu and Windows for Python 3.14.

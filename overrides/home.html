@@ -53,14 +53,14 @@
       <section class="hero" aria-labelledby="hero-title">
         <div class="wrap hero__grid">
           <div class="hero__copy">
-            <p class="eyebrow">Open source · pre-alpha · MIT</p>
+            <p class="eyebrow">Open source · v0.1.0 · MIT</p>
             <h1 id="hero-title">Thumbnails that look like a series.</h1>
             <p class="lede">Thumbforge turns a YouTube playlist into a matching set of spec-compliant thumbnails. Pick one hero, then batch the whole series in its style, from your terminal.</p>
             <div class="cta">
               <a class="btn btn--primary" href="{{ 'user-guide/getting-started/' | url }}">Get started <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
               <a class="btn" href="{{ config.repo_url }}">View on GitHub <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7h10v10M7 17 17 7"/></svg></a>
             </div>
-            <p class="hero__note">Pre-alpha: fetching playlists and numbering parts work today; generating thumbnails lands in v0.1.0. <a href="#status">What works today</a></p>
+            <p class="hero__note">Version 0.1.0 is on PyPI. <a href="#install">Install it</a></p>
           </div>
 
           <div class="stack">
@@ -88,7 +88,6 @@
           <ol class="steps">
             <li class="step">
               <h3>Fetch the playlist</h3>
-              <span class="chip chip--now">Available now</span>
               <p>Give it a playlist URL. Thumbforge stores the channel, the playlist and every video, and numbers the parts in playlist order.</p>
               <div class="step__cmds">
                 <code class="cmd">thumbforge fetch <span class="nb">&lt;playlist-url&gt;</span></code>
@@ -96,7 +95,6 @@
             </li>
             <li class="step">
               <h3>Pick your hero</h3>
-              <span class="chip chip--soon">Coming in v0.1.0</span>
               <p>Generate several candidates for one video, compare them and pick the one that sets the look of the series.</p>
               <div class="step__cmds">
                 <code class="cmd">thumbforge thumb generate <span class="nb">&lt;video-id&gt;</span> <span class="nb">--n 4</span></code>
@@ -105,7 +103,6 @@
             </li>
             <li class="step">
               <h3>Batch the series</h3>
-              <span class="chip chip--soon">Coming in v0.1.0</span>
               <p>Every other video gets a thumbnail in the hero's style, with its own title and Part N badge.</p>
               <div class="step__cmds">
                 <code class="cmd">thumbforge batch <span class="nb">&lt;playlist-id&gt;</span> <span class="nb">--hero &lt;run-id&gt;</span></code>
@@ -150,7 +147,7 @@
               </figure>
             </li>
           </ol>
-          <p class="split-note">Text is composited, not generated. The provider only paints the background; Pillow draws the title and the badge from the template's layout. <strong>Every thumbnail gets identical typography, and a model's spelling never decides what your thumbnail says.</strong> The text overlay works today; joining it to image generation lands in v0.1.0.</p>
+          <p class="split-note">Text is composited, not generated. The provider only paints the background; Pillow draws the title and the badge from the template's layout. <strong>Every thumbnail gets identical typography, and a model's spelling never decides what your thumbnail says.</strong></p>
         </div>
       </section>
 
@@ -163,15 +160,13 @@
           <div class="term-grid">
             <div class="term">
               <div class="term__bar" aria-hidden="true">~/series</div>
-<pre tabindex="0" role="region" aria-label="Example commands, scrollable"><code><span class="t-c"># works today</span>
-<span class="t-p">$</span> thumbforge fetch "https://www.youtube.com/playlist?list=PL…"
+<pre tabindex="0" role="region" aria-label="Example commands, scrollable"><code><span class="t-p">$</span> thumbforge fetch "https://www.youtube.com/playlist?list=PL…"
 <span class="t-p">$</span> thumbforge playlist show <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--videos</span></span>
 <span class="t-p">$</span> thumbforge playlist renumber <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--start</span> 1</span>
 
-<span class="t-soon"><span class="t-mark"># coming in v0.1.0</span>
 <span class="t-p">$</span> thumbforge thumb generate <span class="t-a nb">&lt;video-id&gt;</span> <span class="nb"><span class="t-f">--template</span> bold-title</span> <span class="nb"><span class="t-f">--provider</span> antigravity</span> <span class="nb"><span class="t-f">--n</span> 4</span>
 <span class="t-p">$</span> thumbforge thumb pick <span class="t-a nb">&lt;run-id&gt;</span> 2
-<span class="t-p">$</span> thumbforge batch <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--hero</span> <span class="t-a">&lt;run-id&gt;</span></span> <span class="nb"><span class="t-f">--template</span> series-parts</span></span></code></pre>
+<span class="t-p">$</span> thumbforge batch <span class="t-a nb">&lt;playlist-id&gt;</span> <span class="nb"><span class="t-f">--hero</span> <span class="t-a">&lt;run-id&gt;</span></span> <span class="nb"><span class="t-f">--template</span> series-parts</span></code></pre>
             </div>
             <ul class="facts">
               <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg><p><strong>Local-first</strong>One SQLite database and a folder of images on your machine.</p></li>
@@ -198,7 +193,6 @@
               <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0ZM14.5 12.5l2-2M11.5 9.5l2-2M8.5 6.5l2-2M17.5 15.5l2-2"/></svg></span>
               <h3>Spec-compliant</h3>
               <p>16:9, at least 1280 px wide, JPEG or PNG, under 2 MB, sRGB. Checked before an image is accepted.</p>
-              <span class="chip chip--soon">Coming in v0.1.0</span>
             </li>
             <li class="card">
               <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 22v-5M15 8V2M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1zM9 8V2"/></svg></span>
@@ -209,7 +203,6 @@
               <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg></span>
               <h3>Local and resumable</h3>
               <p>Channels, playlists, videos, templates, runs and assets live in SQLite; images are content-addressed on disk. An interrupted batch resumes where it stopped.</p>
-              <span class="chip chip--soon">Resume: coming in v0.1.0</span>
             </li>
             <li class="card">
               <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5M10 12.5 8 15l2 2.5M14 12.5l2 2.5-2 2.5"/></svg></span>
@@ -219,7 +212,7 @@
             <li class="card">
               <span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 19h8M4 17l6-6-6-6"/></svg></span>
               <h3>Scriptable</h3>
-              <p><code>--json</code> prints one JSON document; logs go to stderr, results to stdout. Metadata comes from yt-dlp, so no API key.</p>
+              <p><code>--json</code> prints one JSON document; logs go to stderr, results to stdout. Metadata comes from yt-dlp, so no API key; the YouTube Data API is an optional source.</p>
             </li>
           </ul>
         </div>
@@ -230,30 +223,30 @@
           <div class="section__head">
             <p class="label"><b>05</b> Status</p>
             <h2 id="status-title">Where it stands.</h2>
-            <p>Thumbforge is pre-alpha. This is the honest split between what runs today and what the first release adds.</p>
+            <p>Version 0.1.0 covers the whole flow, from fetching a playlist to a resumable batch.</p>
           </div>
           <div class="status">
             <div class="status__col status__col--now">
-              <h3>Works today</h3>
+              <h3>Set up and inspect</h3>
               <ul>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Fetch videos, playlists and channels</span></li>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>List and show what you fetched</span></li>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Renumber parts, leaving trailers unnumbered</span></li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Validate templates and render their prompts (no provider call)</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Copy, import, validate and render templates (no provider call)</span></li>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>List, check and configure providers</span></li>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Inspect and edit configuration</span></li>
                 <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Manage the database</span></li>
               </ul>
             </div>
-            <div class="status__col status__col--soon">
-              <h3>Coming in v0.1.0</h3>
+            <div class="status__col status__col--now">
+              <h3>Make thumbnails</h3>
               <ul>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Hero generation and comparison</span></li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Pick and iterate</span></li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Batch a playlist, with resume and cancel</span></li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Compliance check on every final image</span></li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Builtin templates and template management</span></li>
-                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.1 2.182a10 10 0 0 1 3.8 0M13.9 21.818a10 10 0 0 1-3.8 0M17.609 3.721a10 10 0 0 1 2.69 2.7M2.182 13.9a10 10 0 0 1 0-3.8M20.279 17.609a10 10 0 0 1-2.7 2.69M21.818 10.1a10 10 0 0 1 0 3.8M3.721 6.391a10 10 0 0 1 2.7-2.69M6.391 20.279a10 10 0 0 1-2.69-2.7"/></svg><span>Run history and cost report</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Hero generation and comparison</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Pick and iterate</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Batch a playlist, with resume and cancel</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Compliance check on every final image</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Built-in templates, with every version of your own stored</span></li>
+                <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6 9 17l-5-5"/></svg><span>Run history and cost report</span></li>
               </ul>
             </div>
           </div>
