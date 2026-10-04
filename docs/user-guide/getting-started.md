@@ -35,10 +35,9 @@ uv tool install thumbforge
 
 ```
 $ thumbforge --version
-thumbforge 0.0.0
+thumbforge 0.1.0
 ```
 
-The version is `0.0.0` until the first release.
 
 If your shell says `thumbforge` is not found, the directory printed by `uv tool dir --bin` is not on your `PATH`. Run `uv tool update-shell` and open a new terminal. To remove Thumbforge again, run `uv tool uninstall thumbforge`.
 
@@ -109,7 +108,7 @@ $ thumbforge provider list
 ┃ Key         ┃ Name            ┃ Version ┃ Auth    ┃ Capabilities                                 ┃
 ┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
 │ antigravity │ Antigravity CLI │ unknown │ missing │ negative, aspect · jpeg · x2                 │
-│ fake        │ Fake            │ 0.0.0   │ ok      │ reference, seed, negative, aspect · png · x8 │
+│ fake        │ Fake            │ 0.1.0   │ ok      │ reference, seed, negative, aspect · png · x8 │
 └─────────────┴─────────────────┴─────────┴─────────┴──────────────────────────────────────────────┘
 $ thumbforge provider check fake
 fake · healthy
@@ -137,7 +136,7 @@ Run <run>
 Kind      hero
 Status    completed
 Template  bold-title@1
-Provider  fake@0.0.0:<fingerprint>
+Provider  fake@0.1.0:<fingerprint>
 Video     jNQXAC9IVRw
 Started   <timestamp>
 Finished  <timestamp>

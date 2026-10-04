@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 (2026-10-04)
 
 ### Features
 
@@ -58,6 +58,7 @@
 - **site:** New landing page (4bb33ad)
 - **user-guide:** Getting started and install (P8.2) (ca3a5f8)
 - **user-guide:** Shell completion (P8.3) (80e8f18)
+- README quick start, changelog and release readiness (P8.5) (da0a5e2)
 
 ### Tests
 

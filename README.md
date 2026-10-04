@@ -79,7 +79,7 @@ Run <run-id>
 Kind      hero
 Status    completed
 Template  bold-title@1
-Provider  fake@0.0.0:<fingerprint>
+Provider  fake@0.1.0:<fingerprint>
 Video     <video-id>
 Started   <timestamp>
 Finished  <timestamp>
@@ -112,7 +112,7 @@ $ thumbforge batch PLFgquLnL59alCl_2TQvOiD5Vgm1hCaGSI --hero <run-id> --template
 Batch run <batch-run-id>
 Playlist    <playlist-title>
 Template    series-parts@1
-Provider    fake@0.0.0:<fingerprint>
+Provider    fake@0.1.0:<fingerprint>
 Reference   <asset> (final)
 Parent run  <run-id>
 Status      completed
