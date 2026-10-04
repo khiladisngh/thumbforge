@@ -19,7 +19,7 @@ A run has exactly one pick. Picking another iteration moves it, and picking an i
 thumbforge thumb show <run>
 ```
 
-The grid shows each candidate captioned with its number, a `★` on the picked one, and `✔` or `✘` for whether it passes YouTube's thumbnail rules. On a terminal that cannot draw colour you get a list of file paths instead. `--columns 3` changes how many fit on a row; `--json` prints the same data as `runs show`.
+`thumb show` prints the run's table, with a `★` on the picked candidate. On a colour terminal that handles UTF-8 it then draws the finals as a grid of small block-character pictures, each captioned with its number, the `★` and `✔` or `✘` for whether it passes YouTube's thumbnail rules. When the terminal cannot draw them, which includes output piped to a file or another command, `--no-color`, and a dumb or legacy console, it prints a table of file paths with the same captions instead; open those files in an image viewer, or copy them out with `thumb export`. `--columns 3` changes how many pictures fit on a row; `--json` prints the same data as `runs show`.
 
 ## Export
 

@@ -6,6 +6,8 @@ Thumbforge treats a YouTube playlist as a **series**: an ordered set of videos t
 
 `thumbforge fetch <playlist-url>` stores the playlist, its channel and every video in your local database. It reads public metadata (titles, order, durations) with yt-dlp and needs no YouTube account or API key. Videos that leave the playlist on a later fetch are removed from the playlist, but their records and any thumbnails made for them are kept. A playlist fetched in the last 24 hours is shown from the database without going back to YouTube; `--refresh` re-reads it.
 
+Fetch the playlist link, `https://www.youtube.com/playlist?list=<playlist-id>`, and put it in quotes. A watch link with a playlist attached, `https://www.youtube.com/watch?v=<video-id>&list=<playlist-id>`, names the one video being watched: `fetch` stores that video and its channel and no playlist (`Stored 1 channel, 0 playlist, 1 videos.`), and `playlist list` stays empty. Without quotes the `&` ends the command in most shells and cuts the link short. A link with `list=` and no `v=`, such as `watch?list=<playlist-id>`, is read as the playlist.
+
 If you would rather use the YouTube Data API, install the optional `api` extra (`uv tool install "thumbforge[api]"`), store your key with `thumbforge provider set-key api` (or set `THUMBFORGE_PROVIDERS__API__API_KEY`), and run `thumbforge fetch --source api <url>`. It stores the same records. Without the extra, or without a key, `fetch --source api` exits `1` and says which one is missing.
 
 ## Position and part number

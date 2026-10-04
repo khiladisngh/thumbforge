@@ -69,7 +69,7 @@ Or set the same two things for a whole terminal session with environment variabl
     set THUMBFORGE_GENERAL__DATA_DIR=%CD%\scratch\data
     ```
 
-Logs still go to the state directory shown by `config path`. Progress lines such as `run started` also print to your terminal (stderr); they are left out of the samples below, and `--quiet` hides them.
+These two options move the configuration file and the data directory, and nothing else. Logs and each run's scratch folder go to a third place, the per-user state directory (`state_dir` in `config path`), whatever you set here; [Files and logs](reference/cli.md#files-and-logs) says how to move it. Progress lines such as `run started` also print to your terminal (stderr); they are left out of the samples below, and `--quiet` hides them.
 
 ## First run
 
@@ -119,6 +119,8 @@ Stored 1 channel, 0 playlist, 1 videos.
 
 `fetch` accepts a video, playlist or channel URL, or a bare id, and stores the metadata in the database. `jNQXAC9IVRw` is a short public video used as an example; any public video works. yt-dlp may print a warning about a missing JavaScript runtime; the fetch still succeeds.
 
+Put the URL in quotes: an unquoted `&` ends the command in most shells. A watch link that carries `&list=…` names one video seen inside a playlist, so `fetch` stores that video only (`0 playlist`). To store the playlist, fetch its playlist link; see [Work with a playlist](#work-with-a-playlist).
+
 ### 5. Generate candidates
 
 ```
@@ -138,11 +140,18 @@ Finished  <timestamp>
 │ 2 │ completed │ 1920x1080 │ ✔         │ <key>        │ —    │ <asset>       │
 │ 3 │ completed │ 1920x1080 │ ✔         │ <key>        │ —    │ <asset>       │
 └───┴───────────┴───────────┴───────────┴──────────────┴──────┴───────────────┘
+┏━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ # ┃ path                                                                     ┃
+┡━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 1 │ <data-dir>/assets/<xx>/<asset-file>                                      │
+│ 2 │ <data-dir>/assets/<xx>/<asset-file>                                      │
+│ 3 │ <data-dir>/assets/<xx>/<asset-file>                                      │
+└───┴──────────────────────────────────────────────────────────────────────────┘
 Copy images out with: thumbforge thumb export <run|iteration> --to PATH
 Pick one with: thumbforge thumb pick <run> <ordinal>
 ```
 
-This makes three candidates (the default is four) from the `bold-title` template and prints one row per candidate. `Compliant` is whether the final image passes YouTube's thumbnail rules, and `Cost` is what the provider reported using (`—` for `fake`). On a terminal that can draw images you also get a preview of each candidate; elsewhere you get a table of file paths. The `fake` provider returns the same image for the same prompt and seed, so the candidates are placeholders, not artwork. Copy the run id (the `<run>` in the commands below) from the first line.
+This makes three candidates (the default is four) from the `bold-title` template and prints one row per candidate. `Compliant` is whether the final image passes YouTube's thumbnail rules, and `Cost` is what the provider reported using (`—` for `fake`). On a colour terminal that handles UTF-8 you also get a preview of each candidate, drawn in block characters; elsewhere (output piped, `--no-color`) you get a table of file paths, as in the sample above. The `fake` provider returns the same image for the same prompt and seed, so the candidates are placeholders, not artwork. Copy the run id (the `<run>` in the commands below) from the first line.
 
 ### 6. Pick one and export it
 
@@ -157,7 +166,7 @@ Wrote out/jNQXAC9IVRw-2.jpg
 Wrote out/jNQXAC9IVRw-3.jpg
 ```
 
-`thumb pick` marks candidate 2 as the one to keep; picking another one moves the mark. `thumb show` prints the run again with a grid of the finals, and the picked one carries a `★`. `thumb export` copies every completed candidate into the folder `out` (created if needed) as `<video-id>-<number>.jpg`; on Windows the paths print with backslashes. [Pick and refine](how-to/pick-and-refine.md) covers `--raw`, exporting one iteration and refining the pick with `thumb iterate`.
+`thumb pick` marks candidate 2 as the one to keep; picking another one moves the mark. `thumb show` prints the run again, with a `★` on the picked candidate. On a colour terminal that handles UTF-8 it then draws the finals as a grid of small block-character pictures; anywhere else (output piped to a file or another command, `--no-color`, a dumb or legacy console) it prints a table of file paths instead, and you open the files yourself or copy them out with `thumb export`. `thumb export` copies every completed candidate into the folder `out` (created if needed) as `<video-id>-<number>.jpg`; on Windows the paths print with backslashes. [Pick and refine](how-to/pick-and-refine.md) covers `--raw`, exporting one iteration and refining the pick with `thumb iterate`.
 
 ### 7. Preview a template's prompt
 
@@ -245,6 +254,32 @@ thumbforge video show <video-id>
 
 `fetch` stores the channel, the playlist and every video, and prints the playlist with each video's position, part number, id and title. A playlist fetched in the last 24 hours is shown from the database without going back to YouTube; add `--refresh` to re-read it. `playlist show` and `video show` accept a YouTube id or a URL; `--videos` adds the ordered list of videos with their part numbers.
 
+Use the playlist link, the one with `/playlist?list=`. A watch link such as `https://www.youtube.com/watch?v=<video-id>&list=<playlist-id>` stores only that video and no playlist (`Stored 1 channel, 0 playlist, 1 videos.`), and `playlist list` stays empty. Quote the link, because of the `&`. A link of the form `watch?list=<playlist-id>` without `v=` is also read as the playlist.
+
+`video show` prints a `Thumbnail` line with the address of the video's current thumbnail on YouTube (the `source_thumbnail_url` field with `--json`):
+
+```
+$ thumbforge video show jNQXAC9IVRw
+Me at the zoo
+Title       Me at the zoo
+YouTube id  jNQXAC9IVRw
+Length      0:19
+Channel     jawed
+Published   2005-04-24T03:31:52+00:00
+URL         https://www.youtube.com/watch?v=jNQXAC9IVRw
+Thumbnail   https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg?sqp=…
+Fetched     <timestamp>
+Playlists   0
+```
+
+Thumbforge 0.1.0 has no command that downloads or shows that image. Open the address in a browser, or save it with `curl`, quoting the address because it contains `&`:
+
+```
+curl -o current.webp "https://i.ytimg.com/vi/<video-id>/hqdefault.jpg?sqp=…&rs=…"
+```
+
+Take the whole address from `thumbforge --json video show <video-id>`: the terminal table wraps a long address over several lines. YouTube may send WebP even though the address ends in `.jpg`, so a `.webp` name is the safe one to save it under (on PowerShell, write `curl.exe`; plain `curl` is a different command there).
+
 Each video starts with a part number equal to its position in the playlist. When the playlist opens with a trailer, leave it unnumbered so the first real episode is Part 1:
 
 ```
@@ -279,7 +314,16 @@ Items       3 completed, 0 failed, 0 pending of 3
 …
 ```
 
-`--dry-run` prints the plan and calls no provider; `--only 1-3` limits the batch to those part numbers. The second command prints a header and a table with one row per item (part, title, status, size, compliance, asset and, for a failure, the error). On a terminal a progress line per finished item appears while it runs. If you press Ctrl+C, or some items fail, `thumbforge runs resume <batch-run>` finishes the rest without generating the completed ones again, and `thumbforge runs cost <run>` totals what a provider reported using. See [Batch a playlist](how-to/batch-a-playlist.md) and [Resume an interrupted run](how-to/resume-an-interrupted-run.md).
+`--dry-run` prints the plan and calls no provider; `--only 1-3` limits the batch to those part numbers. `--only` is the only option that selects parts: `--max-images` merely refuses to start when the batch would make more images than the number you give, and `--dry-run` ignores it. The second command prints a header and a table with one row per item (part, title, status, size, compliance, asset and, for a failure, the error). On a terminal a progress line per finished item appears while it runs. If you press Ctrl+C, or some items fail, `thumbforge runs resume <batch-run>` finishes the rest without generating the completed ones again, and `thumbforge runs cost <run>` totals what a provider reported using. See [Batch a playlist](how-to/batch-a-playlist.md) and [Resume an interrupted run](how-to/resume-an-interrupted-run.md).
+
+## Common surprises
+
+- **A watch link with `&list=…` stores one video, not the playlist.** Fetch the `/playlist?list=` link, in quotes. See [Work with a playlist](#work-with-a-playlist).
+- **`--max-images` selects nothing, and `--dry-run` ignores it.** Choose parts with `--only`; see [Batch a playlist](how-to/batch-a-playlist.md#choose-what-to-generate).
+- **Running the same `batch` again makes a new run with no images in it**, and `runs resume` refuses a run that is already `completed` (exit `2`). See [Batch a playlist](how-to/batch-a-playlist.md#running-it-again).
+- **Logs ignore `--config` and `--data-dir`.** They go to the per-user state directory. See [Files and logs](reference/cli.md#files-and-logs).
+- **`thumb show` prints file paths, not a picture grid, when the terminal cannot draw it**, for example when the output is piped. See step 6 above.
+- **There is no command for the video's current thumbnail.** `video show` prints its address only. See [Work with a playlist](#work-with-a-playlist).
 
 ## Exit codes
 

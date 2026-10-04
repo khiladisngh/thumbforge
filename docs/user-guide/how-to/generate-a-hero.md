@@ -39,7 +39,7 @@ Copy images out with: thumbforge thumb export <run|iteration> --to PATH
 Pick one with: thumbforge thumb pick <run> <ordinal>
 ```
 
-It prints the run, then one row per candidate: its number, status, final size, whether the final passes YouTube's thumbnail rules, a short idempotency key, the cost the provider reported (`—` when it reported none, as the `fake` provider does) and the stored image or the error. On a terminal that can draw images you also get a preview of every candidate; elsewhere you get a table of file paths. The run id on the first line is what `thumb pick`, `thumb show`, `thumb export` and `thumb iterate` take next.
+It prints the run, then one row per candidate: its number, status, final size, whether the final passes YouTube's thumbnail rules, a short idempotency key, the cost the provider reported (`—` when it reported none, as the `fake` provider does) and the stored image or the error. On a colour terminal that handles UTF-8 you also get a preview of every candidate, drawn in block characters; elsewhere (output piped, `--no-color`) you get a table of file paths. The run id on the first line is what `thumb pick`, `thumb show`, `thumb export` and `thumb iterate` take next.
 
 ## Options
 

@@ -14,9 +14,9 @@ thumbforge runs resume <run-id>
 
 Completed items are skipped without a provider call; failed and unfinished ones are retried in place, inside the same run, and a `running` item that has not moved for 15 minutes (`[batch] stale_after_s`) is taken to belong to a crashed process and retried too. The run is reopened and ends `completed` (or `failed` again) from its own items. The same options as `batch` apply: progress on a terminal, `--json`, and the exit codes `0`, `4`, `6` and `130`. `--concurrency N` overrides the number of parallel provider calls the run was started with.
 
-`runs resume` refuses a run that is `completed` or `cancelled`, or that is not a batch run (exit `2`), and exits `3` for an unknown run id.
+`runs resume` refuses a run that is `completed` or `cancelled`, or that is not a batch run (exit `2`), and exits `3` for an unknown run id. For a `completed` run the message ends `hint: start a new batch to generate again`. A new batch with the same options makes nothing, because its items are all done; see [Running it again](batch-a-playlist.md#running-it-again) for what to change.
 
-Running the same `batch` command again also works: it retries the same items, but as a run of its own, and the interrupted run keeps the `paused` status it was left in.
+Running the same `batch` command again while items are still unfinished also works: it retries them, but as a run of its own, and the interrupted run keeps the `paused` status it was left in.
 
 ## Give up on a run
 
@@ -37,6 +37,6 @@ thumbforge config path
 thumbforge db status
 ```
 
-`runs list` prints the newest runs first: id, kind, status, template, provider, how many iterations are done and how many failed. `runs show` lists a run's iterations, with the tokens each one used when its provider reported them; for a batch run it also shows the playlist and the item counts. `runs cost` totals the tokens in and out, the credits and the provider time of the run's own iterations (not those of a batch built on it), and says how many iterations the provider reported no cost for. A run whose provider reported none, like the built-in `fake` one, prints `has no cost data` rather than zeros. `--json` works on both commands. `config path` shows where the database and logs live; `db status` confirms the database is at the current schema revision.
+`runs list` prints the newest runs first: id, kind, status, template, provider, how many iterations are done and how many failed. `runs show` lists a run's iterations, with the tokens each one used when its provider reported them; for a batch run it also shows the playlist and the item counts. `runs cost` totals the tokens in and out, the credits and the provider time of the run's own iterations (not those of a batch built on it), and says how many iterations the provider reported no cost for. A run whose provider reported none, like the built-in `fake` one, prints `has no cost data` rather than zeros. `--json` works on both commands. `config path` shows where the database and logs live (the logs are in the per-user state directory even when `--config` and `--data-dir` point elsewhere; see [Files and logs](../reference/cli.md#files-and-logs)); `db status` confirms the database is at the current schema revision.
 
 `runs delete` removes a run and its iterations. The image files stay unless you pass `--assets`, which also deletes the files that no other run, iteration or reference image still uses (identical images made by two runs are one shared file, so it goes only with the last of them). A run that other runs build on is refused with exit `2` and the ids of those runs: a hero that a batch took as its reference, or the parent of a refinement made with `thumb iterate`. Delete the batch or the refinement first.
